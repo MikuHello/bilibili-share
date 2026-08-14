@@ -1,0 +1,4 @@
+.DS_Store
+.reasonix/
+node_modules/
+coverage/
