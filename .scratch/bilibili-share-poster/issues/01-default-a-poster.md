@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** in-review
+**Status:** complete
 
 - [x] 项目维护可测试的 TypeScript 源码，并能构建一个可直接安装的 `.user.js` 产物；版本一不声明远程更新地址。
 - [x] 在受支持的标准视频页，官方分享动作右侧出现带海报/图片图标和“生成海报”文案的入口，且重复挂载不会产生多个入口。
@@ -39,3 +39,8 @@
 - Re-export of `BV1XoTEzrEiL` measured 1080×1440 and independently decoded to its canonical share target. A live-page invalid `text/html` cover response showed a specific error, retry action, and no download action.
 - Playback restoration also requires the same captured part number. The baseline `.DS_Store` tracking state was restored so this ticket does not perform unrelated cleanup.
 - Standards review exposed a vocabulary collision between the approved decorative `SHARE CARD` masthead and `CONTEXT.md`; the domain document now clarifies that the product object remains “Share poster” and the masthead does not create a second object name.
+
+### 2026-08-14 — final code-review
+
+- Spec axis: no remaining missing, partial, out-of-scope, or incorrect behavior.
+- Standards axis: no hard violations. Three judgement-call refactoring candidates remain for later deepening: deduplicate the two typed GM transports, consider branded BVID/share-target types, and split poster rendering/export from panel lifecycle when later tickets create real change pressure.
