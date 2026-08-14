@@ -1,3 +1,5 @@
+import { isOpaqueShortUrl } from "./share-target";
+
 export type StatisticValue = number | null;
 
 export interface GenerationSnapshot {
@@ -25,7 +27,6 @@ export interface DefaultPoster {
   uploader: string;
   identity: string;
   shareTarget: string;
-  qrTarget: string;
   titleLines: 2;
   linkWrap: "anywhere";
   contentOrder: readonly ["cover", "title", "uploader-identity", "stats", "destination"];
@@ -75,14 +76,7 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
 
   const expectedPath = `/video/${bvid}/`;
   const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
-  const isOpaqueShort =
-    url.hostname === "b23.tv" &&
-    /^\/[0-9A-Za-z]+$/.test(url.pathname) &&
-    !url.search &&
-    !url.hash &&
-    !url.username &&
-    !url.password &&
-    !url.port;
+  const isOpaqueShort = isOpaqueShortUrl(url);
   if (url.protocol !== "https:" || (!isCanonical && !isOpaqueShort)) {
     throw new Error("分享链接无效");
   }
@@ -106,7 +100,6 @@ export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: st
     uploader,
     identity: `${bvid} · AV${snapshot.aid}`,
     shareTarget: canonicalTarget,
-    qrTarget: canonicalTarget,
     titleLines: defaultTheme.titleLines,
     linkWrap: "anywhere",
     contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],

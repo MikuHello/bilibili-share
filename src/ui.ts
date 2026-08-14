@@ -47,8 +47,8 @@ async function createPoster(model: DefaultPoster): Promise<HTMLElement> {
 
   const destination = element("div", "bsp-destination");
   const qr = element("img", "bsp-qr");
-  qr.alt = `二维码：${model.qrTarget}`;
-  qr.src = await QRCode.toDataURL(model.qrTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  qr.alt = `二维码：${model.shareTarget}`;
+  qr.src = await QRCode.toDataURL(model.shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
   const linkArea = element("div");
   const visibleLink = element("span", "bsp-link", model.shareTarget);
   visibleLink.style.overflowWrap = model.linkWrap;

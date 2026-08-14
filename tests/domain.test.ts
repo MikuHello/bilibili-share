@@ -61,7 +61,6 @@ describe("default A poster domain", () => {
       uploader: completeSnapshot.uploader,
       identity: "BV1xx411c7mD · AV170001",
       shareTarget,
-      qrTarget: shareTarget,
       titleLines: 2,
       linkWrap: "anywhere",
       contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
@@ -78,7 +77,6 @@ describe("default A poster domain", () => {
     const poster = buildDefaultPoster(completeSnapshot, "https://b23.tv/a7BomhP");
 
     expect(poster.shareTarget).toBe("https://b23.tv/a7BomhP");
-    expect(poster.qrTarget).toBe("https://b23.tv/a7BomhP");
   });
 
   it.each([

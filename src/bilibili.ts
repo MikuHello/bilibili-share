@@ -24,6 +24,15 @@ interface VideoApiResponse {
   data?: VideoApiData;
 }
 
+interface PublicVideoInformation {
+  aid: number;
+  bvid: string;
+  title: string;
+  coverUrl: string;
+  uploader: string;
+  stats: GenerationSnapshot["stats"];
+}
+
 export interface GenerationResources {
   snapshot: GenerationSnapshot;
   targetSelection: ShareTargetSelection;
@@ -159,6 +168,31 @@ function statistic(value: unknown): StatisticValue {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
 }
 
+export function parseVideoApiResponse(payload: unknown, expectedBvid: string): PublicVideoInformation {
+  const response = payload as VideoApiResponse;
+  if (response?.code !== 0 || !response.data) {
+    const detail = typeof response?.message === "string" && response.message ? `：${response.message}` : "";
+    throw new Error(`Bilibili 视频信息请求失败${detail}`);
+  }
+
+  const data = response.data;
+  const bvid = requiredText(data.bvid, "BV 标识");
+  if (bvid.toUpperCase() !== expectedBvid.toUpperCase()) throw new Error("视频身份校验失败，请重试。");
+  return {
+    bvid,
+    aid: requiredPositiveInteger(data.aid, "AV 标识"),
+    coverUrl: requiredText(data.pic, "视频封面"),
+    title: requiredText(data.title, "视频标题"),
+    uploader: requiredText(data.owner?.name, "UP 主"),
+    stats: {
+      views: statistic(data.stat?.view),
+      likes: statistic(data.stat?.like),
+      coins: statistic(data.stat?.coin),
+      favorites: statistic(data.stat?.favorite),
+    },
+  };
+}
+
 async function blobToImageDataUrl(blob: Blob): Promise<string> {
   if (blob.size === 0 || (blob.type && !blob.type.startsWith("image/"))) {
     throw new Error("Bilibili 返回的视频封面无效，请重试。");
@@ -186,39 +220,26 @@ export function canonicalShareTarget(bvid: string): string {
 
 export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise<GenerationSnapshot> {
   const endpoint = `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(capture.bvid)}`;
-  let payload: VideoApiResponse;
+  let payload: unknown;
   try {
     payload = JSON.parse(await gmTextRequest(endpoint)) as VideoApiResponse;
   } catch (error) {
     if (error instanceof SyntaxError) throw new Error("Bilibili 返回了无法解析的视频信息，请重试。");
     throw error;
   }
-  if (payload.code !== 0 || !payload.data) {
-    const detail = typeof payload.message === "string" && payload.message ? `：${payload.message}` : "";
-    throw new Error(`Bilibili 视频信息请求失败${detail}`);
-  }
-
-  const data = payload.data;
-  const responseBvid = requiredText(data.bvid, "BV 标识");
-  if (responseBvid.toUpperCase() !== capture.bvid.toUpperCase()) throw new Error("视频身份校验失败，请重试。");
-  const coverUrl = requiredText(data.pic, "视频封面");
-  const coverBlob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
+  const video = parseVideoApiResponse(payload, capture.bvid);
+  const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
 
   return {
-    bvid: responseBvid,
-    aid: requiredPositiveInteger(data.aid, "AV 标识"),
+    bvid: video.bvid,
+    aid: video.aid,
     coverDataUrl: await blobToImageDataUrl(coverBlob),
-    title: requiredText(data.title, "视频标题"),
-    uploader: requiredText(data.owner?.name, "UP 主"),
+    title: video.title,
+    uploader: video.uploader,
     partNumber: capture.partNumber,
     playbackSeconds: capture.playbackSeconds,
     wasPlaying: capture.wasPlaying,
-    stats: {
-      views: statistic(data.stat?.view),
-      likes: statistic(data.stat?.like),
-      coins: statistic(data.stat?.coin),
-      favorites: statistic(data.stat?.favorite),
-    },
+    stats: video.stats,
   };
 }
 

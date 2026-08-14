@@ -2118,6 +2118,9 @@
   });
 
   // src/share-target.ts
+  function isOpaqueShortUrl(url) {
+    return url.protocol === "https:" && url.hostname === "b23.tv" && /^\/[0-9A-Za-z]+$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password && !url.port;
+  }
   function shareIdentity(rawUrl) {
     const url = new URL(rawUrl);
     const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
@@ -2139,9 +2142,14 @@
     if (typeof response.data?.content !== "string" || !response.data.content.trim()) {
       throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
     }
-    const match = response.data.content.match(/https:\/\/b23\.tv\/[0-9A-Za-z]+/);
-    if (!match) throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
-    return match[0];
+    for (const token of response.data.content.split(/\s+/)) {
+      try {
+        const url = new URL(token);
+        if (isOpaqueShortUrl(url)) return url.toString();
+      } catch {
+      }
+    }
+    throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
   }
   function selectShareTarget(canonicalTarget, attempt) {
     const expected = shareIdentity(canonicalTarget);
@@ -2284,6 +2292,29 @@
   function statistic(value) {
     return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
   }
+  function parseVideoApiResponse(payload, expectedBvid) {
+    const response = payload;
+    if (response?.code !== 0 || !response.data) {
+      const detail = typeof response?.message === "string" && response.message ? `\uFF1A${response.message}` : "";
+      throw new Error(`Bilibili \u89C6\u9891\u4FE1\u606F\u8BF7\u6C42\u5931\u8D25${detail}`);
+    }
+    const data = response.data;
+    const bvid = requiredText(data.bvid, "BV \u6807\u8BC6");
+    if (bvid.toUpperCase() !== expectedBvid.toUpperCase()) throw new Error("\u89C6\u9891\u8EAB\u4EFD\u6821\u9A8C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    return {
+      bvid,
+      aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
+      coverUrl: requiredText(data.pic, "\u89C6\u9891\u5C01\u9762"),
+      title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
+      uploader: requiredText(data.owner?.name, "UP \u4E3B"),
+      stats: {
+        views: statistic(data.stat?.view),
+        likes: statistic(data.stat?.like),
+        coins: statistic(data.stat?.coin),
+        favorites: statistic(data.stat?.favorite)
+      }
+    };
+  }
   async function blobToImageDataUrl(blob) {
     if (blob.size === 0 || blob.type && !blob.type.startsWith("image/")) {
       throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
@@ -2316,30 +2347,18 @@
       if (error instanceof SyntaxError) throw new Error("Bilibili \u8FD4\u56DE\u4E86\u65E0\u6CD5\u89E3\u6790\u7684\u89C6\u9891\u4FE1\u606F\uFF0C\u8BF7\u91CD\u8BD5\u3002");
       throw error;
     }
-    if (payload.code !== 0 || !payload.data) {
-      const detail = typeof payload.message === "string" && payload.message ? `\uFF1A${payload.message}` : "";
-      throw new Error(`Bilibili \u89C6\u9891\u4FE1\u606F\u8BF7\u6C42\u5931\u8D25${detail}`);
-    }
-    const data = payload.data;
-    const responseBvid = requiredText(data.bvid, "BV \u6807\u8BC6");
-    if (responseBvid.toUpperCase() !== capture.bvid.toUpperCase()) throw new Error("\u89C6\u9891\u8EAB\u4EFD\u6821\u9A8C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5\u3002");
-    const coverUrl = requiredText(data.pic, "\u89C6\u9891\u5C01\u9762");
-    const coverBlob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
+    const video = parseVideoApiResponse(payload, capture.bvid);
+    const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
     return {
-      bvid: responseBvid,
-      aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
+      bvid: video.bvid,
+      aid: video.aid,
       coverDataUrl: await blobToImageDataUrl(coverBlob),
-      title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
-      uploader: requiredText(data.owner?.name, "UP \u4E3B"),
+      title: video.title,
+      uploader: video.uploader,
       partNumber: capture.partNumber,
       playbackSeconds: capture.playbackSeconds,
       wasPlaying: capture.wasPlaying,
-      stats: {
-        views: statistic(data.stat?.view),
-        likes: statistic(data.stat?.like),
-        coins: statistic(data.stat?.coin),
-        favorites: statistic(data.stat?.favorite)
-      }
+      stats: video.stats
     };
   }
   async function fetchValidatedShareTarget(snapshot) {
@@ -3276,7 +3295,7 @@
     }
     const expectedPath = `/video/${bvid}/`;
     const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
-    const isOpaqueShort = url.hostname === "b23.tv" && /^\/[0-9A-Za-z]+$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password && !url.port;
+    const isOpaqueShort = isOpaqueShortUrl(url);
     if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     }
@@ -3298,7 +3317,6 @@
       uploader,
       identity: `${bvid} \xB7 AV${snapshot.aid}`,
       shareTarget: canonicalTarget,
-      qrTarget: canonicalTarget,
       titleLines: defaultTheme.titleLines,
       linkWrap: "anywhere",
       contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
@@ -3343,8 +3361,8 @@
     }
     const destination = element("div", "bsp-destination");
     const qr = element("img", "bsp-qr");
-    qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.qrTarget}`;
-    qr.src = await import_qrcode.default.toDataURL(model.qrTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+    qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`;
+    qr.src = await import_qrcode.default.toDataURL(model.shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
     const linkArea = element("div");
     const visibleLink = element("span", "bsp-link", model.shareTarget);
     visibleLink.style.overflowWrap = model.linkWrap;

@@ -21,6 +21,19 @@ interface FailedShortLink {
   reason: string;
 }
 
+export function isOpaqueShortUrl(url: URL): boolean {
+  return (
+    url.protocol === "https:" &&
+    url.hostname === "b23.tv" &&
+    /^\/[0-9A-Za-z]+$/.test(url.pathname) &&
+    !url.search &&
+    !url.hash &&
+    !url.username &&
+    !url.password &&
+    !url.port
+  );
+}
+
 function shareIdentity(rawUrl: string): { bvid: string; part: string | null; timestamp: string | null } {
   const url = new URL(rawUrl);
   const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
@@ -43,9 +56,15 @@ export function parseShortLinkResponse(payload: unknown): string {
   if (typeof response.data?.content !== "string" || !response.data.content.trim()) {
     throw new Error("Bilibili 短链响应缺少有效链接");
   }
-  const match = response.data.content.match(/https:\/\/b23\.tv\/[0-9A-Za-z]+/);
-  if (!match) throw new Error("Bilibili 短链响应缺少有效链接");
-  return match[0];
+  for (const token of response.data.content.split(/\s+/)) {
+    try {
+      const url = new URL(token);
+      if (isOpaqueShortUrl(url)) return url.toString();
+    } catch {
+      // Non-URL title text is expected before the short link.
+    }
+  }
+  throw new Error("Bilibili 短链响应缺少有效链接");
 }
 
 export function selectShareTarget(

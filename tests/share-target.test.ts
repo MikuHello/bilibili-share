@@ -25,6 +25,16 @@ describe("validated share target", () => {
     ).toBe("https://b23.tv/a7BomhP");
   });
 
+  it("rejects content that only contains a lookalike short-link token", () => {
+    expect(() =>
+      parseShortLinkResponse({
+        code: 0,
+        message: "OK",
+        data: { content: "【一个视频标题】 https://b23.tv/a7BomhP.evil" },
+      }),
+    ).toThrow("Bilibili 短链响应缺少有效链接");
+  });
+
   it("uses a short URL whose resolved BVID matches despite tracking parameters", () => {
     expect(
       selectShareTarget("https://www.bilibili.com/video/BV1xx411c7mD/", {
@@ -77,6 +87,19 @@ describe("validated share target", () => {
     ).toEqual({
       shareTarget: "https://b23.tv/partTime",
       source: "short",
+    });
+  });
+
+  it("falls back when an enabled timestamp disappears from the resolved short URL", () => {
+    expect(
+      selectShareTarget("https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=61", {
+        status: "resolved",
+        shortUrl: "https://b23.tv/missingTime",
+        resolvedUrl: "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&share_source=COPY",
+      }),
+    ).toMatchObject({
+      shareTarget: "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=61",
+      source: "canonical-fallback",
     });
   });
 
