@@ -38,3 +38,4 @@
 - Domain output now drives the runtime theme class, content order, title line clamp, link wrapping, and export dimensions instead of duplicating those decisions only in adapters.
 - Re-export of `BV1XoTEzrEiL` measured 1080×1440 and independently decoded to its canonical share target. A live-page invalid `text/html` cover response showed a specific error, retry action, and no download action.
 - Playback restoration also requires the same captured part number. The baseline `.DS_Store` tracking state was restored so this ticket does not perform unrelated cleanup.
+- Standards review exposed a vocabulary collision between the approved decorative `SHARE CARD` masthead and `CONTEXT.md`; the domain document now clarifies that the product object remains “Share poster” and the masthead does not create a second object name.

@@ -6,7 +6,8 @@ This context names the user-visible concepts of producing and exporting a sharea
 
 **Share poster**:
 A static image representing one Bilibili video, including its identity, scan destination, and a snapshot of selected public information.
-_Avoid_: Share card, screenshot
+Theme A may print the approved decorative masthead label `SHARE CARD`; that label does not rename the product object.
+_Avoid as an object name_: Share card, screenshot
 
 **Poster preview**:
 The on-page view of the exact share poster that will be copied or downloaded.
