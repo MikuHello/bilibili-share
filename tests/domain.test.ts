@@ -64,6 +64,7 @@ describe("default A poster domain", () => {
       qrTarget: shareTarget,
       titleLines: 2,
       linkWrap: "anywhere",
+      contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
       stats: [
         { label: "播放", value: "1234.6万" },
         { label: "点赞", value: "9.9万" },

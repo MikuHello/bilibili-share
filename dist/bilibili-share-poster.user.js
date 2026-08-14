@@ -2131,18 +2131,21 @@
     return candidates.filter((video) => video.isConnected).sort((left, right) => right.clientWidth * right.clientHeight - left.clientWidth * left.clientHeight)[0] ?? null;
   }
   function captureAndPausePlayback() {
-    const identity = readPageIdentity();
-    if (!identity) throw new Error("\u5F53\u524D\u9875\u9762\u4E0D\u662F\u53D7\u652F\u6301\u7684\u6807\u51C6\u89C6\u9891\u9875\uFF0C\u8BF7\u6253\u5F00 /video/BV... \u9875\u9762\u540E\u91CD\u8BD5\u3002");
     const player = findMainPlayer();
     if (!player) throw new Error("\u672A\u627E\u5230\u4E3B\u64AD\u653E\u5668\u3002Bilibili \u9875\u9762\u7ED3\u6784\u53EF\u80FD\u5DF2\u53D8\u5316\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u540E\u91CD\u8BD5\u3002");
     const wasPlaying = !player.paused && !player.ended;
-    const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
     try {
       player.pause();
     } catch {
       throw new Error("\u65E0\u6CD5\u6682\u505C\u4E3B\u64AD\u653E\u5668\uFF0C\u8BF7\u68C0\u67E5\u9875\u9762\u64AD\u653E\u72B6\u6001\u540E\u91CD\u8BD5\u3002");
     }
     if (!player.paused) throw new Error("\u4E3B\u64AD\u653E\u5668\u672A\u80FD\u7A33\u5B9A\u6682\u505C\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    const identity = readPageIdentity();
+    if (!identity) {
+      if (wasPlaying) void player.play().catch(() => void 0);
+      throw new Error("\u5F53\u524D\u9875\u9762\u4E0D\u662F\u53D7\u652F\u6301\u7684\u6807\u51C6\u89C6\u9891\u9875\uFF0C\u8BF7\u6253\u5F00 /video/BV... \u9875\u9762\u540E\u91CD\u8BD5\u3002");
+    }
+    const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
     return { ...identity, playbackSeconds, wasPlaying, player };
   }
   function gmTextRequest(url) {
@@ -2197,13 +2200,25 @@
   function statistic(value) {
     return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
   }
-  function blobToDataUrl(blob) {
-    return new Promise((resolve, reject) => {
+  async function blobToImageDataUrl(blob) {
+    if (blob.size === 0 || blob.type && !blob.type.startsWith("image/")) {
+      throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
       reader.onerror = () => reject(new Error("\u89C6\u9891\u5C01\u9762\u8BFB\u53D6\u5931\u8D25\u3002"));
       reader.readAsDataURL(blob);
     });
+    const image = new Image();
+    image.src = dataUrl;
+    try {
+      await image.decode();
+    } catch {
+      throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6CD5\u89E3\u7801\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    }
+    if (image.naturalWidth <= 0 || image.naturalHeight <= 0) throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    return dataUrl;
   }
   function canonicalShareTarget(bvid) {
     return `https://www.bilibili.com/video/${bvid}/`;
@@ -2229,7 +2244,7 @@
     return {
       bvid: responseBvid,
       aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
-      coverDataUrl: await blobToDataUrl(coverBlob),
+      coverDataUrl: await blobToImageDataUrl(coverBlob),
       title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
       uploader: requiredText(data.owner?.name, "UP \u4E3B"),
       partNumber: capture.partNumber,
@@ -2246,7 +2261,7 @@
   function restorePlayback(capture) {
     if (!capture.wasPlaying || !capture.player.isConnected) return;
     const current = readPageIdentity();
-    if (!current || current.bvid.toUpperCase() !== capture.bvid.toUpperCase()) return;
+    if (!current || current.bvid.toUpperCase() !== capture.bvid.toUpperCase() || current.partNumber !== capture.partNumber) return;
     void capture.player.play().catch(() => void 0);
   }
 
@@ -3109,6 +3124,9 @@
   var import_qrcode = __toESM(require_browser(), 1);
 
   // src/domain.ts
+  function getDefaultTheme() {
+    return { id: "A", titleLines: 2 };
+  }
   function formatCompactStat(value) {
     if (value === null || !Number.isFinite(value)) return "--";
     if (value >= 1e8) return `${(value / 1e8).toFixed(1)}\u4EBF`;
@@ -3145,8 +3163,9 @@
     const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
     if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
     const canonicalTarget = validateShareTarget(shareTarget, bvid);
+    const defaultTheme = getDefaultTheme();
     return {
-      theme: "A",
+      theme: defaultTheme.id,
       dimensions: { width: 1080, height: 1440 },
       coverDataUrl,
       title,
@@ -3154,8 +3173,9 @@
       identity: `${bvid} \xB7 AV${snapshot.aid}`,
       shareTarget: canonicalTarget,
       qrTarget: canonicalTarget,
-      titleLines: 2,
+      titleLines: defaultTheme.titleLines,
       linkWrap: "anywhere",
+      contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
       stats: [
         { label: "\u64AD\u653E", value: formatCompactStat(snapshot.stats.views) },
         { label: "\u70B9\u8D5E", value: formatCompactStat(snapshot.stats.likes) },
@@ -3181,11 +3201,12 @@
     const poster = element("article", "bsp-poster");
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
     const masthead = element("header", "bsp-masthead");
-    masthead.append(element("strong", "", "BILIBILI \u5206\u4EAB\u6D77\u62A5"), element("span", "", "SHARE POSTER"));
+    masthead.append(element("strong", "", "BILIBILI \u5206\u4EAB\u6D77\u62A5"), element("span", "", "SHARE CARD"));
     const cover = element("img", "bsp-cover");
     cover.src = model.coverDataUrl;
     cover.alt = "";
     const title = element("h4", "bsp-poster-title", model.title);
+    title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
     const byline = element("div", "bsp-byline");
     byline.append(element("strong", "", `UP \u4E3B \xB7 ${model.uploader}`), element("span", "bsp-identity", model.identity));
     const stats = element("div", "bsp-stats");
@@ -3199,9 +3220,21 @@
     qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.qrTarget}`;
     qr.src = await import_qrcode.default.toDataURL(model.qrTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
     const linkArea = element("div");
-    linkArea.append(element("span", "bsp-link-label", "\u626B\u7801\u89C2\u770B \xB7 SHARE TARGET"), element("span", "bsp-link", model.shareTarget));
+    const visibleLink = element("span", "bsp-link", model.shareTarget);
+    visibleLink.style.overflowWrap = model.linkWrap;
+    linkArea.append(element("span", "bsp-link-label", "\u626B\u7801\u89C2\u770B \xB7 SHARE TARGET"), visibleLink);
     destination.append(qr, linkArea);
-    poster.append(masthead, cover, title, byline, stats, destination, element("span", "bsp-archive", `ARCHIVE \xB7 ${model.identity}`));
+    poster.classList.add(`bsp-theme-${model.theme.toLowerCase()}`);
+    poster.append(masthead);
+    const content = {
+      cover,
+      title,
+      "uploader-identity": byline,
+      stats,
+      destination
+    };
+    for (const section of model.contentOrder) poster.append(content[section]);
+    poster.append(element("span", "bsp-archive", `ARCHIVE \xB7 ${model.identity}`));
     return poster;
   }
   var SharePanel = class {
@@ -3211,6 +3244,7 @@
     controls = element("div", "bsp-controls");
     capture = null;
     snapshot = null;
+    model = null;
     poster = null;
     closed = false;
     loading = false;
@@ -3302,6 +3336,7 @@
         const poster = await createPoster(model);
         if (this.closed) return;
         this.snapshot = snapshot;
+        this.model = model;
         this.poster = poster;
         this.renderReady(model, poster);
       } catch (error) {
@@ -3353,12 +3388,16 @@
       );
     }
     async download(button, status) {
-      if (!this.poster || !this.snapshot) return;
+      if (!this.poster || !this.snapshot || !this.model) return;
       button.disabled = true;
       button.textContent = "\u6B63\u5728\u751F\u6210 PNG\u2026";
       status.textContent = "";
       try {
-        const dataUrl = await toPng(this.poster, { width: 360, height: 480, pixelRatio: 3, cacheBust: false, backgroundColor: "#f7f5f0" });
+        const width = this.poster.offsetWidth;
+        const height = this.poster.offsetHeight;
+        const pixelRatio = this.model.dimensions.width / width;
+        if (Math.round(height * pixelRatio) !== this.model.dimensions.height) throw new Error("\u6D77\u62A5\u753B\u5E03\u6BD4\u4F8B\u4E0D\u4E00\u81F4");
+        const dataUrl = await toPng(this.poster, { width, height, pixelRatio, cacheBust: false, backgroundColor: "#f7f5f0" });
         const link = document.createElement("a");
         link.download = buildPosterFilename(this.snapshot.bvid, /* @__PURE__ */ new Date());
         link.href = dataUrl;

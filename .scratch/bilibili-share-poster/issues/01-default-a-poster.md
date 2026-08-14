@@ -31,3 +31,10 @@
 - Closing by button and backdrop resumed a video that this userscript paused; closing with `Escape` left an already-paused video paused. At 700×900 the workspace collapsed to one column with preview above controls.
 - The userscript was injected temporarily for browser validation; Tampermonkey was not persistently modified. Its GM transport boundary was fed the same live public API response and cover bytes because a page-level fetch shim cannot reproduce Tampermonkey's cross-origin grant.
 - No frontend-design agent switch was requested, so the conditional handoff clause did not activate.
+
+### 2026-08-14 — first code-review remediation
+
+- Spec review findings were repaired: capture now pauses before reading the stable identity/time; cover bytes must be a decodable image before ready/export; the approved masthead says `SHARE CARD`.
+- Domain output now drives the runtime theme class, content order, title line clamp, link wrapping, and export dimensions instead of duplicating those decisions only in adapters.
+- Re-export of `BV1XoTEzrEiL` measured 1080×1440 and independently decoded to its canonical share target. A live-page invalid `text/html` cover response showed a specific error, retry action, and no download action.
+- Playback restoration also requires the same captured part number. The baseline `.DS_Store` tracking state was restored so this ticket does not perform unrelated cleanup.

@@ -43,19 +43,23 @@ function findMainPlayer(): HTMLVideoElement | null {
 }
 
 export function captureAndPausePlayback(): PlaybackCapture {
-  const identity = readPageIdentity();
-  if (!identity) throw new Error("当前页面不是受支持的标准视频页，请打开 /video/BV... 页面后重试。");
   const player = findMainPlayer();
   if (!player) throw new Error("未找到主播放器。Bilibili 页面结构可能已变化，请刷新页面后重试。");
 
   const wasPlaying = !player.paused && !player.ended;
-  const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
   try {
     player.pause();
   } catch {
     throw new Error("无法暂停主播放器，请检查页面播放状态后重试。");
   }
   if (!player.paused) throw new Error("主播放器未能稳定暂停，请重试。");
+
+  const identity = readPageIdentity();
+  if (!identity) {
+    if (wasPlaying) void player.play().catch(() => undefined);
+    throw new Error("当前页面不是受支持的标准视频页，请打开 /video/BV... 页面后重试。");
+  }
+  const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
 
   return { ...identity, playbackSeconds, wasPlaying, player };
 }
@@ -117,13 +121,25 @@ function statistic(value: unknown): StatisticValue {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
 }
 
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
+async function blobToImageDataUrl(blob: Blob): Promise<string> {
+  if (blob.size === 0 || (blob.type && !blob.type.startsWith("image/"))) {
+    throw new Error("Bilibili 返回的视频封面无效，请重试。");
+  }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error("视频封面读取失败。"));
     reader.readAsDataURL(blob);
   });
+  const image = new Image();
+  image.src = dataUrl;
+  try {
+    await image.decode();
+  } catch {
+    throw new Error("Bilibili 返回的视频封面无法解码，请重试。");
+  }
+  if (image.naturalWidth <= 0 || image.naturalHeight <= 0) throw new Error("Bilibili 返回的视频封面无效，请重试。");
+  return dataUrl;
 }
 
 export function canonicalShareTarget(bvid: string): string {
@@ -153,7 +169,7 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
   return {
     bvid: responseBvid,
     aid: requiredPositiveInteger(data.aid, "AV 标识"),
-    coverDataUrl: await blobToDataUrl(coverBlob),
+    coverDataUrl: await blobToImageDataUrl(coverBlob),
     title: requiredText(data.title, "视频标题"),
     uploader: requiredText(data.owner?.name, "UP 主"),
     partNumber: capture.partNumber,
@@ -171,6 +187,6 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
 export function restorePlayback(capture: PlaybackCapture): void {
   if (!capture.wasPlaying || !capture.player.isConnected) return;
   const current = readPageIdentity();
-  if (!current || current.bvid.toUpperCase() !== capture.bvid.toUpperCase()) return;
+  if (!current || current.bvid.toUpperCase() !== capture.bvid.toUpperCase() || current.partNumber !== capture.partNumber) return;
   void capture.player.play().catch(() => undefined);
 }

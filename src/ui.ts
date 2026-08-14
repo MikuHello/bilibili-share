@@ -22,11 +22,12 @@ async function createPoster(model: DefaultPoster): Promise<HTMLElement> {
   poster.setAttribute("aria-label", `${model.title} 分享海报`);
 
   const masthead = element("header", "bsp-masthead");
-  masthead.append(element("strong", "", "BILIBILI 分享海报"), element("span", "", "SHARE POSTER"));
+  masthead.append(element("strong", "", "BILIBILI 分享海报"), element("span", "", "SHARE CARD"));
   const cover = element("img", "bsp-cover");
   cover.src = model.coverDataUrl;
   cover.alt = "";
   const title = element("h4", "bsp-poster-title", model.title);
+  title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
   const byline = element("div", "bsp-byline");
   byline.append(element("strong", "", `UP 主 · ${model.uploader}`), element("span", "bsp-identity", model.identity));
 
@@ -42,10 +43,22 @@ async function createPoster(model: DefaultPoster): Promise<HTMLElement> {
   qr.alt = `二维码：${model.qrTarget}`;
   qr.src = await QRCode.toDataURL(model.qrTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
   const linkArea = element("div");
-  linkArea.append(element("span", "bsp-link-label", "扫码观看 · SHARE TARGET"), element("span", "bsp-link", model.shareTarget));
+  const visibleLink = element("span", "bsp-link", model.shareTarget);
+  visibleLink.style.overflowWrap = model.linkWrap;
+  linkArea.append(element("span", "bsp-link-label", "扫码观看 · SHARE TARGET"), visibleLink);
   destination.append(qr, linkArea);
 
-  poster.append(masthead, cover, title, byline, stats, destination, element("span", "bsp-archive", `ARCHIVE · ${model.identity}`));
+  poster.classList.add(`bsp-theme-${model.theme.toLowerCase()}`);
+  poster.append(masthead);
+  const content = {
+    cover,
+    title,
+    "uploader-identity": byline,
+    stats,
+    destination,
+  } satisfies Record<DefaultPoster["contentOrder"][number], HTMLElement>;
+  for (const section of model.contentOrder) poster.append(content[section]);
+  poster.append(element("span", "bsp-archive", `ARCHIVE · ${model.identity}`));
   return poster;
 }
 
@@ -56,6 +69,7 @@ export class SharePanel {
   private readonly controls = element("div", "bsp-controls");
   private capture: PlaybackCapture | null = null;
   private snapshot: GenerationSnapshot | null = null;
+  private model: DefaultPoster | null = null;
   private poster: HTMLElement | null = null;
   private closed = false;
   private loading = false;
@@ -159,6 +173,7 @@ export class SharePanel {
       const poster = await createPoster(model);
       if (this.closed) return;
       this.snapshot = snapshot;
+      this.model = model;
       this.poster = poster;
       this.renderReady(model, poster);
     } catch (error) {
@@ -214,12 +229,16 @@ export class SharePanel {
   }
 
   private async download(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
-    if (!this.poster || !this.snapshot) return;
+    if (!this.poster || !this.snapshot || !this.model) return;
     button.disabled = true;
     button.textContent = "正在生成 PNG…";
     status.textContent = "";
     try {
-      const dataUrl = await toPng(this.poster, { width: 360, height: 480, pixelRatio: 3, cacheBust: false, backgroundColor: "#f7f5f0" });
+      const width = this.poster.offsetWidth;
+      const height = this.poster.offsetHeight;
+      const pixelRatio = this.model.dimensions.width / width;
+      if (Math.round(height * pixelRatio) !== this.model.dimensions.height) throw new Error("海报画布比例不一致");
+      const dataUrl = await toPng(this.poster, { width, height, pixelRatio, cacheBust: false, backgroundColor: "#f7f5f0" });
       const link = document.createElement("a");
       link.download = buildPosterFilename(this.snapshot.bvid, new Date());
       link.href = dataUrl;

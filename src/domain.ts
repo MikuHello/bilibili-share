@@ -28,6 +28,7 @@ export interface DefaultPoster {
   qrTarget: string;
   titleLines: 2;
   linkWrap: "anywhere";
+  contentOrder: readonly ["cover", "title", "uploader-identity", "stats", "destination"];
   stats: Array<{ label: string; value: string }>;
 }
 
@@ -86,9 +87,10 @@ export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: st
   const bvid = requireText(snapshot.bvid, "BV 标识");
   if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少AV 标识");
   const canonicalTarget = validateShareTarget(shareTarget, bvid);
+  const defaultTheme = getDefaultTheme();
 
   return {
-    theme: "A",
+    theme: defaultTheme.id,
     dimensions: { width: 1080, height: 1440 },
     coverDataUrl,
     title,
@@ -96,8 +98,9 @@ export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: st
     identity: `${bvid} · AV${snapshot.aid}`,
     shareTarget: canonicalTarget,
     qrTarget: canonicalTarget,
-    titleLines: 2,
+    titleLines: defaultTheme.titleLines,
     linkWrap: "anywhere",
+    contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
     stats: [
       { label: "播放", value: formatCompactStat(snapshot.stats.views) },
       { label: "点赞", value: formatCompactStat(snapshot.stats.likes) },
