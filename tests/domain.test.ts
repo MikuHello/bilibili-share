@@ -74,6 +74,13 @@ describe("default A poster domain", () => {
     });
   });
 
+  it("assembles one validated short target into every poster destination", () => {
+    const poster = buildDefaultPoster(completeSnapshot, "https://b23.tv/a7BomhP");
+
+    expect(poster.shareTarget).toBe("https://b23.tv/a7BomhP");
+    expect(poster.qrTarget).toBe("https://b23.tv/a7BomhP");
+  });
+
   it.each([
     ["title", { title: "" }, "视频标题"],
     ["cover", { coverDataUrl: "" }, "视频封面"],

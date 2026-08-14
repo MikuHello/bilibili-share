@@ -1,8 +1,15 @@
 import { toPng } from "html-to-image";
 import QRCode from "qrcode";
 
-import { canonicalShareTarget, captureAndPausePlayback, fetchGenerationSnapshot, readPageIdentity, restorePlayback, type PlaybackCapture } from "./bilibili";
+import {
+  captureAndPausePlayback,
+  fetchGenerationResources,
+  readPageIdentity,
+  restorePlayback,
+  type PlaybackCapture,
+} from "./bilibili";
 import { buildDefaultPoster, buildPosterFilename, type DefaultPoster, type GenerationSnapshot } from "./domain";
+import type { ShareTargetSelection } from "./share-target";
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -168,14 +175,14 @@ export class SharePanel {
     if (!this.capture || this.loading) return;
     this.loading = true;
     try {
-      const snapshot = await fetchGenerationSnapshot(this.capture);
-      const model = buildDefaultPoster(snapshot, canonicalShareTarget(snapshot.bvid));
+      const { snapshot, targetSelection } = await fetchGenerationResources(this.capture);
+      const model = buildDefaultPoster(snapshot, targetSelection.shareTarget);
       const poster = await createPoster(model);
       if (this.closed) return;
       this.snapshot = snapshot;
       this.model = model;
       this.poster = poster;
-      this.renderReady(model, poster);
+      this.renderReady(model, poster, targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     } finally {
@@ -183,13 +190,14 @@ export class SharePanel {
     }
   }
 
-  private renderReady(model: DefaultPoster, poster: HTMLElement): void {
+  private renderReady(model: DefaultPoster, poster: HTMLElement, targetSelection: ShareTargetSelection): void {
     const frame = element("div", "bsp-preview-frame");
     frame.append(poster);
     this.previewPane.replaceChildren(frame);
 
     const snapshotBox = element("div", "bsp-snapshot");
     appendRow(snapshotBox, "主题", "A · 报刊信息卡");
+    appendRow(snapshotBox, "链接", targetSelection.source === "short" ? "已校验短链" : "规范长链接（降级）");
     appendRow(snapshotBox, "落点", model.shareTarget);
     appendRow(snapshotBox, "画布", "1080 × 1440 PNG");
     appendRow(snapshotBox, "播放状态", "已为生成暂停");
@@ -200,13 +208,26 @@ export class SharePanel {
     const status = element("p", "bsp-status");
     status.setAttribute("role", "status");
     actions.append(download, element("p", "bsp-help", "预览与下载使用同一海报节点；关闭面板后，仅恢复此前正在播放的同一视频。"), status);
-    this.controls.replaceChildren(
+    const summary =
+      targetSelection.source === "short"
+        ? "本次使用经过落点校验的 b23.tv 短链接。二维码与可见链接指向完全相同的视频。"
+        : "短链未通过校验，本次已统一改用规范长链接。二维码、可见链接与下载海报仍然可用。";
+    const content: HTMLElement[] = [
       element("p", "bsp-step", "02 / DEFAULT SHARE"),
       element("h3", "", "海报已经生成"),
-      element("p", "", "本次使用规范长链接。二维码与可见链接指向完全相同的默认视频落点。"),
-      snapshotBox,
-      actions,
-    );
+      element("p", "", summary),
+    ];
+    if (targetSelection.source === "canonical-fallback") {
+      const fallback = element("div", "bsp-fallback");
+      fallback.setAttribute("role", "status");
+      fallback.append(
+        element("strong", "", "短链不可用，已使用规范长链接"),
+        element("span", "", `原因：${targetSelection.fallbackReason ?? "短链未通过校验"}。不会影响预览或下载。`),
+      );
+      content.push(fallback);
+    }
+    content.push(snapshotBox, actions);
+    this.controls.replaceChildren(...content);
   }
 
   private renderError(error: unknown, retryCapture: boolean): void {

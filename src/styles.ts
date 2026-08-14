@@ -22,6 +22,9 @@ export const STYLES = String.raw`
 .bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
 .bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
 .bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
+.bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
+.bsp-fallback strong { font-size:13px; line-height:1.4; }
+.bsp-fallback span { font-size:12px; line-height:1.55; }
 .bsp-snapshot { margin:28px 0; padding:18px 0; border-top:2px solid #1a1a1a; border-bottom:1px solid #bcb8af; }
 .bsp-snapshot-row { display:flex; justify-content:space-between; gap:16px; padding:7px 0; color:#6b6861; font-size:12px; }
 .bsp-snapshot-row strong { max-width:72%; overflow:hidden; color:#24231f; font:600 12px/1.4 ui-monospace,Menlo,monospace; text-align:right; text-overflow:ellipsis; white-space:nowrap; }

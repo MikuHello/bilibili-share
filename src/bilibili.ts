@@ -1,4 +1,5 @@
 import type { GenerationSnapshot, StatisticValue } from "./domain";
+import { parseShortLinkResponse, selectShareTarget, type ShareTargetSelection } from "./share-target";
 
 interface CapturedPlayback {
   bvid: string;
@@ -21,6 +22,11 @@ interface VideoApiResponse {
   code?: unknown;
   message?: unknown;
   data?: VideoApiData;
+}
+
+export interface GenerationResources {
+  snapshot: GenerationSnapshot;
+  targetSelection: ShareTargetSelection;
 }
 
 export type PlaybackCapture = CapturedPlayback;
@@ -64,13 +70,18 @@ export function captureAndPausePlayback(): PlaybackCapture {
   return { ...identity, playbackSeconds, wasPlaying, player };
 }
 
-function gmTextRequest(url: string): Promise<string> {
+function gmTextRequest(
+  url: string,
+  options: { method?: "GET" | "POST"; data?: string; headers?: Record<string, string> } = {},
+): Promise<string> {
   return new Promise((resolve, reject) => {
     GM_xmlhttpRequest({
-      method: "GET",
+      method: options.method ?? "GET",
       url,
+      data: options.data,
       timeout: 15_000,
-      headers: { Referer: "https://www.bilibili.com/" },
+      anonymous: true,
+      headers: { Referer: "https://www.bilibili.com/", ...options.headers },
       onload(response) {
         if (response.status < 200 || response.status >= 300) {
           reject(new Error(`请求失败（HTTP ${response.status}）`));
@@ -91,6 +102,7 @@ function gmBlobRequest(url: string): Promise<Blob> {
       url,
       responseType: "blob",
       timeout: 15_000,
+      anonymous: true,
       headers: { Referer: "https://www.bilibili.com/" },
       onload(response) {
         if (response.status < 200 || response.status >= 300) {
@@ -101,6 +113,32 @@ function gmBlobRequest(url: string): Promise<Blob> {
       },
       ontimeout: () => reject(new Error("请求超时，请稍后重试。")),
       onerror: () => reject(new Error("网络请求失败，请检查网络后重试。")),
+    });
+  });
+}
+
+function gmResolvedUrlRequest(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: "HEAD",
+      url,
+      redirect: "follow",
+      timeout: 15_000,
+      anonymous: true,
+      headers: { Referer: "https://www.bilibili.com/" },
+      onload(response) {
+        if (response.status < 200 || response.status >= 300) {
+          reject(new Error(`短链解析失败（HTTP ${response.status}）`));
+          return;
+        }
+        if (!response.finalUrl) {
+          reject(new Error("短链解析未返回落点"));
+          return;
+        }
+        resolve(response.finalUrl);
+      },
+      ontimeout: () => reject(new Error("短链解析超时，请稍后重试")),
+      onerror: () => reject(new Error("短链解析失败，请稍后重试")),
     });
   });
 }
@@ -182,6 +220,45 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
       favorites: statistic(data.stat?.favorite),
     },
   };
+}
+
+async function fetchValidatedShareTarget(snapshot: GenerationSnapshot): Promise<ShareTargetSelection> {
+  const canonicalTarget = canonicalShareTarget(snapshot.bvid);
+  try {
+    const form = new URLSearchParams({
+      build: "6500300",
+      buvid: "bsp-userscript-public",
+      oid: snapshot.aid.toString(),
+      platform: "web",
+      share_channel: "COPY",
+      share_id: "main.ugc-video-detail.0.0.pv",
+      share_mode: "3",
+      share_origin: "vinfo_share",
+    });
+    const responseText = await gmTextRequest("https://api.bilibili.com/x/share/click", {
+      method: "POST",
+      data: form.toString(),
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    });
+    let payload: unknown;
+    try {
+      payload = JSON.parse(responseText);
+    } catch {
+      throw new Error("Bilibili 返回了无法解析的短链响应");
+    }
+    const shortUrl = parseShortLinkResponse(payload);
+    const resolvedUrl = await gmResolvedUrlRequest(shortUrl);
+    return selectShareTarget(canonicalTarget, { status: "resolved", shortUrl, resolvedUrl });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "短链暂时不可用";
+    return selectShareTarget(canonicalTarget, { status: "failed", reason });
+  }
+}
+
+export async function fetchGenerationResources(capture: PlaybackCapture): Promise<GenerationResources> {
+  const snapshot = await fetchGenerationSnapshot(capture);
+  const targetSelection = await fetchValidatedShareTarget(snapshot);
+  return { snapshot, targetSelection };
 }
 
 export function restorePlayback(capture: PlaybackCapture): void {

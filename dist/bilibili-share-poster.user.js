@@ -2,11 +2,12 @@
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      0.1.0
-// @description  在 Bilibili 标准视频页生成可下载的 A 主题分享海报
+// @description  在 Bilibili 标准视频页生成使用已校验分享落点的 A 主题海报
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
+// @connect      b23.tv
 // @connect      *.hdslb.com
 // @run-at       document-idle
 // ==/UserScript==
@@ -2116,6 +2117,61 @@
     }
   });
 
+  // src/share-target.ts
+  function shareIdentity(rawUrl) {
+    const url = new URL(rawUrl);
+    const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
+    if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || !match) {
+      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
+    }
+    return {
+      bvid: match[1].toUpperCase(),
+      part: url.searchParams.get("p"),
+      timestamp: url.searchParams.get("t")
+    };
+  }
+  function parseShortLinkResponse(payload) {
+    const response = payload;
+    if (response?.code !== 0) {
+      const detail = typeof response?.message === "string" && response.message ? `\uFF1A${response.message}` : "";
+      throw new Error(`Bilibili \u77ED\u94FE\u8BF7\u6C42\u5931\u8D25${detail}`);
+    }
+    if (typeof response.data?.content !== "string" || !response.data.content.trim()) {
+      throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
+    }
+    const match = response.data.content.match(/https:\/\/b23\.tv\/[0-9A-Za-z]+/);
+    if (!match) throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
+    return match[0];
+  }
+  function selectShareTarget(canonicalTarget, attempt) {
+    const expected = shareIdentity(canonicalTarget);
+    if (attempt.status === "failed") {
+      return {
+        shareTarget: canonicalTarget,
+        source: "canonical-fallback",
+        fallbackReason: attempt.reason
+      };
+    }
+    let resolved;
+    try {
+      resolved = shareIdentity(attempt.resolvedUrl);
+    } catch {
+      return {
+        shareTarget: canonicalTarget,
+        source: "canonical-fallback",
+        fallbackReason: "\u77ED\u94FE\u843D\u70B9\u65E0\u6548"
+      };
+    }
+    if (resolved.bvid !== expected.bvid || resolved.part !== expected.part || resolved.timestamp !== expected.timestamp) {
+      return {
+        shareTarget: canonicalTarget,
+        source: "canonical-fallback",
+        fallbackReason: "\u77ED\u94FE\u843D\u70B9\u4E0E\u672C\u6B21\u751F\u6210\u5FEB\u7167\u4E0D\u4E00\u81F4"
+      };
+    }
+    return { shareTarget: attempt.shortUrl, source: "short" };
+  }
+
   // src/bilibili.ts
   function readPageIdentity(url = location.href) {
     const parsed = new URL(url);
@@ -2148,13 +2204,15 @@
     const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
     return { ...identity, playbackSeconds, wasPlaying, player };
   }
-  function gmTextRequest(url) {
+  function gmTextRequest(url, options = {}) {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
-        method: "GET",
+        method: options.method ?? "GET",
         url,
+        data: options.data,
         timeout: 15e3,
-        headers: { Referer: "https://www.bilibili.com/" },
+        anonymous: true,
+        headers: { Referer: "https://www.bilibili.com/", ...options.headers },
         onload(response) {
           if (response.status < 200 || response.status >= 300) {
             reject(new Error(`\u8BF7\u6C42\u5931\u8D25\uFF08HTTP ${response.status}\uFF09`));
@@ -2174,6 +2232,7 @@
         url,
         responseType: "blob",
         timeout: 15e3,
+        anonymous: true,
         headers: { Referer: "https://www.bilibili.com/" },
         onload(response) {
           if (response.status < 200 || response.status >= 300) {
@@ -2184,6 +2243,31 @@
         },
         ontimeout: () => reject(new Error("\u8BF7\u6C42\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002")),
         onerror: () => reject(new Error("\u7F51\u7EDC\u8BF7\u6C42\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u540E\u91CD\u8BD5\u3002"))
+      });
+    });
+  }
+  function gmResolvedUrlRequest(url) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "HEAD",
+        url,
+        redirect: "follow",
+        timeout: 15e3,
+        anonymous: true,
+        headers: { Referer: "https://www.bilibili.com/" },
+        onload(response) {
+          if (response.status < 200 || response.status >= 300) {
+            reject(new Error(`\u77ED\u94FE\u89E3\u6790\u5931\u8D25\uFF08HTTP ${response.status}\uFF09`));
+            return;
+          }
+          if (!response.finalUrl) {
+            reject(new Error("\u77ED\u94FE\u89E3\u6790\u672A\u8FD4\u56DE\u843D\u70B9"));
+            return;
+          }
+          resolve(response.finalUrl);
+        },
+        ontimeout: () => reject(new Error("\u77ED\u94FE\u89E3\u6790\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5")),
+        onerror: () => reject(new Error("\u77ED\u94FE\u89E3\u6790\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5"))
       });
     });
   }
@@ -2258,6 +2342,43 @@
       }
     };
   }
+  async function fetchValidatedShareTarget(snapshot) {
+    const canonicalTarget = canonicalShareTarget(snapshot.bvid);
+    try {
+      const form = new URLSearchParams({
+        build: "6500300",
+        buvid: "bsp-userscript-public",
+        oid: snapshot.aid.toString(),
+        platform: "web",
+        share_channel: "COPY",
+        share_id: "main.ugc-video-detail.0.0.pv",
+        share_mode: "3",
+        share_origin: "vinfo_share"
+      });
+      const responseText = await gmTextRequest("https://api.bilibili.com/x/share/click", {
+        method: "POST",
+        data: form.toString(),
+        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }
+      });
+      let payload;
+      try {
+        payload = JSON.parse(responseText);
+      } catch {
+        throw new Error("Bilibili \u8FD4\u56DE\u4E86\u65E0\u6CD5\u89E3\u6790\u7684\u77ED\u94FE\u54CD\u5E94");
+      }
+      const shortUrl = parseShortLinkResponse(payload);
+      const resolvedUrl = await gmResolvedUrlRequest(shortUrl);
+      return selectShareTarget(canonicalTarget, { status: "resolved", shortUrl, resolvedUrl });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "\u77ED\u94FE\u6682\u65F6\u4E0D\u53EF\u7528";
+      return selectShareTarget(canonicalTarget, { status: "failed", reason });
+    }
+  }
+  async function fetchGenerationResources(capture) {
+    const snapshot = await fetchGenerationSnapshot(capture);
+    const targetSelection = await fetchValidatedShareTarget(snapshot);
+    return { snapshot, targetSelection };
+  }
   function restorePlayback(capture) {
     if (!capture.wasPlaying || !capture.player.isConnected) return;
     const current = readPageIdentity();
@@ -2290,6 +2411,9 @@
 .bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
 .bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
 .bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
+.bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
+.bsp-fallback strong { font-size:13px; line-height:1.4; }
+.bsp-fallback span { font-size:12px; line-height:1.55; }
 .bsp-snapshot { margin:28px 0; padding:18px 0; border-top:2px solid #1a1a1a; border-bottom:1px solid #bcb8af; }
 .bsp-snapshot-row { display:flex; justify-content:space-between; gap:16px; padding:7px 0; color:#6b6861; font-size:12px; }
 .bsp-snapshot-row strong { max-width:72%; overflow:hidden; color:#24231f; font:600 12px/1.4 ui-monospace,Menlo,monospace; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
@@ -3151,7 +3275,9 @@
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     }
     const expectedPath = `/video/${bvid}/`;
-    if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || url.pathname !== expectedPath) {
+    const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
+    const isOpaqueShort = url.hostname === "b23.tv" && /^\/[0-9A-Za-z]+$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password && !url.port;
+    if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     }
     return url.toString();
@@ -3331,26 +3457,27 @@
       if (!this.capture || this.loading) return;
       this.loading = true;
       try {
-        const snapshot = await fetchGenerationSnapshot(this.capture);
-        const model = buildDefaultPoster(snapshot, canonicalShareTarget(snapshot.bvid));
+        const { snapshot, targetSelection } = await fetchGenerationResources(this.capture);
+        const model = buildDefaultPoster(snapshot, targetSelection.shareTarget);
         const poster = await createPoster(model);
         if (this.closed) return;
         this.snapshot = snapshot;
         this.model = model;
         this.poster = poster;
-        this.renderReady(model, poster);
+        this.renderReady(model, poster, targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
       } finally {
         this.loading = false;
       }
     }
-    renderReady(model, poster) {
+    renderReady(model, poster, targetSelection) {
       const frame = element("div", "bsp-preview-frame");
       frame.append(poster);
       this.previewPane.replaceChildren(frame);
       const snapshotBox = element("div", "bsp-snapshot");
       appendRow(snapshotBox, "\u4E3B\u9898", "A \xB7 \u62A5\u520A\u4FE1\u606F\u5361");
+      appendRow(snapshotBox, "\u94FE\u63A5", targetSelection.source === "short" ? "\u5DF2\u6821\u9A8C\u77ED\u94FE" : "\u89C4\u8303\u957F\u94FE\u63A5\uFF08\u964D\u7EA7\uFF09");
       appendRow(snapshotBox, "\u843D\u70B9", model.shareTarget);
       appendRow(snapshotBox, "\u753B\u5E03", "1080 \xD7 1440 PNG");
       appendRow(snapshotBox, "\u64AD\u653E\u72B6\u6001", "\u5DF2\u4E3A\u751F\u6210\u6682\u505C");
@@ -3361,13 +3488,23 @@
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
       actions.append(download, element("p", "bsp-help", "\u9884\u89C8\u4E0E\u4E0B\u8F7D\u4F7F\u7528\u540C\u4E00\u6D77\u62A5\u8282\u70B9\uFF1B\u5173\u95ED\u9762\u677F\u540E\uFF0C\u4EC5\u6062\u590D\u6B64\u524D\u6B63\u5728\u64AD\u653E\u7684\u540C\u4E00\u89C6\u9891\u3002"), status);
-      this.controls.replaceChildren(
+      const summary = targetSelection.source === "short" ? "\u672C\u6B21\u4F7F\u7528\u7ECF\u8FC7\u843D\u70B9\u6821\u9A8C\u7684 b23.tv \u77ED\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u4E0E\u53EF\u89C1\u94FE\u63A5\u6307\u5411\u5B8C\u5168\u76F8\u540C\u7684\u89C6\u9891\u3002" : "\u77ED\u94FE\u672A\u901A\u8FC7\u6821\u9A8C\uFF0C\u672C\u6B21\u5DF2\u7EDF\u4E00\u6539\u7528\u89C4\u8303\u957F\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u3001\u53EF\u89C1\u94FE\u63A5\u4E0E\u4E0B\u8F7D\u6D77\u62A5\u4ECD\u7136\u53EF\u7528\u3002";
+      const content = [
         element("p", "bsp-step", "02 / DEFAULT SHARE"),
         element("h3", "", "\u6D77\u62A5\u5DF2\u7ECF\u751F\u6210"),
-        element("p", "", "\u672C\u6B21\u4F7F\u7528\u89C4\u8303\u957F\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u4E0E\u53EF\u89C1\u94FE\u63A5\u6307\u5411\u5B8C\u5168\u76F8\u540C\u7684\u9ED8\u8BA4\u89C6\u9891\u843D\u70B9\u3002"),
-        snapshotBox,
-        actions
-      );
+        element("p", "", summary)
+      ];
+      if (targetSelection.source === "canonical-fallback") {
+        const fallback = element("div", "bsp-fallback");
+        fallback.setAttribute("role", "status");
+        fallback.append(
+          element("strong", "", "\u77ED\u94FE\u4E0D\u53EF\u7528\uFF0C\u5DF2\u4F7F\u7528\u89C4\u8303\u957F\u94FE\u63A5"),
+          element("span", "", `\u539F\u56E0\uFF1A${targetSelection.fallbackReason ?? "\u77ED\u94FE\u672A\u901A\u8FC7\u6821\u9A8C"}\u3002\u4E0D\u4F1A\u5F71\u54CD\u9884\u89C8\u6216\u4E0B\u8F7D\u3002`)
+        );
+        content.push(fallback);
+      }
+      content.push(snapshotBox, actions);
+      this.controls.replaceChildren(...content);
     }
     renderError(error, retryCapture) {
       const message = error instanceof Error ? error.message : "\u751F\u6210\u6D77\u62A5\u65F6\u53D1\u751F\u672A\u77E5\u9519\u8BEF\u3002";

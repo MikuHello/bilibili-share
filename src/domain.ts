@@ -74,7 +74,16 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
   }
 
   const expectedPath = `/video/${bvid}/`;
-  if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || url.pathname !== expectedPath) {
+  const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
+  const isOpaqueShort =
+    url.hostname === "b23.tv" &&
+    /^\/[0-9A-Za-z]+$/.test(url.pathname) &&
+    !url.search &&
+    !url.hash &&
+    !url.username &&
+    !url.password &&
+    !url.port;
+  if (url.protocol !== "https:" || (!isCanonical && !isOpaqueShort)) {
     throw new Error("分享链接无效");
   }
   return url.toString();

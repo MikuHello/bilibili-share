@@ -1,8 +1,8 @@
 # Bilibili Share
 
-A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. Ticket 01 delivers the default A “报刊信息卡” path: pause the current standard video, capture one stable generation snapshot, preview a local poster, and download the same poster as a 1080×1440 PNG.
+A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. The current default A “报刊信息卡” path pauses the current standard video, captures one stable generation snapshot, validates an anonymous `b23.tv` short-link redirect, previews a local poster, and downloads the same poster as a 1080×1440 PNG.
 
-The current slice uses the canonical `https://www.bilibili.com/video/<BV>/` URL as the single share target. Short links, image copy, share text, part/timestamp targets, and theme B remain in later tickets under [`.scratch/bilibili-share-poster/issues/`](.scratch/bilibili-share-poster/issues/).
+The poster, QR code, and visible link always use one share target. A validated `b23.tv` URL is preferred; any request, response, or redirect mismatch falls back visibly to the canonical `https://www.bilibili.com/video/<BV>/` URL without blocking preview or download. Image copy, share text, part/timestamp targets, and theme B remain in later tickets under [`.scratch/bilibili-share-poster/issues/`](.scratch/bilibili-share-poster/issues/).
 
 ## Install
 
