@@ -2121,17 +2121,27 @@
   function isOpaqueShortUrl(url) {
     return url.protocol === "https:" && url.hostname === "b23.tv" && /^\/[0-9A-Za-z]+$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password && !url.port;
   }
-  function shareIdentity(rawUrl) {
-    const url = new URL(rawUrl);
+  function parseCanonicalVideoIdentity(rawUrl) {
+    let url;
+    try {
+      url = new URL(rawUrl);
+    } catch {
+      return null;
+    }
     const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
     if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || !match) {
-      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
+      return null;
     }
     return {
-      bvid: match[1].toUpperCase(),
+      bvid: match[1],
       part: url.searchParams.get("p"),
       timestamp: url.searchParams.get("t")
     };
+  }
+  function shareIdentity(rawUrl) {
+    const identity = parseCanonicalVideoIdentity(rawUrl);
+    if (!identity) throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
+    return identity;
   }
   function parseShortLinkResponse(payload) {
     const response = payload;
@@ -2170,7 +2180,7 @@
         fallbackReason: "\u77ED\u94FE\u843D\u70B9\u65E0\u6548"
       };
     }
-    if (resolved.bvid !== expected.bvid || resolved.part !== expected.part || resolved.timestamp !== expected.timestamp) {
+    if (resolved.bvid.toUpperCase() !== expected.bvid.toUpperCase() || resolved.part !== expected.part || resolved.timestamp !== expected.timestamp) {
       return {
         shareTarget: canonicalTarget,
         source: "canonical-fallback",
@@ -2182,11 +2192,10 @@
 
   // src/bilibili.ts
   function readPageIdentity(url = location.href) {
-    const parsed = new URL(url);
-    const match = parsed.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
-    if (!match) return null;
-    const rawPart = Number.parseInt(parsed.searchParams.get("p") ?? "1", 10);
-    return { bvid: match[1], partNumber: Number.isSafeInteger(rawPart) && rawPart > 0 ? rawPart : 1 };
+    const identity = parseCanonicalVideoIdentity(url);
+    if (!identity) return null;
+    const rawPart = Number.parseInt(identity.part ?? "1", 10);
+    return { bvid: identity.bvid, partNumber: Number.isSafeInteger(rawPart) && rawPart > 0 ? rawPart : 1 };
   }
   function findMainPlayer() {
     const candidates = Array.from(document.querySelectorAll(
@@ -3293,8 +3302,8 @@
     } catch {
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     }
-    const expectedPath = `/video/${bvid}/`;
-    const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
+    const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
+    const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
     const isOpaqueShort = isOpaqueShortUrl(url);
     if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
@@ -3307,7 +3316,7 @@
     const uploader = requireText(snapshot.uploader, "UP \u4E3B");
     const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
     if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
-    const canonicalTarget = validateShareTarget(shareTarget, bvid);
+    const validatedShareTarget = validateShareTarget(shareTarget, bvid);
     const defaultTheme = getDefaultTheme();
     return {
       theme: defaultTheme.id,
@@ -3316,7 +3325,7 @@
       title,
       uploader,
       identity: `${bvid} \xB7 AV${snapshot.aid}`,
-      shareTarget: canonicalTarget,
+      shareTarget: validatedShareTarget,
       titleLines: defaultTheme.titleLines,
       linkWrap: "anywhere",
       contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],

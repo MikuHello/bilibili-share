@@ -1,5 +1,10 @@
 import type { GenerationSnapshot, StatisticValue } from "./domain";
-import { parseShortLinkResponse, selectShareTarget, type ShareTargetSelection } from "./share-target";
+import {
+  parseCanonicalVideoIdentity,
+  parseShortLinkResponse,
+  selectShareTarget,
+  type ShareTargetSelection,
+} from "./share-target";
 
 interface CapturedPlayback {
   bvid: string;
@@ -41,11 +46,10 @@ export interface GenerationResources {
 export type PlaybackCapture = CapturedPlayback;
 
 export function readPageIdentity(url = location.href): { bvid: string; partNumber: number } | null {
-  const parsed = new URL(url);
-  const match = parsed.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
-  if (!match) return null;
-  const rawPart = Number.parseInt(parsed.searchParams.get("p") ?? "1", 10);
-  return { bvid: match[1], partNumber: Number.isSafeInteger(rawPart) && rawPart > 0 ? rawPart : 1 };
+  const identity = parseCanonicalVideoIdentity(url);
+  if (!identity) return null;
+  const rawPart = Number.parseInt(identity.part ?? "1", 10);
+  return { bvid: identity.bvid, partNumber: Number.isSafeInteger(rawPart) && rawPart > 0 ? rawPart : 1 };
 }
 
 function findMainPlayer(): HTMLVideoElement | null {

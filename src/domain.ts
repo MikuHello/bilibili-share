@@ -1,4 +1,4 @@
-import { isOpaqueShortUrl } from "./share-target";
+import { isOpaqueShortUrl, parseCanonicalVideoIdentity } from "./share-target";
 
 export type StatisticValue = number | null;
 
@@ -74,8 +74,8 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
     throw new Error("分享链接无效");
   }
 
-  const expectedPath = `/video/${bvid}/`;
-  const isCanonical = url.hostname === "www.bilibili.com" && url.pathname === expectedPath;
+  const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
+  const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
   const isOpaqueShort = isOpaqueShortUrl(url);
   if (url.protocol !== "https:" || (!isCanonical && !isOpaqueShort)) {
     throw new Error("分享链接无效");
@@ -89,7 +89,7 @@ export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: st
   const uploader = requireText(snapshot.uploader, "UP 主");
   const bvid = requireText(snapshot.bvid, "BV 标识");
   if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少AV 标识");
-  const canonicalTarget = validateShareTarget(shareTarget, bvid);
+  const validatedShareTarget = validateShareTarget(shareTarget, bvid);
   const defaultTheme = getDefaultTheme();
 
   return {
@@ -99,7 +99,7 @@ export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: st
     title,
     uploader,
     identity: `${bvid} · AV${snapshot.aid}`,
-    shareTarget: canonicalTarget,
+    shareTarget: validatedShareTarget,
     titleLines: defaultTheme.titleLines,
     linkWrap: "anywhere",
     contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],

@@ -21,6 +21,12 @@ interface FailedShortLink {
   reason: string;
 }
 
+export interface CanonicalVideoIdentity {
+  bvid: string;
+  part: string | null;
+  timestamp: string | null;
+}
+
 export function isOpaqueShortUrl(url: URL): boolean {
   return (
     url.protocol === "https:" &&
@@ -34,17 +40,28 @@ export function isOpaqueShortUrl(url: URL): boolean {
   );
 }
 
-function shareIdentity(rawUrl: string): { bvid: string; part: string | null; timestamp: string | null } {
-  const url = new URL(rawUrl);
+export function parseCanonicalVideoIdentity(rawUrl: string): CanonicalVideoIdentity | null {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return null;
+  }
   const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
   if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || !match) {
-    throw new Error("分享链接无效");
+    return null;
   }
   return {
-    bvid: match[1].toUpperCase(),
+    bvid: match[1],
     part: url.searchParams.get("p"),
     timestamp: url.searchParams.get("t"),
   };
+}
+
+function shareIdentity(rawUrl: string): CanonicalVideoIdentity {
+  const identity = parseCanonicalVideoIdentity(rawUrl);
+  if (!identity) throw new Error("分享链接无效");
+  return identity;
 }
 
 export function parseShortLinkResponse(payload: unknown): string {
@@ -90,7 +107,7 @@ export function selectShareTarget(
     };
   }
   if (
-    resolved.bvid !== expected.bvid ||
+    resolved.bvid.toUpperCase() !== expected.bvid.toUpperCase() ||
     resolved.part !== expected.part ||
     resolved.timestamp !== expected.timestamp
   ) {
