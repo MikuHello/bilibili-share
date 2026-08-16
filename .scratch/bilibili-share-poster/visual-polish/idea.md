@@ -49,9 +49,26 @@ Status: discovery complete — shared understanding confirmed; not an approved s
 - Theme switch: compact segmented control `A 报刊` | `B 沉浸`.
 - Prototype states: all ten listed states are mandatory, and direction B additionally gets a “maximized poster” state.
 
+## Prototype feedback and direction decision (2026-08-17)
+
+- Direction B: the single bottom control bar overflows and the bottom-right actions look cramped. The visual specification for narrow/bottom controls was not clear enough.
+- Direction A: overall structure and right-side controls are good; the share-text preview reads like a raw Markdown/code block; action meaning is not intuitive at first glance.
+- Theme switching is liked, but the poster visibly jumps during the transition.
+- Direction C is redundant and is dropped.
+- Owner decision: combine A and B into one final direction — an immersive poster stage plus a clean, readable control rail. Poster content itself will be discussed separately later.
+
+## Settled decisions (round 4, 2026-08-17)
+
+- One final direction only: poster-first hybrid of A and B. C is out of scope.
+- Wide layout keeps A's readable right-side controls; narrow layout keeps B's poster-first stacked stage but must define exact wrapping rules so nothing overflows.
+- Action buttons keep visible icon + concise text label; icon-only is not accepted.
+- Share-text preview must look like designed UI, not a raw code block.
+- Theme switch animation must crossfade without poster jumping or layout shift.
+- Poster content changes are explicitly deferred to a later discussion.
+
 ## Frontier status
 
-Empty. The owner confirmed the shared understanding on 2026-08-17. Next workflow steps: research notes, three throwaway prototypes, owner direction selection, then `to-spec`.
+Empty. Direction approved. Proceeding to `to-spec`, motion document, and `to-tickets`.
 
 ## Scope gate
 
