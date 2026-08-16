@@ -1,4 +1,5 @@
 import { readPageIdentity } from "./bilibili";
+import { createPanelShareOptions } from "./options";
 import { STYLES } from "./styles";
 import { SharePanel } from "./ui";
 
@@ -72,7 +73,7 @@ function mountEntry(): void {
   const button = document.createElement("button");
   button.id = ENTRY_ID;
   button.type = "button";
-  button.title = "生成分享海报";
+  const remembered = createPanelShareOptions(typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null); button.classList.toggle("bsp-entry-b", remembered.theme === "B"); button.title = "生成分享海报";
   button.append(posterIcon(), document.createTextNode("生成海报"));
   button.addEventListener("click", openPanel);
   anchor.insertAdjacentElement("afterend", button);
@@ -95,3 +96,10 @@ queueMount();
 new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener("urlchange", handleLocationChange);
 window.addEventListener("popstate", handleLocationChange);
+
+if (typeof GM_registerMenuCommand === "function") {
+  GM_registerMenuCommand("生成分享海报", () => {
+    if (!readPageIdentity()) return;
+    openPanel();
+  });
+}

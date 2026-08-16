@@ -38,7 +38,26 @@ describe("public video information adapter", () => {
       title: "一个用于测试的视频",
       coverUrl: "https://i0.hdslb.com/bfs/archive/cover.jpg",
       uploader: "测试 UP 主",
+      partTitle: null,
+      partIdentified: false,
       stats: { views: 10, likes: 9, coins: 8, favorites: 7 },
     });
+
+    expect(
+      parseVideoApiResponse(
+        {
+          ...validResponse,
+          data: {
+            ...validResponse.data,
+            pages: [
+              { page: 1, part: "P1 正片" },
+              { page: 2, part: "P2 花絮" },
+            ],
+          },
+        },
+        "BV1xx411c7mD",
+        2,
+      ),
+    ).toMatchObject({ partTitle: "P2 花絮", partIdentified: true });
   });
 });

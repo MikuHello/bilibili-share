@@ -4,9 +4,13 @@ const header = `// ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      0.1.0
-// @description  在 Bilibili 标准视频页生成使用已校验分享落点的 A 主题海报
+// @description  在 Bilibili 标准视频页生成 A/B 主题分享海报、复制分享文案与组合剪贴板内容
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setClipboard
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
 // @connect      b23.tv

@@ -119,3 +119,27 @@ export function selectShareTarget(
   }
   return { shareTarget: attempt.shortUrl, source: "short" };
 }
+
+export interface ShareTargetContext {
+  partNumber: number;
+  playbackSeconds: number;
+}
+
+export interface ShareTargetOptions {
+  partShare: boolean;
+  timestampShare: boolean;
+}
+
+export function buildCanonicalShareTarget(
+  bvid: string,
+  context: ShareTargetContext,
+  options: ShareTargetOptions,
+): string {
+  const params: string[] = [];
+  if (options.partShare) params.push(`p=${context.partNumber}`);
+  if (options.timestampShare && Math.floor(context.playbackSeconds) >= 1) {
+    params.push(`t=${Math.floor(context.playbackSeconds)}`);
+  }
+  const query = params.length > 0 ? `?${params.join("&")}` : "";
+  return `https://www.bilibili.com/video/${bvid}/${query}`;
+}

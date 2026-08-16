@@ -2,9 +2,13 @@
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      0.1.0
-// @description  在 Bilibili 标准视频页生成使用已校验分享落点的 A 主题海报
+// @description  在 Bilibili 标准视频页生成 A/B 主题分享海报、复制分享文案与组合剪贴板内容
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setClipboard
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
 // @connect      b23.tv
@@ -2189,6 +2193,15 @@
     }
     return { shareTarget: attempt.shortUrl, source: "short" };
   }
+  function buildCanonicalShareTarget(bvid, context, options) {
+    const params = [];
+    if (options.partShare) params.push(`p=${context.partNumber}`);
+    if (options.timestampShare && Math.floor(context.playbackSeconds) >= 1) {
+      params.push(`t=${Math.floor(context.playbackSeconds)}`);
+    }
+    const query = params.length > 0 ? `?${params.join("&")}` : "";
+    return `https://www.bilibili.com/video/${bvid}/${query}`;
+  }
 
   // src/bilibili.ts
   function readPageIdentity(url = location.href) {
@@ -2301,7 +2314,16 @@
   function statistic(value) {
     return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
   }
-  function parseVideoApiResponse(payload, expectedBvid) {
+  function parsePartInformation(pages, expectedPartNumber) {
+    if (!Array.isArray(pages)) return { partTitle: null, partIdentified: false };
+    const current = pages.find(
+      (page) => typeof page === "object" && page !== null && page.page === expectedPartNumber
+    );
+    if (!current) return { partTitle: null, partIdentified: false };
+    const partTitle = typeof current.part === "string" && current.part.trim() ? current.part.trim() : null;
+    return { partTitle, partIdentified: true };
+  }
+  function parseVideoApiResponse(payload, expectedBvid, expectedPartNumber = 1) {
     const response = payload;
     if (response?.code !== 0 || !response.data) {
       const detail = typeof response?.message === "string" && response.message ? `\uFF1A${response.message}` : "";
@@ -2310,12 +2332,15 @@
     const data = response.data;
     const bvid = requiredText(data.bvid, "BV \u6807\u8BC6");
     if (bvid.toUpperCase() !== expectedBvid.toUpperCase()) throw new Error("\u89C6\u9891\u8EAB\u4EFD\u6821\u9A8C\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    const partInformation = parsePartInformation(data.pages, expectedPartNumber);
     return {
       bvid,
       aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
       coverUrl: requiredText(data.pic, "\u89C6\u9891\u5C01\u9762"),
       title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
       uploader: requiredText(data.owner?.name, "UP \u4E3B"),
+      partTitle: partInformation.partTitle,
+      partIdentified: partInformation.partIdentified,
       stats: {
         views: statistic(data.stat?.view),
         likes: statistic(data.stat?.like),
@@ -2344,9 +2369,6 @@
     if (image.naturalWidth <= 0 || image.naturalHeight <= 0) throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
     return dataUrl;
   }
-  function canonicalShareTarget(bvid) {
-    return `https://www.bilibili.com/video/${bvid}/`;
-  }
   async function fetchGenerationSnapshot(capture) {
     const endpoint = `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(capture.bvid)}`;
     let payload;
@@ -2356,7 +2378,7 @@
       if (error instanceof SyntaxError) throw new Error("Bilibili \u8FD4\u56DE\u4E86\u65E0\u6CD5\u89E3\u6790\u7684\u89C6\u9891\u4FE1\u606F\uFF0C\u8BF7\u91CD\u8BD5\u3002");
       throw error;
     }
-    const video = parseVideoApiResponse(payload, capture.bvid);
+    const video = parseVideoApiResponse(payload, capture.bvid, capture.partNumber);
     const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
     return {
       bvid: video.bvid,
@@ -2365,13 +2387,14 @@
       title: video.title,
       uploader: video.uploader,
       partNumber: capture.partNumber,
+      partTitle: video.partTitle,
+      partIdentified: video.partIdentified,
       playbackSeconds: capture.playbackSeconds,
       wasPlaying: capture.wasPlaying,
       stats: video.stats
     };
   }
-  async function fetchValidatedShareTarget(snapshot) {
-    const canonicalTarget = canonicalShareTarget(snapshot.bvid);
+  async function fetchValidatedShareTarget(snapshot, canonicalTarget) {
     try {
       const form = new URLSearchParams({
         build: "6500300",
@@ -2404,7 +2427,12 @@
   }
   async function fetchGenerationResources(capture) {
     const snapshot = await fetchGenerationSnapshot(capture);
-    const targetSelection = await fetchValidatedShareTarget(snapshot);
+    const canonicalTarget = buildCanonicalShareTarget(
+      snapshot.bvid,
+      snapshot,
+      { partShare: false, timestampShare: false }
+    );
+    const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
     return { snapshot, targetSelection };
   }
   function restorePlayback(capture) {
@@ -2412,6 +2440,59 @@
     const current = readPageIdentity();
     if (!current || current.bvid.toUpperCase() !== capture.bvid.toUpperCase() || current.partNumber !== capture.partNumber) return;
     void capture.player.play().catch(() => void 0);
+  }
+
+  // src/options.ts
+  function createDefaultShareOptions() {
+    return {
+      theme: "A",
+      partShare: false,
+      timestampShare: false,
+      detailedText: false,
+      markdownText: false
+    };
+  }
+  function resolveRememberedPreferences(stored) {
+    const record = typeof stored === "object" && stored !== null ? stored : {};
+    return {
+      theme: record.theme === "B" ? "B" : "A",
+      detailedText: record.detailedText === true,
+      markdownText: record.markdownText === true
+    };
+  }
+  function createPanelShareOptions(storedPreferences = null) {
+    const remembered = resolveRememberedPreferences(storedPreferences);
+    return {
+      theme: remembered.theme,
+      partShare: false,
+      timestampShare: false,
+      detailedText: remembered.detailedText,
+      markdownText: remembered.markdownText
+    };
+  }
+  function canEnablePartShare(context) {
+    return context.partIdentified;
+  }
+  function canEnableTimestampShare(context) {
+    return context.partIdentified && Math.floor(context.playbackSeconds) >= 1;
+  }
+  function togglePartShare(options, context) {
+    if (!canEnablePartShare(context)) return options;
+    const partShare = !options.partShare;
+    return {
+      ...options,
+      partShare,
+      timestampShare: partShare ? options.timestampShare : false
+    };
+  }
+  function toggleTimestampShare(options, context) {
+    if (!canEnableTimestampShare(context)) return options;
+    const timestampShare = !options.timestampShare;
+    return {
+      ...options,
+      timestampShare,
+      partShare: timestampShare && context.partNumber > 1 ? true : options.partShare
+    };
   }
 
   // src/styles.ts
@@ -2431,21 +2512,33 @@
 .bsp-close:hover { background:#e7e3db; }
 .bsp-workspace { display:grid; grid-template-columns:46% 54%; min-height:576px; }
 .bsp-preview-pane { display:flex; align-items:center; justify-content:center; padding:28px; border-right:1px solid #cbc7be; background:#dedad1; }
-.bsp-preview-frame { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); }
+.bsp-preview-frame { position:relative; width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); }
+.bsp-poster-updating { position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
 .bsp-loading-card { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; border:1px solid #b9b5ac; background:#f7f5f0; color:#64615b; }
 .bsp-spinner { width:28px; height:28px; margin:0 auto 14px; border:2px solid #c8c4bb; border-top-color:#1a1a1a; border-radius:50%; animation:bsp-spin .75s linear infinite; }
 @keyframes bsp-spin { to { transform:rotate(360deg); } }
 .bsp-controls { display:flex; flex-direction:column; padding:34px 36px; background:#faf8f3; }
 .bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
 .bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
+.bsp-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:20px 0 0; }
+.bsp-option { display:flex; align-items:center; gap:8px; min-height:44px; padding:8px 12px; border:1px solid #cbc7be; border-radius:3px; background:#fff; cursor:pointer; }
+.bsp-option input { margin:0; accent-color:#1a1a1a; }
+.bsp-option-label { color:#24231f; font-size:13px; font-weight:600; }
+.bsp-option small { color:#77736b; font-size:11px; }
+.bsp-option:has(input:disabled) { opacity:.55; cursor:not-allowed; }
+.bsp-option-notice { margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
 .bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
 .bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
 .bsp-fallback strong { font-size:13px; line-height:1.4; }
 .bsp-fallback span { font-size:12px; line-height:1.55; }
+.bsp-text-preview { margin:20px 0 0; padding:12px 14px; border:1px solid #cbc7be; background:#fff; color:#24231f; font:12px/1.7 ui-monospace,Menlo,monospace; white-space:pre-wrap; word-break:break-all; user-select:all; }
 .bsp-snapshot { margin:28px 0; padding:18px 0; border-top:2px solid #1a1a1a; border-bottom:1px solid #bcb8af; }
 .bsp-snapshot-row { display:flex; justify-content:space-between; gap:16px; padding:7px 0; color:#6b6861; font-size:12px; }
 .bsp-snapshot-row strong { max-width:72%; overflow:hidden; color:#24231f; font:600 12px/1.4 ui-monospace,Menlo,monospace; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-actions { margin-top:auto; }
+.bsp-actions { margin-top:auto; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.bsp-button-primary { background:#1a1a1a; color:#fff; }
+.bsp-button-secondary { background:#fff; color:#1a1a1a; }
+.bsp-button-secondary:hover { background:#f7f5f0; }
 .bsp-button { appearance:none; width:100%; min-height:46px; border:1px solid #1a1a1a; border-radius:2px; background:#1a1a1a; color:#fff; font:650 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; }
 .bsp-button:hover { background:#353431; }
 .bsp-button:disabled { border-color:#aaa79f; background:#aaa79f; cursor:not-allowed; }
@@ -2462,6 +2555,9 @@
 .bsp-byline { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; color:#55524c; font-size:9px; }
 .bsp-byline strong { min-width:0; overflow:hidden; color:#262522; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
 .bsp-identity { flex:none; font:600 7.5px/1 ui-monospace,Menlo,monospace; }
+.bsp-part-timestamp { position:relative; z-index:1; display:flex; align-items:center; gap:6px; margin-top:7px; min-height:14px; }
+.bsp-part-chip { max-width:82%; overflow:hidden; padding:2px 7px; border:1px solid #77736b; background:#f0ede6; color:#24231f; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-time-chip { margin-left:auto; color:#1a1a1a; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
 .bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:13px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
 .bsp-stat { padding:8px 5px 7px; border-right:1px solid #c6c2b9; }
 .bsp-stat:last-child { border-right:0; }
@@ -2473,6 +2569,57 @@
 .bsp-link-label { display:block; margin-bottom:7px; color:#6b6b66; font-size:7px; letter-spacing:.17em; }
 .bsp-link { display:block; overflow-wrap:anywhere; color:#1a1a1a; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; }
 .bsp-archive { position:absolute; right:18px; bottom:7px; z-index:1; color:#8b877e; font:600 6px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; }
+.bsp-theme-picker { display:flex; align-items:center; gap:8px; margin-top:18px; }
+.bsp-theme-picker-label { margin-right:4px; color:#77736b; font-size:12px; font-weight:600; }
+.bsp-theme-button { appearance:none; min-height:32px; padding:0 12px; border:1px solid #cbc7be; border-radius:3px; background:#fff; color:#55524c; font-size:12px; cursor:pointer; }
+.bsp-theme-button.is-active { border-color:#1a1a1a; background:#1a1a1a; color:#fff; font-weight:600; }
+#bsp-entry.bsp-entry-b { background:#18191c; border-color:#18191c; color:#fff; }
+#bsp-entry.bsp-entry-b:hover { background:#343a40; border-color:#343a40; }
+.bsp-backdrop.bsp-theme-b { background:rgba(5,6,8,.78); }
+.bsp-panel.bsp-theme-b { border-color:#3d4045; background:#18191c; color:#f1f2f3; }
+.bsp-panel.bsp-theme-b .bsp-panel-head { border-bottom-color:#2e3135; background:#101113; }
+.bsp-panel.bsp-theme-b .bsp-panel-title { color:#fff; }
+.bsp-panel.bsp-theme-b .bsp-close { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-close:hover { background:#2e3135; }
+.bsp-panel.bsp-theme-b .bsp-preview-pane { border-right-color:#2e3135; background:#222529; }
+.bsp-panel.bsp-theme-b .bsp-controls { background:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-kicker, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-option { border-color:#3d4045; background:#232528; }
+.bsp-panel.bsp-theme-b .bsp-option-label { color:#fff; }
+.bsp-panel.bsp-theme-b .bsp-option small { color:#9aa0a6; }
+.bsp-panel.bsp-theme-b .bsp-text-preview { border-color:#2e3135; background:#101113; color:#e8e9eb; }
+.bsp-panel.bsp-theme-b .bsp-snapshot { border-top-color:#f1f2f3; border-bottom-color:#3d4045; }
+.bsp-panel.bsp-theme-b .bsp-snapshot-row { color:#b8bcc2; }
+.bsp-panel.bsp-theme-b .bsp-snapshot-row strong { color:#f1f2f3; }
+.bsp-panel.bsp-theme-b .bsp-theme-picker-label { color:#9aa0a6; }
+.bsp-panel.bsp-theme-b .bsp-theme-button { border-color:#3d4045; background:#232528; color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-theme-button.is-active { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-button-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-button-secondary { border-color:#8a9096; background:#2e3135; color:#fff; }
+.bsp-panel.bsp-theme-b .bsp-button-secondary:hover { background:#3d4045; }
+.bsp-poster.bsp-poster-b { padding:0; border:0; background:#000; color:#fff; }
+.bsp-poster-b::after { display:none; }
+.bsp-cover-b { position:absolute; inset:0; z-index:0; display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
+.bsp-b-scrim { position:absolute; inset:0; z-index:1; background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.28) 38%,rgba(0,0,0,.86) 78%,rgba(0,0,0,.94) 94%); }
+.bsp-b-content { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; padding:16px; }
+.bsp-b-topline { display:flex; align-items:center; gap:8px; min-height:24px; }
+.bsp-b-part-chip, .bsp-b-time-chip { overflow:hidden; padding:3px 9px; border:1px solid rgba(255,255,255,.32); border-radius:14px; background:rgba(0,0,0,.55); color:#fff; text-overflow:ellipsis; white-space:nowrap; backdrop-filter:blur(2px); }
+.bsp-b-part-chip { max-width:76%; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; }
+.bsp-b-time-chip { margin-left:auto; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
+.bsp-b-bottom { margin-top:auto; }
+.bsp-b-title { display:-webkit-box; overflow:hidden; margin:0; color:#fff; font-size:19px; font-weight:800; line-height:1.4; letter-spacing:-.02em; text-shadow:0 2px 12px rgba(0,0,0,.7); -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.bsp-b-up { margin-top:8px; overflow:hidden; color:rgba(255,255,255,.9); font-size:9px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-b-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
+.bsp-b-stat { min-width:0; text-align:center; }
+.bsp-b-stat strong, .bsp-b-stat span { display:block; }
+.bsp-b-stat strong { overflow:hidden; color:#fff; font:750 11px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-b-stat span { margin-top:3px; color:rgba(255,255,255,.62); font-size:7px; letter-spacing:.12em; }
+.bsp-b-identity { margin-top:8px; color:rgba(255,255,255,.6); font:600 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.08em; text-align:center; }
+.bsp-b-destination { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.bsp-b-qr { box-sizing:border-box; flex:none; width:72px; height:72px; padding:4px; border-radius:5px; background:#fff; }
+.bsp-b-link-side { min-width:0; flex:1; }
+.bsp-b-link-label { display:block; margin-bottom:5px; color:rgba(255,255,255,.58); font-size:7px; letter-spacing:.16em; }
+.bsp-b-link { display:block; overflow-wrap:anywhere; color:#fff; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,.8); }
 @media (max-width:760px) { .bsp-workspace { grid-template-columns:1fr; } .bsp-preview-pane { border-right:0; border-bottom:1px solid #cbc7be; } .bsp-controls { min-height:360px; padding:26px 24px; } }
 @media (prefers-reduced-motion:reduce) { .bsp-spinner { animation:none; } }
 `;
@@ -3275,9 +3422,180 @@
   // src/ui.ts
   var import_qrcode = __toESM(require_browser(), 1);
 
+  // src/clipboard.ts
+  function browserClipboard() {
+    const clipboard = navigator.clipboard;
+    return clipboard && typeof clipboard.write === "function" ? clipboard : null;
+  }
+  function clipboardItemConstructor() {
+    const constructor = globalThis.ClipboardItem;
+    return typeof constructor === "function" ? constructor : null;
+  }
+  async function copyPng(dataUrl, writer) {
+    try {
+      await writer.write(dataUrl);
+      return { status: "copied" };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u56FE\u7247\u526A\u8D34\u677F"
+      };
+    }
+  }
+  function describePosterCopyResult(outcome) {
+    if (outcome.status === "copied") {
+      return {
+        statusMessage: "\u6D77\u62A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\u3002",
+        helpMessage: "\u4EC5\u590D\u5236\u4E86\u6D77\u62A5\u56FE\u7247\uFF0C\u4E0D\u5305\u542B\u5206\u4EAB\u6587\u6848\u3002",
+        downloadGuidance: false
+      };
+    }
+    return {
+      statusMessage: "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002",
+      helpMessage: `${outcome.reason} \u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002`,
+      downloadGuidance: true
+    };
+  }
+  async function copyText(text, writer) {
+    try {
+      await writer.write(text);
+      return { status: "copied" };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u6587\u672C\u526A\u8D34\u677F"
+      };
+    }
+  }
+  function describeTextCopyResult(outcome) {
+    if (outcome.status === "copied") {
+      return {
+        statusMessage: "\u6587\u6848\u5DF2\u590D\u5236\u3002",
+        helpMessage: "\u4EC5\u590D\u5236\u4E86\u5206\u4EAB\u6587\u6848\uFF0C\u4E0D\u5305\u542B\u6D77\u62A5\u56FE\u7247\u3002",
+        manualCopy: false
+      };
+    }
+    return {
+      statusMessage: "\u6587\u6848\u590D\u5236\u5931\u8D25\u3002",
+      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002`,
+      manualCopy: true
+    };
+  }
+  async function copyShareTextToClipboard(text) {
+    const clipboard = browserClipboard();
+    if (clipboard && typeof clipboard.writeText === "function") {
+      return copyText(text, {
+        async write(value) {
+          await clipboard.writeText(value);
+        }
+      });
+    }
+    if (typeof GM_setClipboard === "function") {
+      return copyText(text, {
+        async write(value) {
+          GM_setClipboard(value, "text");
+        }
+      });
+    }
+    return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u6587\u672C\u526A\u8D34\u677F\u5199\u5165" };
+  }
+  function escapeHtml(value) {
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  }
+  function buildCombinedHtml(posterDataUrl, shareText) {
+    return `<img src="${escapeHtml(posterDataUrl)}" alt="\u5206\u4EAB\u6D77\u62A5"><br><pre>${escapeHtml(shareText)}</pre>`;
+  }
+  async function copyCombined(posterDataUrl, shareText, ports) {
+    const html = buildCombinedHtml(posterDataUrl, shareText);
+    try {
+      await ports.writeCombined(posterDataUrl, shareText, html);
+      return { status: "copied" };
+    } catch (combinedError) {
+      const combinedReason = combinedError instanceof Error && combinedError.message ? combinedError.message : "\u7EC4\u5408\u5199\u5165\u5931\u8D25";
+      try {
+        await ports.writeText(shareText);
+        return { status: "text-fallback", reason: combinedReason };
+      } catch (textError) {
+        return {
+          status: "failed",
+          reason: textError instanceof Error && textError.message ? textError.message : "\u6587\u6848\u5199\u5165\u5931\u8D25"
+        };
+      }
+    }
+  }
+  function describeCombinedCopyResult(outcome) {
+    if (outcome.status === "copied") {
+      return {
+        statusMessage: "\u5DF2\u5199\u5165\u517C\u5BB9\u683C\u5F0F\u3002",
+        helpMessage: "\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u53D6\u5176\u4E2D\u4E00\u79CD\uFF1B\u4E0D\u4FDD\u8BC1\u7C98\u8D34\u65F6\u56FE\u4E0E\u6587\u540C\u65F6\u51FA\u73B0\u3002"
+      };
+    }
+    if (outcome.status === "text-fallback") {
+      return {
+        statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\uFF0C\u5DF2\u6539\u4E3A\u4EC5\u590D\u5236\u6587\u6848\u3002",
+        helpMessage: `${outcome.reason} \u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002`
+      };
+    }
+    return {
+      statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002",
+      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002`
+    };
+  }
+  async function copyCombinedPosterAndText(posterDataUrl, shareText) {
+    const clipboardItemCtor = clipboardItemConstructor();
+    const clipboard = browserClipboard();
+    if (clipboardItemCtor && clipboard) {
+      const textBlob = new Blob([shareText], { type: "text/plain" });
+      const htmlBlob = new Blob([buildCombinedHtml(posterDataUrl, shareText)], { type: "text/html" });
+      const ports = {
+        async writeCombined(dataUrl, _text, _html) {
+          await clipboard.write([
+            new clipboardItemCtor({
+              "image/png": pngDataUrlToBlob(dataUrl),
+              "text/plain": textBlob,
+              "text/html": htmlBlob
+            })
+          ]);
+        },
+        writeText: (text) => copyShareTextToClipboard(text).then((outcome) => {
+          if (outcome.status === "failed") throw new Error(outcome.reason);
+        })
+      };
+      return copyCombined(posterDataUrl, shareText, ports);
+    }
+    const textOutcome = await copyShareTextToClipboard(shareText);
+    return textOutcome.status === "copied" ? { status: "text-fallback", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u7EC4\u5408\u526A\u8D34\u677F\u5199\u5165" } : { status: "failed", reason: textOutcome.reason };
+  }
+  function pngDataUrlToBlob(dataUrl) {
+    const [header, base64] = dataUrl.split(",");
+    if (!header?.startsWith("data:image/png") || !base64) throw new Error("\u6D77\u62A5 PNG \u6570\u636E\u65E0\u6548");
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return new Blob([bytes], { type: "image/png" });
+  }
+  async function copyPosterPngToClipboard(dataUrl) {
+    const clipboardItemCtor = clipboardItemConstructor();
+    const clipboard = browserClipboard();
+    if (!clipboardItemCtor || !clipboard) {
+      return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u56FE\u7247\u526A\u8D34\u677F\u5199\u5165" };
+    }
+    return copyPng(dataUrl, {
+      async write(value) {
+        await clipboard.write([new clipboardItemCtor({ "image/png": pngDataUrlToBlob(value) })]);
+      }
+    });
+  }
+
   // src/domain.ts
-  function getDefaultTheme() {
-    return { id: "A", titleLines: 2 };
+  function posterTitleFontSize(theme, title) {
+    if (theme === "A") return 19;
+    const length = Array.from(title).length;
+    if (length <= 20) return 19;
+    if (length <= 32) return 17;
+    return 15;
   }
   function formatCompactStat(value) {
     if (value === null || !Number.isFinite(value)) return "--";
@@ -3285,10 +3603,28 @@
     if (value >= 1e4) return `${(value / 1e4).toFixed(1)}\u4E07`;
     return Math.max(0, Math.trunc(value)).toString();
   }
-  function buildPosterFilename(bvid, generatedAt) {
+  function formatTimestamp(seconds) {
+    const wholeSeconds = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(wholeSeconds / 3600);
+    const minutes = Math.floor(wholeSeconds % 3600 / 60);
+    const remainder = wholeSeconds % 60;
+    const mm = minutes.toString().padStart(2, "0");
+    const ss = remainder.toString().padStart(2, "0");
+    return hours > 0 ? `${hours.toString().padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+  function buildPosterFilename(bvid, generatedAt, partNumber) {
     const twoDigits = (value) => value.toString().padStart(2, "0");
     const stamp = `${generatedAt.getFullYear()}${twoDigits(generatedAt.getMonth() + 1)}${twoDigits(generatedAt.getDate())}-${twoDigits(generatedAt.getHours())}${twoDigits(generatedAt.getMinutes())}${twoDigits(generatedAt.getSeconds())}`;
-    return `bilibili_${bvid}_${stamp}.png`;
+    const partSegment = partNumber && partNumber > 0 ? `_P${partNumber}` : "";
+    return `bilibili_${bvid}${partSegment}_${stamp}.png`;
+  }
+  function buildPartLabel(snapshot, options) {
+    if (!options.partShare) return null;
+    const title = snapshot.partTitle?.trim() ? snapshot.partTitle.trim() : "";
+    return title ? `P${snapshot.partNumber} \xB7 ${title}` : `P${snapshot.partNumber}`;
+  }
+  function buildTimestampLabel(snapshot, options) {
+    return options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1 ? formatTimestamp(snapshot.playbackSeconds) : null;
   }
   function requireText(value, label) {
     const normalized = value.trim();
@@ -3310,25 +3646,30 @@
     }
     return url.toString();
   }
-  function buildDefaultPoster(snapshot, shareTarget) {
+  function buildSharePoster(snapshot, shareTarget, options) {
     const title = requireText(snapshot.title, "\u89C6\u9891\u6807\u9898");
     const coverDataUrl = requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
     const uploader = requireText(snapshot.uploader, "UP \u4E3B");
     const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
     if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
     const validatedShareTarget = validateShareTarget(shareTarget, bvid);
-    const defaultTheme = getDefaultTheme();
+    const theme = options.theme === "B" ? "B" : "A";
+    const titleLines = theme === "A" ? 2 : 3;
+    const contentOrder = theme === "A" ? ["cover", "title", "uploader-identity", "part-timestamp", "stats", "destination"] : ["cover", "part-timestamp", "title", "uploader-identity", "stats", "destination"];
     return {
-      theme: defaultTheme.id,
+      theme,
       dimensions: { width: 1080, height: 1440 },
       coverDataUrl,
       title,
       uploader,
       identity: `${bvid} \xB7 AV${snapshot.aid}`,
       shareTarget: validatedShareTarget,
-      titleLines: defaultTheme.titleLines,
+      titleLines,
+      titleFontSize: posterTitleFontSize(theme, title),
       linkWrap: "anywhere",
-      contentOrder: ["cover", "title", "uploader-identity", "stats", "destination"],
+      contentOrder,
+      partLabel: buildPartLabel(snapshot, options),
+      timestampLabel: buildTimestampLabel(snapshot, options),
       stats: [
         { label: "\u64AD\u653E", value: formatCompactStat(snapshot.stats.views) },
         { label: "\u70B9\u8D5E", value: formatCompactStat(snapshot.stats.likes) },
@@ -3336,6 +3677,58 @@
         { label: "\u6536\u85CF", value: formatCompactStat(snapshot.stats.favorites) }
       ]
     };
+  }
+
+  // src/share-text.ts
+  function buildCompactShareText(title, uploader, shareTarget) {
+    return `${title}\uFF08UP\u4E3B\uFF1A${uploader}\uFF09
+${shareTarget}`;
+  }
+  function formatExactStat(value) {
+    if (value === null || !Number.isFinite(value)) return "--";
+    const whole = Math.max(0, Math.trunc(value));
+    return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function plainDetailedText(snapshot, shareTarget, options) {
+    const lines = [
+      snapshot.title,
+      `UP\u4E3B\uFF1A${snapshot.uploader}`,
+      `BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
+    ];
+    const partLabel = buildPartLabel(snapshot, options);
+    if (partLabel) lines.push(`\u5206P\uFF1A${partLabel}`);
+    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
+      lines.push(`\u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
+    }
+    lines.push(shareTarget);
+    return lines.join("\n");
+  }
+  function markdownDetailedText(snapshot, shareTarget, options) {
+    const lines = [
+      `**${snapshot.title}**`,
+      "",
+      `- UP\u4E3B\uFF1A${snapshot.uploader}`,
+      `- BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
+    ];
+    const partLabel = buildPartLabel(snapshot, options);
+    if (partLabel) lines.push(`- \u5206P\uFF1A${partLabel}`);
+    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
+      lines.push(`- \u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
+    }
+    lines.push(`- \u94FE\u63A5\uFF1A${shareTarget}`);
+    return lines.join("\n");
+  }
+  function buildShareText(snapshot, shareTarget, options) {
+    if (options.detailedText) {
+      return options.markdownText ? markdownDetailedText(snapshot, shareTarget, options) : plainDetailedText(snapshot, shareTarget, options);
+    }
+    if (options.markdownText) {
+      return `[${snapshot.title}](${shareTarget})
+${shareTarget}`;
+    }
+    return buildCompactShareText(snapshot.title, snapshot.uploader, shareTarget);
   }
 
   // src/ui.ts
@@ -3350,7 +3743,11 @@
     row.append(element("span", "", label), element("strong", "", value));
     parent.append(row);
   }
+  function posterQrDataUrl(shareTarget) {
+    return import_qrcode.default.toDataURL(shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  }
   async function createPoster(model) {
+    if (model.theme === "B") return createPosterB(model);
     const poster = element("article", "bsp-poster");
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
     const masthead = element("header", "bsp-masthead");
@@ -3362,6 +3759,9 @@
     title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
     const byline = element("div", "bsp-byline");
     byline.append(element("strong", "", `UP \u4E3B \xB7 ${model.uploader}`), element("span", "bsp-identity", model.identity));
+    const partTimestamp = element("div", "bsp-part-timestamp");
+    if (model.partLabel) partTimestamp.append(element("span", "bsp-part-chip", model.partLabel));
+    if (model.timestampLabel) partTimestamp.append(element("span", "bsp-time-chip", model.timestampLabel));
     const stats = element("div", "bsp-stats");
     for (const statistic2 of model.stats) {
       const cell = element("div", "bsp-stat");
@@ -3371,7 +3771,7 @@
     const destination = element("div", "bsp-destination");
     const qr = element("img", "bsp-qr");
     qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`;
-    qr.src = await import_qrcode.default.toDataURL(model.shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+    qr.src = await posterQrDataUrl(model.shareTarget);
     const linkArea = element("div");
     const visibleLink = element("span", "bsp-link", model.shareTarget);
     visibleLink.style.overflowWrap = model.linkWrap;
@@ -3383,11 +3783,52 @@
       cover,
       title,
       "uploader-identity": byline,
+      "part-timestamp": partTimestamp,
       stats,
       destination
     };
     for (const section of model.contentOrder) poster.append(content[section]);
     poster.append(element("span", "bsp-archive", `ARCHIVE \xB7 ${model.identity}`));
+    return poster;
+  }
+  async function createPosterB(model) {
+    const poster = element("article", "bsp-poster bsp-poster-b");
+    poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
+    const cover = element("img", "bsp-cover-b");
+    cover.src = model.coverDataUrl;
+    cover.alt = "";
+    poster.append(cover);
+    const scrim = element("div", "bsp-b-scrim");
+    const content = element("div", "bsp-b-content");
+    content.append(scrim);
+    const topLine = element("div", "bsp-b-topline");
+    if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));
+    if (model.timestampLabel) topLine.append(element("span", "bsp-b-time-chip", model.timestampLabel));
+    content.append(topLine);
+    const bottom = element("div", "bsp-b-bottom");
+    const title = element("h4", "bsp-b-title", model.title);
+    title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
+    title.style.fontSize = `${model.titleFontSize}px`;
+    bottom.append(title, element("div", "bsp-b-up", `UP \u4E3B \xB7 ${model.uploader}`));
+    const stats = element("div", "bsp-b-stats");
+    for (const statistic2 of model.stats) {
+      const cell = element("div", "bsp-b-stat");
+      cell.append(element("strong", "", statistic2.value), element("span", "", statistic2.label));
+      stats.append(cell);
+    }
+    bottom.append(stats, element("div", "bsp-b-identity", model.identity));
+    const destination = element("div", "bsp-b-destination");
+    const qr = element("img", "bsp-b-qr");
+    qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`;
+    qr.src = await posterQrDataUrl(model.shareTarget);
+    const linkSide = element("div", "bsp-b-link-side");
+    const visibleLink = element("span", "bsp-b-link", model.shareTarget);
+    visibleLink.style.overflowWrap = model.linkWrap;
+    linkSide.append(element("span", "bsp-b-link-label", "\u626B\u7801\u89C2\u770B \xB7 SHARE TARGET"), visibleLink);
+    destination.append(qr, linkSide);
+    bottom.append(destination);
+    content.append(bottom);
+    poster.append(content);
     return poster;
   }
   var SharePanel = class {
@@ -3399,8 +3840,12 @@
     snapshot = null;
     model = null;
     poster = null;
+    options = createDefaultShareOptions();
+    targetSelection = null;
     closed = false;
     loading = false;
+    updating = false;
+    exportButtons = [];
     onClosed;
     constructor(onClosed) {
       this.onClosed = onClosed;
@@ -3430,6 +3875,9 @@
       this.onKeyDown = this.onKeyDown.bind(this);
     }
     open() {
+      this.options = createPanelShareOptions(
+        typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null
+      );
       document.body.append(this.backdrop);
       document.addEventListener("keydown", this.onKeyDown, true);
       this.renderLoading();
@@ -3485,12 +3933,13 @@
       this.loading = true;
       try {
         const { snapshot, targetSelection } = await fetchGenerationResources(this.capture);
-        const model = buildDefaultPoster(snapshot, targetSelection.shareTarget);
+        const model = buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
         const poster = await createPoster(model);
         if (this.closed) return;
         this.snapshot = snapshot;
         this.model = model;
         this.poster = poster;
+        this.targetSelection = targetSelection;
         this.renderReady(model, poster, targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
@@ -3502,19 +3951,40 @@
       const frame = element("div", "bsp-preview-frame");
       frame.append(poster);
       this.previewPane.replaceChildren(frame);
+      this.applyThemeClasses(model.theme);
+      this.updating = false;
+      this.exportButtons = [];
+      if (!this.snapshot) return;
+      const snapshot = this.snapshot;
       const snapshotBox = element("div", "bsp-snapshot");
-      appendRow(snapshotBox, "\u4E3B\u9898", "A \xB7 \u62A5\u520A\u4FE1\u606F\u5361");
+      appendRow(snapshotBox, "\u4E3B\u9898", model.theme === "A" ? "A \xB7 \u62A5\u520A\u4FE1\u606F\u5361" : "B \xB7 \u6C89\u6D78\u5C01\u9762");
       appendRow(snapshotBox, "\u94FE\u63A5", targetSelection.source === "short" ? "\u5DF2\u6821\u9A8C\u77ED\u94FE" : "\u89C4\u8303\u957F\u94FE\u63A5\uFF08\u964D\u7EA7\uFF09");
       appendRow(snapshotBox, "\u843D\u70B9", model.shareTarget);
       appendRow(snapshotBox, "\u753B\u5E03", "1080 \xD7 1440 PNG");
       appendRow(snapshotBox, "\u64AD\u653E\u72B6\u6001", "\u5DF2\u4E3A\u751F\u6210\u6682\u505C");
+      const shareText = buildShareText(snapshot, model.shareTarget, this.options);
+      const textPreview = element("pre", "bsp-text-preview", shareText);
+      textPreview.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
       const actions = element("div", "bsp-actions");
-      const download = element("button", "bsp-button", "\u4E0B\u8F7D PNG");
+      const help = element("p", "bsp-help", "\u9884\u89C8\u3001\u590D\u5236\u548C\u4E0B\u8F7D\u4F7F\u7528\u540C\u4E00\u5DF2\u751F\u6210\u6D77\u62A5\uFF1B\u5173\u95ED\u9762\u677F\u540E\uFF0C\u4EC5\u6062\u590D\u6B64\u524D\u6B63\u5728\u64AD\u653E\u7684\u540C\u4E00\u89C6\u9891\u3002");
+      const status = element("p", "bsp-status");
+      const download = element("button", "bsp-button bsp-button-secondary", "\u4E0B\u8F7D PNG");
       download.type = "button";
       download.addEventListener("click", () => void this.download(download, status));
-      const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
-      actions.append(download, element("p", "bsp-help", "\u9884\u89C8\u4E0E\u4E0B\u8F7D\u4F7F\u7528\u540C\u4E00\u6D77\u62A5\u8282\u70B9\uFF1B\u5173\u95ED\u9762\u677F\u540E\uFF0C\u4EC5\u6062\u590D\u6B64\u524D\u6B63\u5728\u64AD\u653E\u7684\u540C\u4E00\u89C6\u9891\u3002"), status);
+      const copy = element("button", "bsp-button bsp-button-primary", "\u590D\u5236\u6D77\u62A5");
+      copy.type = "button";
+      copy.addEventListener("click", () => void this.copyPoster(copy, status, help));
+      const copyTextButton = element("button", "bsp-button bsp-button-secondary", "\u590D\u5236\u6587\u6848");
+      copyTextButton.type = "button";
+      copyTextButton.addEventListener("click", () => void this.copyShareText(copyTextButton, shareText, status, help));
+      const combinedButton = element("button", "bsp-button bsp-button-secondary", "\u7EC4\u5408\u590D\u5236");
+      combinedButton.type = "button";
+      combinedButton.addEventListener("click", () => void this.copyCombined(combinedButton, shareText, status, help));
+      actions.append(copy, download, copyTextButton, combinedButton, help, status);
+      this.exportButtons.push(copy, download, copyTextButton, combinedButton);
+      const themePicker = this.renderThemePicker();
+      const optionControls = this.renderShareOptions();
       const summary = targetSelection.source === "short" ? "\u672C\u6B21\u4F7F\u7528\u7ECF\u8FC7\u843D\u70B9\u6821\u9A8C\u7684 b23.tv \u77ED\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u4E0E\u53EF\u89C1\u94FE\u63A5\u6307\u5411\u5B8C\u5168\u76F8\u540C\u7684\u89C6\u9891\u3002" : "\u77ED\u94FE\u672A\u901A\u8FC7\u6821\u9A8C\uFF0C\u672C\u6B21\u5DF2\u7EDF\u4E00\u6539\u7528\u89C4\u8303\u957F\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u3001\u53EF\u89C1\u94FE\u63A5\u4E0E\u4E0B\u8F7D\u6D77\u62A5\u4ECD\u7136\u53EF\u7528\u3002";
       const content = [
         element("p", "bsp-step", "02 / DEFAULT SHARE"),
@@ -3530,8 +4000,143 @@
         );
         content.push(fallback);
       }
-      content.push(snapshotBox, actions);
+      content.push(themePicker, optionControls, textPreview, snapshotBox, actions);
       this.controls.replaceChildren(...content);
+    }
+    optionToggle(labelText, description, checked, disabled, onChange) {
+      const label = element("label", "bsp-option");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = checked;
+      input.disabled = disabled;
+      input.addEventListener("change", () => onChange(input.checked));
+      label.append(input, element("span", "bsp-option-label", labelText), element("small", "", description));
+      return label;
+    }
+    renderShareOptions() {
+      const container = element("div", "bsp-options");
+      const snapshot = this.snapshot;
+      if (!snapshot) return container;
+      container.append(
+        this.optionToggle("\u5206P\u5206\u4EAB", "\u5206\u4EAB\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+          void checked;
+          this.applyOptions(togglePartShare(this.options, snapshot));
+        }),
+        this.optionToggle("\u65F6\u95F4\u6233", "\u4ECE\u5F53\u524D\u64AD\u653E\u4F4D\u7F6E\u5F00\u59CB", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+          void checked;
+          this.applyOptions(toggleTimestampShare(this.options, snapshot));
+        }),
+        this.optionToggle("\u8BE6\u7EC6\u6587\u6848", "\u7EDF\u8BA1\u4E0E\u8EAB\u4EFD\u4FE1\u606F", this.options.detailedText, this.updating, (checked) => {
+          this.applyOptions({ ...this.options, detailedText: checked });
+        }),
+        this.optionToggle("Markdown", "Markdown \u683C\u5F0F\u6587\u6848", this.options.markdownText, this.updating, (checked) => {
+          this.applyOptions({ ...this.options, markdownText: checked });
+        })
+      );
+      if (!snapshot.partIdentified) {
+        const notice = element("p", "bsp-option-notice", "\u5F53\u524D\u5206P\u65E0\u6CD5\u8BC6\u522B\uFF0C\u5DF2\u7981\u7528\u5206P\u4E0E\u65F6\u95F4\u6233\u5206\u4EAB\uFF1B\u9ED8\u8BA4\u5206\u4EAB\u4ECD\u53EF\u7528\u3002");
+        container.append(notice);
+      } else if (Math.floor(snapshot.playbackSeconds) < 1) {
+        const notice = element("p", "bsp-option-notice", "\u5F53\u524D\u64AD\u653E\u4F4D\u7F6E\u4E0D\u8DB3 1 \u79D2\uFF0C\u65F6\u95F4\u6233\u5206\u4EAB\u4E0D\u53EF\u7528\u3002");
+        container.append(notice);
+      }
+      return container;
+    }
+    renderThemePicker() {
+      const picker = element("div", "bsp-theme-picker");
+      picker.setAttribute("role", "group");
+      picker.setAttribute("aria-label", "\u6D77\u62A5\u4E3B\u9898");
+      const label = element("span", "bsp-theme-picker-label", "\u6D77\u62A5\u4E3B\u9898");
+      const buttonA = element("button", "bsp-theme-button", "A \u62A5\u520A\u4FE1\u606F\u5361");
+      buttonA.type = "button";
+      buttonA.disabled = this.updating;
+      buttonA.classList.toggle("is-active", this.options.theme === "A");
+      buttonA.addEventListener("click", () => this.applyTheme("A"));
+      const buttonB = element("button", "bsp-theme-button", "B \u6C89\u6D78\u5C01\u9762");
+      buttonB.type = "button";
+      buttonB.disabled = this.updating;
+      buttonB.classList.toggle("is-active", this.options.theme === "B");
+      buttonB.addEventListener("click", () => this.applyTheme("B"));
+      picker.append(label, buttonA, buttonB);
+      return picker;
+    }
+    applyTheme(theme) {
+      if (this.updating || this.options.theme === theme || !this.model || !this.poster || !this.targetSelection) return;
+      this.options = { ...this.options, theme };
+      this.persistPreferences();
+      void this.rebuildPosterForTheme();
+    }
+    async rebuildPosterForTheme() {
+      if (!this.snapshot || !this.targetSelection || this.updating) return;
+      this.updating = true;
+      this.setExportButtonsDisabled(true);
+      this.showUpdatingOverlay();
+      try {
+        const model = buildSharePoster(this.snapshot, this.targetSelection.shareTarget, this.options);
+        const poster = await createPoster(model);
+        if (this.closed) return;
+        this.model = model;
+        this.poster = poster;
+        this.renderReady(model, poster, this.targetSelection);
+      } catch (error) {
+        if (!this.closed) this.renderError(error, false);
+      }
+    }
+    applyThemeClasses(theme) {
+      const isB = theme === "B";
+      this.backdrop.classList.toggle("bsp-theme-b", isB);
+      this.panel.classList.toggle("bsp-theme-b", isB);
+      document.getElementById("bsp-entry")?.classList.toggle("bsp-entry-b", isB);
+    }
+    applyOptions(next) {
+      if (!this.snapshot || this.updating) return;
+      const previous = this.options;
+      const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
+      const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
+      this.options = next;
+      if (textChanged) this.persistPreferences();
+      if (targetChanged) {
+        void this.rebuildPosterForOptions();
+        return;
+      }
+      if (textChanged && this.model && this.poster && this.targetSelection) {
+        this.renderReady(this.model, this.poster, this.targetSelection);
+      }
+    }
+    persistPreferences() {
+      if (typeof GM_setValue !== "function") return;
+      GM_setValue("bsp-panel-preferences", {
+        theme: this.options.theme,
+        detailedText: this.options.detailedText,
+        markdownText: this.options.markdownText
+      });
+    }
+    async rebuildPosterForOptions() {
+      if (!this.snapshot || this.updating) return;
+      this.updating = true;
+      this.setExportButtonsDisabled(true);
+      this.showUpdatingOverlay();
+      try {
+        const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
+        const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
+        const model = buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
+        const poster = await createPoster(model);
+        if (this.closed) return;
+        this.model = model;
+        this.poster = poster;
+        this.targetSelection = targetSelection;
+        this.renderReady(model, poster, targetSelection);
+      } catch (error) {
+        if (!this.closed) this.renderError(error, false);
+      }
+    }
+    setExportButtonsDisabled(disabled) {
+      for (const button of this.exportButtons) button.disabled = disabled;
+    }
+    showUpdatingOverlay() {
+      const frame = this.previewPane.querySelector(".bsp-preview-frame");
+      if (!frame || frame.querySelector(".bsp-poster-updating")) return;
+      frame.append(element("div", "bsp-poster-updating", "\u6B63\u5728\u66F4\u65B0\u2026"));
     }
     renderError(error, retryCapture) {
       const message = error instanceof Error ? error.message : "\u751F\u6210\u6D77\u62A5\u65F6\u53D1\u751F\u672A\u77E5\u9519\u8BEF\u3002";
@@ -3551,19 +4156,77 @@
         element("p", "bsp-help", retryCapture ? "\u8BF7\u786E\u8BA4\u4E3B\u64AD\u653E\u5668\u5DF2\u7ECF\u52A0\u8F7D\uFF0C\u518D\u91CD\u8BD5\u3002" : "\u91CD\u8BD5\u4F1A\u4FDD\u7559\u6700\u521D\u6355\u83B7\u7684\u89C6\u9891\u3001\u5206P\u548C\u64AD\u653E\u4F4D\u7F6E\uFF0C\u53EA\u91CD\u65B0\u83B7\u53D6\u751F\u6210\u6240\u9700\u8D44\u6E90\u3002")
       );
     }
+    async posterPngDataUrl() {
+      if (!this.poster || !this.model) throw new Error("\u6D77\u62A5\u9884\u89C8\u5C1A\u672A\u751F\u6210");
+      const sourceWidth = this.poster.offsetWidth;
+      const sourceHeight = this.poster.offsetHeight;
+      const sourcePixelRatio = this.model.dimensions.width / sourceWidth;
+      if (Math.round(sourceHeight * sourcePixelRatio) !== this.model.dimensions.height) throw new Error("\u6D77\u62A5\u753B\u5E03\u6BD4\u4F8B\u4E0D\u4E00\u81F4");
+      const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
+      return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor });
+    }
+    async copyPoster(button, status, help) {
+      if (!this.poster || !this.model) return;
+      button.disabled = true;
+      button.textContent = "\u6B63\u5728\u590D\u5236\u6D77\u62A5\u2026";
+      status.textContent = "";
+      try {
+        const dataUrl = await this.posterPngDataUrl();
+        const outcome = await copyPosterPngToClipboard(dataUrl);
+        const feedback = describePosterCopyResult(outcome);
+        status.textContent = feedback.statusMessage;
+        help.textContent = feedback.helpMessage;
+      } catch {
+        status.textContent = "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002";
+        help.textContent = "\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002";
+      } finally {
+        button.disabled = false;
+        button.textContent = "\u590D\u5236\u6D77\u62A5";
+      }
+    }
+    async copyShareText(button, text, status, help) {
+      button.disabled = true;
+      button.textContent = "\u6B63\u5728\u590D\u5236\u6587\u6848\u2026";
+      status.textContent = "";
+      try {
+        const feedback = describeTextCopyResult(await copyShareTextToClipboard(text));
+        status.textContent = feedback.statusMessage;
+        help.textContent = feedback.helpMessage;
+      } catch {
+        status.textContent = "\u6587\u6848\u590D\u5236\u5931\u8D25\u3002";
+        help.textContent = "\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002";
+      } finally {
+        button.disabled = false;
+        button.textContent = "\u590D\u5236\u6587\u6848";
+      }
+    }
+    async copyCombined(button, text, status, help) {
+      if (!this.poster || !this.model) return;
+      button.disabled = true;
+      button.textContent = "\u6B63\u5728\u7EC4\u5408\u590D\u5236\u2026";
+      status.textContent = "";
+      try {
+        const dataUrl = await this.posterPngDataUrl();
+        const feedback = describeCombinedCopyResult(await copyCombinedPosterAndText(dataUrl, text));
+        status.textContent = feedback.statusMessage;
+        help.textContent = feedback.helpMessage;
+      } catch {
+        status.textContent = "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002";
+        help.textContent = "\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002";
+      } finally {
+        button.disabled = false;
+        button.textContent = "\u7EC4\u5408\u590D\u5236";
+      }
+    }
     async download(button, status) {
       if (!this.poster || !this.snapshot || !this.model) return;
       button.disabled = true;
       button.textContent = "\u6B63\u5728\u751F\u6210 PNG\u2026";
       status.textContent = "";
       try {
-        const width = this.poster.offsetWidth;
-        const height = this.poster.offsetHeight;
-        const pixelRatio = this.model.dimensions.width / width;
-        if (Math.round(height * pixelRatio) !== this.model.dimensions.height) throw new Error("\u6D77\u62A5\u753B\u5E03\u6BD4\u4F8B\u4E0D\u4E00\u81F4");
-        const dataUrl = await toPng(this.poster, { width, height, pixelRatio, cacheBust: false, backgroundColor: "#f7f5f0" });
+        const dataUrl = await this.posterPngDataUrl();
         const link = document.createElement("a");
-        link.download = buildPosterFilename(this.snapshot.bvid, /* @__PURE__ */ new Date());
+        link.download = buildPosterFilename(this.snapshot.bvid, /* @__PURE__ */ new Date(), this.options.partShare ? this.snapshot.partNumber : null);
         link.href = dataUrl;
         link.click();
         status.textContent = "PNG \u5DF2\u4E0B\u8F7D\u3002";
@@ -3642,6 +4305,8 @@
     const button = document.createElement("button");
     button.id = ENTRY_ID;
     button.type = "button";
+    const remembered = createPanelShareOptions(typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null);
+    button.classList.toggle("bsp-entry-b", remembered.theme === "B");
     button.title = "\u751F\u6210\u5206\u4EAB\u6D77\u62A5";
     button.append(posterIcon(), document.createTextNode("\u751F\u6210\u6D77\u62A5"));
     button.addEventListener("click", openPanel);
@@ -3662,4 +4327,10 @@
   new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("urlchange", handleLocationChange);
   window.addEventListener("popstate", handleLocationChange);
+  if (typeof GM_registerMenuCommand === "function") {
+    GM_registerMenuCommand("\u751F\u6210\u5206\u4EAB\u6D77\u62A5", () => {
+      if (!readPageIdentity()) return;
+      openPanel();
+    });
+  }
 })();

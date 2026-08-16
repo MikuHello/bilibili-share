@@ -1,8 +1,8 @@
 # Bilibili Share
 
-A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. The current default A “报刊信息卡” path pauses the current standard video, captures one stable generation snapshot, validates an anonymous `b23.tv` short-link redirect, previews a local poster, and downloads the same poster as a 1080×1440 PNG.
+A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. It pauses the current standard video, captures one stable generation snapshot, validates an anonymous `b23.tv` short-link redirect, and previews a local A “报刊信息卡” or B “沉浸封面” poster. Export actions cover copy poster, download 1080×1440 PNG, copy share text, and best-effort combined poster-and-text clipboard copy.
 
-The poster, QR code, and visible link always use one share target. A validated `b23.tv` URL is preferred; any request, response, or redirect mismatch falls back visibly to the canonical `https://www.bilibili.com/video/<BV>/` URL without blocking preview or download. Image copy, share text, part/timestamp targets, and theme B remain in later tickets under [`.scratch/bilibili-share-poster/issues/`](.scratch/bilibili-share-poster/issues/).
+The poster, QR code, and visible link always use one share target. A validated `b23.tv` URL is preferred; any request, response, or redirect mismatch falls back visibly to the canonical `https://www.bilibili.com/video/<BV>/` URL without blocking preview or download. Part sharing and timestamp sharing build `?p=` and `?t=` targets from the same snapshot; detailed and Markdown share text are independent options and are remembered between panels. Current ticket state lives in [`.scratch/bilibili-share-poster/issues/`](.scratch/bilibili-share-poster/issues/).
 
 ## Install
 

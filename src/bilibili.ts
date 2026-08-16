@@ -1,5 +1,6 @@
 import type { GenerationSnapshot, StatisticValue } from "./domain";
 import {
+  buildCanonicalShareTarget,
   parseCanonicalVideoIdentity,
   parseShortLinkResponse,
   selectShareTarget,
@@ -21,6 +22,7 @@ interface VideoApiData {
   pic?: unknown;
   owner?: { name?: unknown };
   stat?: { view?: unknown; like?: unknown; coin?: unknown; favorite?: unknown };
+  pages?: Array<{ page?: unknown; part?: unknown }>;
 }
 
 interface VideoApiResponse {
@@ -35,6 +37,8 @@ interface PublicVideoInformation {
   title: string;
   coverUrl: string;
   uploader: string;
+  partTitle: string | null;
+  partIdentified: boolean;
   stats: GenerationSnapshot["stats"];
 }
 
@@ -172,7 +176,25 @@ function statistic(value: unknown): StatisticValue {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
 }
 
-export function parseVideoApiResponse(payload: unknown, expectedBvid: string): PublicVideoInformation {
+function parsePartInformation(
+  pages: unknown,
+  expectedPartNumber: number,
+): { partTitle: string | null; partIdentified: boolean } {
+  if (!Array.isArray(pages)) return { partTitle: null, partIdentified: false };
+  const current = pages.find(
+    (page): page is { page?: unknown; part?: unknown } =>
+      typeof page === "object" && page !== null && (page as { page?: unknown }).page === expectedPartNumber,
+  );
+  if (!current) return { partTitle: null, partIdentified: false };
+  const partTitle = typeof current.part === "string" && current.part.trim() ? current.part.trim() : null;
+  return { partTitle, partIdentified: true };
+}
+
+export function parseVideoApiResponse(
+  payload: unknown,
+  expectedBvid: string,
+  expectedPartNumber = 1,
+): PublicVideoInformation {
   const response = payload as VideoApiResponse;
   if (response?.code !== 0 || !response.data) {
     const detail = typeof response?.message === "string" && response.message ? `：${response.message}` : "";
@@ -182,12 +204,15 @@ export function parseVideoApiResponse(payload: unknown, expectedBvid: string): P
   const data = response.data;
   const bvid = requiredText(data.bvid, "BV 标识");
   if (bvid.toUpperCase() !== expectedBvid.toUpperCase()) throw new Error("视频身份校验失败，请重试。");
+  const partInformation = parsePartInformation(data.pages, expectedPartNumber);
   return {
     bvid,
     aid: requiredPositiveInteger(data.aid, "AV 标识"),
     coverUrl: requiredText(data.pic, "视频封面"),
     title: requiredText(data.title, "视频标题"),
     uploader: requiredText(data.owner?.name, "UP 主"),
+    partTitle: partInformation.partTitle,
+    partIdentified: partInformation.partIdentified,
     stats: {
       views: statistic(data.stat?.view),
       likes: statistic(data.stat?.like),
@@ -218,10 +243,6 @@ async function blobToImageDataUrl(blob: Blob): Promise<string> {
   return dataUrl;
 }
 
-export function canonicalShareTarget(bvid: string): string {
-  return `https://www.bilibili.com/video/${bvid}/`;
-}
-
 export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise<GenerationSnapshot> {
   const endpoint = `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(capture.bvid)}`;
   let payload: unknown;
@@ -231,7 +252,7 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
     if (error instanceof SyntaxError) throw new Error("Bilibili 返回了无法解析的视频信息，请重试。");
     throw error;
   }
-  const video = parseVideoApiResponse(payload, capture.bvid);
+  const video = parseVideoApiResponse(payload, capture.bvid, capture.partNumber);
   const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
 
   return {
@@ -241,14 +262,18 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
     title: video.title,
     uploader: video.uploader,
     partNumber: capture.partNumber,
+    partTitle: video.partTitle,
+    partIdentified: video.partIdentified,
     playbackSeconds: capture.playbackSeconds,
     wasPlaying: capture.wasPlaying,
     stats: video.stats,
   };
 }
 
-async function fetchValidatedShareTarget(snapshot: GenerationSnapshot): Promise<ShareTargetSelection> {
-  const canonicalTarget = canonicalShareTarget(snapshot.bvid);
+export async function fetchValidatedShareTarget(
+  snapshot: GenerationSnapshot,
+  canonicalTarget: string,
+): Promise<ShareTargetSelection> {
   try {
     const form = new URLSearchParams({
       build: "6500300",
@@ -282,7 +307,12 @@ async function fetchValidatedShareTarget(snapshot: GenerationSnapshot): Promise<
 
 export async function fetchGenerationResources(capture: PlaybackCapture): Promise<GenerationResources> {
   const snapshot = await fetchGenerationSnapshot(capture);
-  const targetSelection = await fetchValidatedShareTarget(snapshot);
+  const canonicalTarget = buildCanonicalShareTarget(
+    snapshot.bvid,
+    snapshot,
+    { partShare: false, timestampShare: false },
+  );
+  const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
   return { snapshot, targetSelection };
 }
 
