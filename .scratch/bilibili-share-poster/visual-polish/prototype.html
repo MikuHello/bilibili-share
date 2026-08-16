@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bilibili Share · Visual Polish Prototype</title>
+<style>
+  :root {
+    --font: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --paper: #f7f5f0;
+    --paper-2: #f1eee7;
+    --ink: #1a1a1a;
+    --muted: #6b6b66;
+    --line: #d8d3c9;
+    --accent: #1a1a1a;
+    --accent-ink: #ffffff;
+    --danger: #a3452f;
+    --warn-bg: #f4e9d7;
+    --warn-ink: #5f431f;
+    --ok: #3d6b47;
+    --glass: rgba(20, 22, 24, 0.52);
+    --shadow: 0 24px 70px rgba(0, 0, 0, 0.28), 0 2px 10px rgba(0, 0, 0, 0.12);
+    --radius: 16px;
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--font);
+    background: #e8e9eb;
+    color: var(--ink);
+    padding: 24px 24px 118px;
+  }
+  body.dark-bg { background: #141517; }
+  button { font: inherit; }
+
+  .demo-shell { max-width: 1180px; margin: 0 auto; transition: width 220ms var(--ease); }
+  .demo-shell.narrow { max-width: 760px; }
+
+  /* page toolbar simulation */
+  .page-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 18px; margin-bottom: 22px;
+    background: #ffffff; border: 1px solid #e7e8ea; border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(20, 20, 20, 0.05);
+  }
+  .page-bar .brand { font-weight: 800; letter-spacing: 0.02em; }
+  .toolbar { display: flex; align-items: center; gap: 10px; }
+  .toolbar-item {
+    display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 10px;
+    border: 1px solid transparent; border-radius: 8px; background: transparent;
+    color: #61666d; cursor: pointer; font-size: 13px; transition: background 140ms var(--ease), color 140ms var(--ease), border-color 140ms var(--ease);
+  }
+  .toolbar-item:hover { background: #f1f2f3; color: #18191c; }
+  .toolbar-item .icon { width: 18px; height: 18px; }
+  .toolbar-entry {
+    border-color: #e3e5e7; background: #ffffff; color: #18191c; font-weight: 600;
+  }
+  .toolbar-entry:hover { border-color: #c9cdd2; background: #fafafa; }
+  .theme-b .toolbar-entry { background: #18191c; border-color: #18191c; color: #ffffff; }
+  .theme-b .toolbar-entry:hover { background: #343a40; border-color: #343a40; }
+
+  /* panel overlay */
+  .overlay {
+    position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 28px;
+    background: rgba(16, 17, 18, 0.42);
+    opacity: 0; pointer-events: none; transition: opacity 220ms var(--ease);
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .panel {
+    width: min(1020px, calc(100vw - 56px)); max-height: calc(100vh - 72px);
+    overflow: hidden; border-radius: var(--radius); background: var(--paper-2);
+    box-shadow: var(--shadow); transform: translateY(10px) scale(0.985); opacity: 0;
+    transition: transform 220ms var(--ease), opacity 220ms var(--ease), background 180ms var(--ease), color 180ms var(--ease);
+  }
+  .overlay.open .panel { transform: translateY(0) scale(1); opacity: 1; }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between; min-height: 54px; padding: 0 18px;
+    border-bottom: 1px solid var(--line); background: var(--paper); transition: background 180ms var(--ease), border-color 180ms var(--ease);
+  }
+  .eyebrow { font: 700 10px/1 ui-monospace, Menlo, monospace; letter-spacing: 0.22em; color: var(--muted); }
+  .icon-btn {
+    display: inline-grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--muted); cursor: pointer; transition: background 140ms var(--ease), color 140ms var(--ease);
+  }
+  .icon-btn:hover { background: rgba(0, 0, 0, 0.06); color: var(--ink); }
+  .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .panel-body { display: grid; grid-template-columns: 44% 56%; min-height: 600px; }
+  .preview-side { display: grid; place-items: center; padding: 26px; background: #e5e1d8; transition: background 180ms var(--ease); }
+  .poster-stage { position: relative; width: min(100%, 352px); aspect-ratio: 3/4; filter: drop-shadow(0 18px 28px rgba(0,0,0,0.22)); transition: transform 240ms var(--ease), opacity 200ms var(--ease); }
+  .poster-stage.switching { opacity: 0; transform: translateY(8px); }
+  .controls-side { display: flex; flex-direction: column; gap: 14px; padding: 18px 22px 20px; overflow: auto; background: var(--paper); transition: background 180ms var(--ease), color 180ms var(--ease); }
+
+  .segmented { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: rgba(0,0,0,0.04); }
+  .segmented button {
+    display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 0; border-radius: 7px;
+    background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: background 160ms var(--ease), color 160ms var(--ease), box-shadow 160ms var(--ease);
+  }
+  .segmented button.active { background: var(--accent); color: var(--accent-ink); box-shadow: 0 2px 8px rgba(0,0,0,0.16); }
+
+  .options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 8px;
+    border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--muted);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: background 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease);
+  }
+  .pill:hover { border-color: #a9a59b; }
+  .pill.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .pill .icon { width: 15px; height: 15px; }
+
+  .text-preview {
+    max-height: 92px; overflow: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px;
+    background: #ffffff; color: #4b4944; font: 12px/1.65 var(--mono); white-space: pre-wrap; word-break: break-all;
+  }
+  .fallback { padding: 9px 11px; border-left: 3px solid #9a6528; border-radius: 6px; background: var(--warn-bg); color: var(--warn-ink); font-size: 12px; line-height: 1.5; }
+
+  .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .action {
+    position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    height: 56px; border: 1px solid var(--line); border-radius: 10px; background: #ffffff; color: #55524c;
+    font-size: 11px; cursor: pointer; transition: background 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease);
+  }
+  .action:hover { border-color: #a9a59b; color: var(--ink); transform: translateY(-1px); }
+  .action.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .action.primary:hover { filter: brightness(1.08); }
+  .action .icon { width: 19px; height: 19px; }
+  .action::after {
+    content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translate(-50%, 4px);
+    padding: 5px 8px; border-radius: 6px; background: rgba(18,18,18,0.88); color: #fff; font-size: 11px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 140ms var(--ease), transform 140ms var(--ease); z-index: 3;
+  }
+  .action:hover::after, .action:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+
+  .status { min-height: 20px; font-size: 12px; color: var(--ok); opacity: 0; transform: translateY(3px); transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
+  .status.show { opacity: 1; transform: translateY(0); }
+  .status.error { color: var(--danger); }
+
+  /* poster A */
+  .poster { position: relative; width: 100%; aspect-ratio: 3/4; overflow: hidden; border: 1px solid #b7b4ac; background: var(--paper); color: var(--ink); font-size: 0; }
+  .poster-a { padding: 16px 18px 15px; display: flex; flex-direction: column; }
+  .poster-a .mast { display: flex; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid var(--ink); }
+  .poster-a .mast b { font: 800 11px/1 var(--font); letter-spacing: 0.08em; }
+  .poster-a .mast span { font: 600 8px/1 var(--mono); letter-spacing: 0.16em; color: var(--muted); }
+  .cover { position: relative; height: 182px; margin: 10px 0 12px; overflow: hidden; border: 1px solid #77736b; }
+  .cover .art { width: 100%; height: 100%; object-fit: cover; }
+  .cover .missing { width: 100%; height: 100%; display: grid; place-items: center; background: repeating-linear-gradient(135deg, #ece8df 0 8px, #e2ddd2 8px 16px); color: #8b877e; font: 700 8px/1 var(--mono); letter-spacing: 0.14em; }
+  .poster-a .title { display: -webkit-box; overflow: hidden; font-size: 19px; line-height: 1.28; font-weight: 800; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .poster-a .meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; color: #55524c; font-size: 10px; }
+  .poster-a .ids { flex: none; font: 600 9px/1 var(--mono); }
+  .poster-a .tags { display: flex; align-items: center; gap: 6px; margin-top: 8px; min-height: 16px; }
+  .chip { max-width: 76%; overflow: hidden; padding: 3px 8px; border-radius: 3px; background: var(--ink); color: var(--paper); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+  .time { margin-left: auto; font: 700 10px/1 var(--mono); }
+  .poster-a .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 12px; border-top: 2px solid var(--ink); border-bottom: 1px solid #aaa69d; }
+  .poster-a .stat { padding: 8px 4px 7px; text-align: center; border-right: 1px solid #c6c2b9; }
+  .poster-a .stat:last-child { border-right: 0; }
+  .poster-a .stat b, .poster-a .stat span { display: block; }
+  .poster-a .stat b { font: 800 15px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .poster-a .stat span { margin-top: 5px; color: var(--muted); font-size: 8px; letter-spacing: 0.14em; }
+  .poster-a .dest { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; margin-top: auto; padding-top: 12px; }
+  .qr { width: 72px; height: 72px; padding: 4px; background: #fff; border: 1px solid #ddd9cf; }
+  .dest .label { display: block; margin-bottom: 6px; color: var(--muted); font: 600 8px/1 var(--mono); letter-spacing: 0.14em; }
+  .dest .link { display: block; overflow-wrap: anywhere; font: 700 9px/1.45 var(--mono); word-break: break-all; }
+
+  /* poster B */
+  .poster-b { background: #000; color: #fff; }
+  .poster-b .bg { position: absolute; inset: 0; background: radial-gradient(120% 80% at 70% 20%, #4d6b8c 0%, #1e2f3f 48%, #111419 100%); }
+  .poster-b .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.28) 38%, rgba(0,0,0,0.86) 78%, rgba(0,0,0,0.94) 94%); }
+  .poster-b .topline { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; gap: 8px; }
+  .poster-b .b-chip { max-width: 76%; overflow: hidden; padding: 4px 9px; border: 1px solid rgba(255,255,255,0.32); border-radius: 14px; background: rgba(0,0,0,0.55); color: #fff; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; backdrop-filter: blur(2px); }
+  .poster-b .b-time { margin-left: auto; font: 700 10px/1 var(--mono); }
+  .poster-b .bottom { position: absolute; inset: auto 14px 14px; }
+  .poster-b .title { display: -webkit-box; overflow: hidden; color: #fff; font-size: 19px; line-height: 1.4; font-weight: 800; text-shadow: 0 2px 12px rgba(0,0,0,0.7); -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  .poster-b .up { margin-top: 8px; color: rgba(255,255,255,0.9); font-size: 10px; font-weight: 600; }
+  .poster-b .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; padding: 9px 12px; border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); }
+  .poster-b .stat { text-align: center; }
+  .poster-b .stat b, .poster-b .stat span { display: block; }
+  .poster-b .stat b { color: #fff; font: 800 12px/1 var(--mono); }
+  .poster-b .stat span { margin-top: 3px; color: rgba(255,255,255,0.62); font-size: 8px; letter-spacing: 0.1em; }
+  .poster-b .ids { margin-top: 8px; color: rgba(255,255,255,0.6); font: 600 9px/1 var(--mono); text-align: center; letter-spacing: 0.08em; }
+  .poster-b .dest { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .poster-b .qr { width: 64px; height: 64px; padding: 4px; border-radius: 5px; background: #fff; }
+  .poster-b .link { display: block; overflow-wrap: anywhere; color: #fff; font: 700 9px/1.45 var(--mono); word-break: break-all; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+  .poster-b .link-label { display: block; margin-bottom: 5px; color: rgba(255,255,255,0.58); font: 600 8px/1 var(--mono); letter-spacing: 0.14em; }
+
+  /* direction B immersive panel */
+  .dir-b .panel-body { grid-template-columns: 1fr; min-height: 0; }
+  .dir-b .panel { width: min(780px, calc(100vw - 56px)); background: #18191c; color: #f1f2f3; }
+  .dir-b .panel-head { background: #101113; border-bottom-color: #2e3135; }
+  .dir-b .panel-head .eyebrow, .dir-b .panel-head .icon-btn { color: #c9cdd2; }
+  .dir-b .preview-side { padding: 22px 22px 10px; background: #18191c; }
+  .dir-b .poster-stage { width: min(100%, 340px); }
+  .dir-b .controls-side { flex-direction: row; align-items: center; gap: 10px; padding: 10px 16px 14px; background: #18191c; border-top: 1px solid #2e3135; overflow: visible; }
+  .dir-b .segmented { border-color: #3d4045; background: #232528; }
+  .dir-b .segmented button { color: #c9cdd2; }
+  .dir-b .segmented button.active { background: #f1f2f3; color: #18191c; }
+  .dir-b .options { flex: none; grid-template-columns: repeat(4, auto); }
+  .dir-b .pill { border-color: #3d4045; color: #c9cdd2; background: #232528; }
+  .dir-b .pill.on { background: #f1f2f3; border-color: #f1f2f3; color: #18191c; }
+  .dir-b .text-preview { background: #101113; border-color: #2e3135; color: #e8e9eb; max-height: 56px; }
+  .dir-b .actions { flex: none; grid-template-columns: repeat(4, auto); }
+  .dir-b .action { background: #232528; border-color: #3d4045; color: #e8e9eb; }
+  .dir-b .action.primary { background: #f1f2f3; border-color: #f1f2f3; color: #18191c; }
+  .dir-b .status { color: #7dd98f; }
+  .dir-b.max .panel-body { display: block; }
+  .dir-b.max .preview-side { padding: 18px; }
+  .dir-b.max .poster-stage { width: min(100%, 430px); margin: 0 auto; }
+  .dir-b.max .controls-side { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); border-radius: 14px; border: 1px solid #2e3135; background: rgba(20,22,24,0.82); backdrop-filter: blur(14px); }
+  .dir-b.max .panel { position: relative; background: #0d0e10; }
+
+  /* direction C compact card */
+  .dir-c .overlay { place-items: start end; padding: 74px 20px 20px; }
+  .dir-c .panel { width: 400px; background: #ffffff; }
+  .dir-c .panel-body { grid-template-columns: 1fr; min-height: 0; }
+  .dir-c .preview-side { padding: 16px; background: #f2f3f5; }
+  .dir-c .poster-stage { width: min(100%, 300px); }
+  .dir-c .controls-side { padding: 14px 16px 16px; background: #ffffff; }
+  .dir-c .options { grid-template-columns: repeat(4, 1fr); }
+  .dir-c .text-preview { background: #fafbfc; }
+  .dir-c .actions { grid-template-columns: repeat(4, 1fr); }
+
+  .theme-b .panel { background: #18191c; color: #f1f2f3; }
+  .theme-b .panel-head { background: #101113; border-bottom-color: #2e3135; }
+  .theme-b .panel-head .eyebrow, .theme-b .panel-head .icon-btn { color: #c9cdd2; }
+  .theme-b .preview-side { background: #222529; }
+  .theme-b .controls-side { background: #18191c; }
+  .theme-b .segmented { border-color: #3d4045; background: #232528; }
+  .theme-b .segmented button { color: #c9cdd2; }
+  .theme-b .segmented button.active { background: #f1f2f3; color: #18191c; }
+  .theme-b .pill { border-color: #3d4045; background: #232528; color: #c9cdd2; }
+  .theme-b .pill.on { background: #f1f2f3; border-color: #f1f2f3; color: #18191c; }
+  .theme-b .text-preview { background: #101113; border-color: #2e3135; color: #e8e9eb; }
+  .theme-b .action { background: #232528; border-color: #3d4045; color: #e8e9eb; }
+  .theme-b .action.primary { background: #f1f2f3; border-color: #f1f2f3; color: #18191c; }
+  .theme-b .eyebrow, .theme-b .status { color: #a7c8ae; }
+
+  .reduced .panel, .reduced .poster-stage, .reduced .segmented button,
+  .reduced .pill, .reduced .action, .reduced .status, .reduced .toolbar-item,
+  .reduced .overlay { transition: none; }
+  .reduced .overlay, .reduced .panel { opacity: 1; transform: none; }
+
+  @media (max-width: 820px) {
+    .panel-body { grid-template-columns: 1fr; }
+    .preview-side { padding: 20px; }
+    .poster-stage { width: min(100%, 320px); }
+    .options { grid-template-columns: repeat(2, 1fr); }
+    .actions { grid-template-columns: repeat(2, 1fr); }
+    .dir-b .controls-side { flex-wrap: wrap; }
+  }
+
+  /* demo switcher */
+  .switcher {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 40;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: calc(100vw - 24px);
+    padding: 9px 11px; border: 1px solid #34383d; border-radius: 14px; background: rgba(24,25,28,0.92);
+    color: #f1f2f3; font-size: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); backdrop-filter: blur(12px);
+  }
+  .switcher b { margin-right: 4px; font-size: 11px; }
+  .switcher button {
+    height: 30px; padding: 0 10px; border: 1px solid #3d4045; border-radius: 8px; background: #232528;
+    color: #c9cdd2; cursor: pointer; font-size: 11px; transition: background 140ms var(--ease), color 140ms var(--ease);
+  }
+  .switcher button.on, .switcher button:hover { background: #f1f2f3; color: #18191c; }
+  .switcher .hint { width: 100%; color: #9499a0; font-size: 10px; text-align: center; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-poster" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16l3.2-3.4 2.4 2.4 1.8-1.9 2.6 2.7"/><circle cx="8.5" cy="8.5" r="1.2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></symbol>
+  <symbol id="i-copy-text" viewBox="0 0 24 24"><path d="M8 9h8"/><path d="M8 13h5"/><rect x="4" y="4" width="16" height="16" rx="2"/></symbol>
+  <symbol id="i-combined" viewBox="0 0 24 24"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M6 8h8M6 12h5"/><path d="M17 9v11a2 2 0 0 1-2 2H8"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-detail" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/><path d="m16 13 2 2 4-4"/></symbol>
+  <symbol id="i-markdown" viewBox="0 0 24 24"><path d="M5 16V8l3 5 3-5v8"/><path d="M15 8h4l-4 4 4 4h-4"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-max" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></symbol>
+</svg>
+
+<div class="demo-shell" id="shell">
+  <div class="page-bar" id="pageBar">
+    <span class="brand">bilibili · demo toolbar</span>
+    <div class="toolbar">
+      <button class="toolbar-item"><svg class="icon"><use href="#i-copy"/></svg>点赞</button>
+      <button class="toolbar-item"><svg class="icon"><use href="#i-download"/></svg>投币</button>
+      <button class="toolbar-item"><svg class="icon"><use href="#i-copy-text"/></svg>收藏</button>
+      <button class="toolbar-item" id="officialShare"><svg class="icon"><use href="#i-combined"/></svg>分享</button>
+      <button class="toolbar-item toolbar-entry" id="entry"><svg class="icon"><use href="#i-poster"/></svg>生成海报</button>
+    </div>
+  </div>
+  <div style="display:flex; gap:14px; align-items:flex-start; justify-content:center; color:#777; font-size:13px; text-align:center">
+    <div style="flex:1; min-height:120px; display:grid; place-items:center; border:1px dashed #cfd1d4; border-radius:14px">页面内容占位<br>这里只用于看入口和面板比例</div>
+  </div>
+</div>
+
+<div class="overlay open" id="overlay">
+  <section class="panel" id="panel">
+    <header class="panel-head">
+      <span class="eyebrow">BILIBILI SHARE</span>
+      <button class="icon-btn" id="close" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="panel-body">
+      <div class="preview-side">
+        <div class="poster-stage" id="posterStage"></div>
+      </div>
+      <div class="controls-side">
+        <div class="segmented" id="themeSeg">
+          <button data-theme="A" class="active">A 报刊</button>
+          <button data-theme="B">B 沉浸</button>
+        </div>
+        <div class="options" id="options">
+          <button class="pill" data-option="part" aria-pressed="false"><svg class="icon"><use href="#i-list"/></svg>分P</button>
+          <button class="pill" data-option="time" aria-pressed="false"><svg class="icon"><use href="#i-clock"/></svg>时间戳</button>
+          <button class="pill" data-option="detail" aria-pressed="false"><svg class="icon"><use href="#i-detail"/></svg>详细</button>
+          <button class="pill" data-option="markdown" aria-pressed="false"><svg class="icon"><use href="#i-markdown"/></svg>Markdown</button>
+        </div>
+        <div class="fallback" id="fallback" hidden>短链不可用，已使用规范长链接。二维码、可见链接与文案仍指向同一视频。</div>
+        <pre class="text-preview" id="textPreview"></pre>
+        <div class="actions">
+          <button class="action primary" id="copyPoster" data-tip="复制海报"><svg class="icon"><use href="#i-copy"/></svg><span>海报</span></button>
+          <button class="action" id="download" data-tip="下载 PNG"><svg class="icon"><use href="#i-download"/></svg><span>下载</span></button>
+          <button class="action" id="copyText" data-tip="复制文案"><svg class="icon"><use href="#i-copy-text"/></svg><span>文案</span></button>
+          <button class="action" id="combined" data-tip="组合复制"><svg class="icon"><use href="#i-combined"/></svg><span>组合</span></button>
+        </div>
+        <div class="status" id="status" role="status"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="switcher">
+  <b>方向</b>
+  <button data-dir="B" class="on">B 沉浸舞台</button>
+  <button data-dir="A">A 精修工作台</button>
+  <button data-dir="C">C 轻量卡片</button>
+  <b>场景</b>
+  <button data-scene="default" class="on">默认</button>
+  <button data-scene="b">B 主题</button>
+  <button data-scene="long">长标题/长链</button>
+  <button data-scene="missing">缺失统计</button>
+  <button data-scene="multi">多分P</button>
+  <button data-scene="nocover">封面缺失</button>
+  <button data-scene="narrow">窄视口</button>
+  <button id="maxB">B 最大化</button>
+  <button id="reduced">reduced-motion</button>
+  <div class="hint">三个方向 · 原型仅用于视觉选择，不包含真实网络、二维码或剪贴板</div>
+</div>
+
+<script>
+const state = {
+  dir: 'B', theme: 'A', scene: 'default', maxB: false, reduced: false,
+  part: false, time: false, detail: false, markdown: false,
+  statusTimer: null
+};
+
+const scenes = {
+  default: {
+    title: '4K 风光延时摄影 · 川西环线', up: '山野记事簿',
+    views: '1234.6万', likes: '28.4万', coins: '9.3万', favs: '15.1万',
+    part: '', time: '', link: 'https://b23.tv/AukAWWk', fallback: false, cover: true
+  },
+  b: {
+    title: '4K 风光延时摄影 · 川西环线', up: '山野记事簿',
+    views: '1234.6万', likes: '28.4万', coins: '9.3万', favs: '15.1万',
+    part: '', time: '', link: 'https://b23.tv/AukAWWk', fallback: false, cover: true
+  },
+  long: {
+    title: '【超长标题测试】这是一段非常非常长的视频标题，用来验证两行或三行省略是否稳定不破坏版面', up: '一个名字非常长的UP主_官方频道',
+    views: '1234.6万', likes: '28.4万', coins: '9.3万', favs: '15.1万',
+    part: '', time: '', link: 'https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723', fallback: true, cover: true
+  },
+  missing: {
+    title: '缺失统计时保持版面稳定', up: '数据观察员',
+    views: '1234.6万', likes: '--', coins: '--', favs: '15.1万',
+    part: '', time: '', link: 'https://b23.tv/AukAWWk', fallback: false, cover: true
+  },
+  multi: {
+    title: '4K 风光延时摄影 · 川西环线', up: '山野记事簿',
+    views: '1234.6万', likes: '28.4万', coins: '9.3万', favs: '15.1万',
+    part: 'P2 · 稻城亚丁星空', time: '01:02:03', link: 'https://b23.tv/AukAWWk', fallback: false, cover: true
+  },
+  nocover: {
+    title: '旧视频 · 封面暂时不可用', up: '碧诗',
+    views: '545.0万', likes: '27.5万', coins: '4.1万', favs: '12.6万',
+    part: '', time: '', link: 'https://b23.tv/AukAWWk', fallback: false, cover: false
+  },
+  narrow: {
+    title: '4K 风光延时摄影 · 川西环线', up: '山野记事簿',
+    views: '1234.6万', likes: '28.4万', coins: '9.3万', favs: '15.1万',
+    part: 'P2 · 稻城亚丁星空', time: '01:02:03', link: 'https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723', fallback: true, cover: true
+  }
+};
+
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+const icon = (id) => `<svg class="icon"><use href="#${id}"/></svg>`;
+
+function qrSvg(size = 72) {
+  return `<svg class="qr" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <rect width="${size}" height="${size}" fill="#fff"/>
+    <path fill="#111" d="M8 8h18v18H8zM10 10v14h14V10zM14 14h6v6h-6zM46 8h18v18H46zM48 10v14h14V10zM52 14h6v6h-6zM8 46h18v18H8zM10 48v14h14V48zM14 52h6v6h-6z"/>
+    <path stroke="#111" stroke-width="3" d="M34 14h4v4h-4zM40 18h4v4h-4zM34 26h4v4h-4zM44 30h6M14 34h4v4h-4zM20 38h4v4h-4zM30 34h8M48 38h4M36 48h8v8h-8zM50 46h6v6h-6zM60 30h4v10M30 60h12"/>
+  </svg>`;
+}
+
+function coverArt() {
+  const scene = scenes[state.scene];
+  if (scene.cover === false) {
+    return `<div class="missing">COVER UNAVAILABLE</div>`;
+  }
+  return `<svg class="art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b5876"/><stop offset=".55" stop-color="#4e4376"/><stop offset="1" stop-color="#d76d77"/>
+    </linearGradient></defs>
+    <rect width="1600" height="900" fill="url(#g1)"/>
+    <circle cx="1180" cy="240" r="280" fill="rgba(255,255,255,.16)"/>
+    <circle cx="340" cy="700" r="360" fill="rgba(0,0,0,.18)"/>
+    <path d="M0 640 380 410 680 570 1010 360 1300 530 1600 390V900H0Z" fill="rgba(255,255,255,.10)"/>
+  </svg>`;
+}
+
+function renderPoster() {
+  const s = scenes[state.scene];
+  const theme = state.theme;
+  const part = state.part && s.part ? `<span class="chip">${s.part}</span>` : '';
+  const time = state.time && s.time ? `<span class="time">${s.time}</span>` : '';
+  const stats = ['播放','点赞','投币','收藏'].map((label,i) => `<div class="stat"><b>${[s.views,s.likes,s.coins,s.favs][i]}</b><span>${label}</span></div>`).join('');
+  const stage = $('#posterStage');
+  if (theme === 'A') {
+    stage.innerHTML = `<article class="poster poster-a">
+      <div class="mast"><b>BILIBILI 分享海报</b><span>SHARE CARD</span></div>
+      <div class="cover">${coverArt()}</div>
+      <div class="title">${s.title}</div>
+      <div class="meta"><span>UP 主 · ${s.up}</span><span class="ids">BV1xx411c7mD · AV2</span></div>
+      <div class="tags">${part}${time}</div>
+      <div class="stats">${stats}</div>
+      <div class="dest">${qrSvg()}<div><span class="label">扫码观看 · SHARE TARGET</span><span class="link">${s.link}</span></div></div>
+    </article>`;
+  } else {
+    stage.innerHTML = `<article class="poster poster-b">
+      <div class="bg"></div>
+      <div class="topline">${part ? `<span class="b-chip">${s.part}</span>` : ''}${time ? `<span class="b-chip b-time">${s.time}</span>` : ''}</div>
+      <div class="bottom">
+        <div class="title">${s.title}</div>
+        <div class="up">UP 主 · ${s.up}</div>
+        <div class="stats">${stats}</div>
+        <div class="ids">BV1xx411c7mD · AV2</div>
+        <div class="dest">${qrSvg(64)}<div><span class="link-label">扫码观看 · SHARE TARGET</span><span class="link">${s.link}</span></div></div>
+      </div>
+    </article>`;
+  }
+}
+
+function renderText() {
+  const s = scenes[state.scene];
+  const compact = `${s.title}（UP主：${s.up}）\n${s.link}`;
+  if (state.detail) {
+    $('#textPreview').textContent = `${s.title}\nUP主：${s.up}\nBV/AV：BV1xx411c7mD · AV2\n播放：${s.views}　点赞：${s.likes}　投币：${s.coins}　收藏：${s.favs}${state.part && s.part ? `\n分P：${s.part}` : ''}${state.time && s.time ? `\n时间：${s.time}` : ''}\n${s.link}`;
+  } else if (state.markdown) {
+    $('#textPreview').textContent = `[${s.title}](${s.link})\n${s.link}`;
+  } else {
+    $('#textPreview').textContent = compact;
+  }
+}
+
+function renderFallback() { $('#fallback').hidden = scenes[state.scene].fallback === false; }
+
+function applyTheme(animate = true) {
+  document.body.classList.toggle('theme-b', state.theme === 'B');
+  $$('#themeSeg button').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
+  const stage = $('#posterStage');
+  if (animate) {
+    stage.classList.add('switching');
+    setTimeout(() => { renderPoster(); stage.classList.remove('switching'); }, 100);
+  } else {
+    renderPoster();
+  }
+}
+
+function applyDirection() {
+  const overlay = $('#overlay');
+  const panel = $('#panel');
+  overlay.classList.remove('dir-a','dir-b','dir-c');
+  panel.classList.remove('dir-a','dir-b','dir-c');
+  overlay.classList.add('dir-' + state.dir.toLowerCase());
+  panel.classList.add('dir-' + state.dir.toLowerCase());
+  if (state.dir === 'B') {
+    overlay.classList.toggle('max', state.maxB);
+    $('#pageBar').style.display = state.maxB ? 'none' : 'flex';
+    overlay.classList.remove('open'); requestAnimationFrame(() => overlay.classList.add('open'));
+  } else {
+    overlay.classList.remove('max');
+    $('#pageBar').style.display = 'flex';
+  }
+  renderPoster();
+}
+
+function applyScene() {
+  const s = scenes[state.scene];
+  if (state.scene === 'b') state.theme = 'B';
+  if (state.scene === 'narrow') $('#shell').classList.add('narrow'); else $('#shell').classList.remove('narrow');
+  state.part = state.scene === 'multi' || state.scene === 'narrow';
+  state.time = state.scene === 'multi' || state.scene === 'narrow';
+  $$('#options .pill').forEach(b => b.classList.toggle('on', state[b.dataset.option]));
+  renderFallback(); renderText(); renderPoster();
+}
+
+function showStatus(message, error = false) {
+  const el = $('#status');
+  clearTimeout(state.statusTimer);
+  el.textContent = message; el.classList.toggle('error', error); el.classList.add('show');
+  state.statusTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+$('#entry').addEventListener('click', () => { $('#overlay').classList.add('open'); });
+$('#close').addEventListener('click', () => { $('#overlay').classList.remove('open'); });
+$('#overlay').addEventListener('click', e => { if (e.target === $('#overlay')) $('#overlay').classList.remove('open'); });
+
+$$('#themeSeg button').forEach(b => b.addEventListener('click', () => { state.theme = b.dataset.theme; applyTheme(); }));
+$$('#options .pill').forEach(b => b.addEventListener('click', () => {
+  state[b.dataset.option] = !state[b.dataset.option];
+  b.classList.toggle('on', state[b.dataset.option]);
+  b.setAttribute('aria-pressed', String(state[b.dataset.option]));
+  renderText(); renderPoster();
+}));
+$('#copyPoster').addEventListener('click', () => showStatus('海报已复制。'));
+$('#download').addEventListener('click', () => showStatus('PNG 已下载。'));
+$('#copyText').addEventListener('click', () => showStatus('文案已复制。'));
+$('#combined').addEventListener('click', () => showStatus('已写入兼容格式，接收方可能只取其中一种。'));
+
+$$('.switcher [data-dir]').forEach(b => b.addEventListener('click', () => {
+  $$('.switcher [data-dir]').forEach(x => x.classList.remove('on')); b.classList.add('on'); state.dir = b.dataset.dir; applyDirection();
+}));
+$$('.switcher [data-scene]').forEach(b => b.addEventListener('click', () => {
+  $$('.switcher [data-scene]').forEach(x => x.classList.remove('on')); b.classList.add('on'); state.scene = b.dataset.scene; applyScene(); if (state.scene !== 'b') state.theme = 'A'; applyTheme(false);
+}));
+$('#maxB').addEventListener('click', () => { state.maxB = !state.maxB; $('#maxB').classList.toggle('on', state.maxB); applyDirection(); });
+$('#reduced').addEventListener('click', () => { state.reduced = !state.reduced; $('#reduced').classList.toggle('on', state.reduced); document.body.classList.toggle('reduced', state.reduced); });
+
+applyScene();
+applyDirection();
+applyTheme(false);
+</script>
+</body>
+</html>
