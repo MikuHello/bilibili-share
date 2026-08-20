@@ -99,7 +99,7 @@ export const STYLES = String.raw`
 .bsp-panel.bsp-theme-b .bsp-close:hover { background:#2e3135; }
 .bsp-panel.bsp-theme-b .bsp-preview-pane { border-right-color:#2e3135; background:var(--bsp-stage); }
 .bsp-panel.bsp-theme-b .bsp-controls { background:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-kicker, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
 .bsp-panel.bsp-theme-b .bsp-option-pill { border-color:#3d4045; background:#232528; color:#c9cdd2; }
 .bsp-panel.bsp-theme-b .bsp-option-pill.is-on { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
 .bsp-panel.bsp-theme-b .bsp-text-card { border-color:#2e3135; background:#101113; color:#e8e9eb; }
