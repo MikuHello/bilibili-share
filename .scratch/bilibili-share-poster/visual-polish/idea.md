@@ -73,3 +73,28 @@ Empty. Direction approved. Proceeding to `to-spec`, motion document, and `to-tic
 ## Scope gate
 
 This directory captures unsettled input. Do not publish a visual spec or production implementation until the design tree frontier is empty and the owner approves a direction.
+
+## Settled decisions (round 5, 2026-08-20 — focused re-grill after prototype drift review)
+
+Trigger: reviewing the throwaway `prototype.html` surfaced drift from the approved spec. Confirmed `src/ui/` (uncommitted) already follows the spec, not the prototype, so most drift is prototype-only. Two genuine open decisions re-grilled and resolved.
+
+### Action affordance — three actions, not four
+
+- The four-action grid ("复制海报 / 下载 PNG / 复制文案 / 组合复制") fails the "first glance I know what it does" test. Root cause: the four actions are not coequal, and one of them (plain-text copy) doesn't deserve a slot in the action row.
+- Resolved structure: the action row has **three** actions —
+  1. **复制海报** (poster PNG → clipboard) — emphasized primary action.
+  2. **下载** — icon-only download of the same PNG; no "下载 PNG" text label, the download icon is self-explanatory.
+  3. **海报+文案** (renamed from 组合复制; image + text bundled into one rich clipboard write).
+- **复制文案 is removed from the action row.** Plain-text copy becomes a small copy icon in the top-right corner of the share-text preview card (inline affordance, not a row button), because the text is already visible/selectable in that card.
+- Naming direction locked: `海报+文案` for the combined action (zero ambiguity). Specific short labels for the other two and exact icon choices are deferred to the implementation design pass — the spec records the rule (semantic labels, primary highlighted, rest outlined, icon-only download) not the literal strings.
+- The four underlying clipboard outputs (PNG, file download, text, image+text HTML) are unchanged; only the UI mapping changes.
+
+### Debug mode — not in production
+
+- The prototype's scenario switchers (long/short link, missing stats, multi-part, cover missing, narrow viewport, reduced-motion, B maximized) are QA scaffolding from the direction-selection phase, not product UI.
+- Resolved: a **debug drawer** exists only in development builds; **the production userscript does not ship it at all**. It is gated by a build/dev flag, not a hidden toggle reachable by real users.
+- Product panel contains zero debug controls.
+
+## Frontier status (updated 2026-08-20)
+
+Empty again. Both open points resolved. Proceeding to patch the approved spec and the affected tickets; unaffected tickets (01, 04, 05) continue as-is.
