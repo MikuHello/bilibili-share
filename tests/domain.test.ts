@@ -15,6 +15,7 @@ const completeSnapshot: GenerationSnapshot = {
   bvid: "BV1xx411c7mD",
   aid: 170001,
   coverDataUrl: "data:image/png;base64,cover",
+  coverUnavailable: false,
   title: "一个用于测试的标准视频标题",
   uploader: "测试 UP 主",
   partNumber: 1,

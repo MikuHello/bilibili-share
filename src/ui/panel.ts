@@ -1,5 +1,4 @@
 import { toPng } from "html-to-image";
-import QRCode from "qrcode";
 
 import {
   captureAndPausePlayback,
@@ -8,7 +7,7 @@ import {
   readPageIdentity,
   restorePlayback,
   type PlaybackCapture,
-} from "./bilibili";
+} from "../bilibili";
 import {
   copyCombinedPosterAndText,
   copyPosterPngToClipboard,
@@ -16,133 +15,26 @@ import {
   describeCombinedCopyResult,
   describePosterCopyResult,
   describeTextCopyResult,
-} from "./clipboard";
-import { buildPosterFilename, buildSharePoster, type GenerationSnapshot, type SharePoster } from "./domain";
+} from "../clipboard";
+import { buildPosterFilename, buildSharePoster, type GenerationSnapshot, type SharePoster } from "../domain";
 import {
   canEnablePartShare,
   canEnableTimestampShare,
   createDefaultShareOptions,
   createPanelShareOptions,
+  loadRememberedPreferences,
   togglePartShare,
   toggleTimestampShare,
   type PosterTheme,
   type ShareOptions,
-} from "./options";
-import { buildShareText } from "./share-text";
-import { buildCanonicalShareTarget, type ShareTargetSelection } from "./share-target";
-
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function appendRow(parent: HTMLElement, label: string, value: string): void {
-  const row = element("div", "bsp-snapshot-row");
-  row.append(element("span", "", label), element("strong", "", value));
-  parent.append(row);
-}
-
-function posterQrDataUrl(shareTarget: string): Promise<string> {
-  return QRCode.toDataURL(shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
-}
-
-async function createPoster(model: SharePoster): Promise<HTMLElement> {
-  if (model.theme === "B") return createPosterB(model);
-  const poster = element("article", "bsp-poster");
-  poster.setAttribute("aria-label", `${model.title} 分享海报`);
-
-  const masthead = element("header", "bsp-masthead");
-  masthead.append(element("strong", "", "BILIBILI 分享海报"), element("span", "", "SHARE CARD"));
-  const cover = element("img", "bsp-cover");
-  cover.src = model.coverDataUrl;
-  cover.alt = "";
-  const title = element("h4", "bsp-poster-title", model.title);
-  title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-  const byline = element("div", "bsp-byline");
-  byline.append(element("strong", "", `UP 主 · ${model.uploader}`), element("span", "bsp-identity", model.identity)); const partTimestamp = element("div", "bsp-part-timestamp"); if (model.partLabel) partTimestamp.append(element("span", "bsp-part-chip", model.partLabel)); if (model.timestampLabel) partTimestamp.append(element("span", "bsp-time-chip", model.timestampLabel));
-
-  const stats = element("div", "bsp-stats");
-  for (const statistic of model.stats) {
-    const cell = element("div", "bsp-stat");
-    cell.append(element("strong", "", statistic.value), element("span", "", statistic.label));
-    stats.append(cell);
-  }
-
-  const destination = element("div", "bsp-destination");
-  const qr = element("img", "bsp-qr");
-  qr.alt = `二维码：${model.shareTarget}`;
-  qr.src = await posterQrDataUrl(model.shareTarget);
-  const linkArea = element("div");
-  const visibleLink = element("span", "bsp-link", model.shareTarget);
-  visibleLink.style.overflowWrap = model.linkWrap;
-  linkArea.append(element("span", "bsp-link-label", "扫码观看 · SHARE TARGET"), visibleLink);
-  destination.append(qr, linkArea);
-
-  poster.classList.add(`bsp-theme-${model.theme.toLowerCase()}`);
-  poster.append(masthead);
-  const content = {
-    cover,
-    title,
-    "uploader-identity": byline,
-      "part-timestamp": partTimestamp,
-    stats,
-    destination,
-  } satisfies Record<SharePoster["contentOrder"][number], HTMLElement>;
-  for (const section of model.contentOrder) poster.append(content[section]);
-  poster.append(element("span", "bsp-archive", `ARCHIVE · ${model.identity}`));
-  return poster;
-}
-
-async function createPosterB(model: SharePoster): Promise<HTMLElement> {
-  const poster = element("article", "bsp-poster bsp-poster-b");
-  poster.setAttribute("aria-label", `${model.title} 分享海报`);
-
-  const cover = element("img", "bsp-cover-b");
-  cover.src = model.coverDataUrl;
-  cover.alt = "";
-  poster.append(cover);
-
-  const scrim = element("div", "bsp-b-scrim");
-  const content = element("div", "bsp-b-content");
-  content.append(scrim);
-
-  const topLine = element("div", "bsp-b-topline");
-  if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));
-  if (model.timestampLabel) topLine.append(element("span", "bsp-b-time-chip", model.timestampLabel));
-  content.append(topLine);
-
-  const bottom = element("div", "bsp-b-bottom");
-  const title = element("h4", "bsp-b-title", model.title);
-  title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-  title.style.fontSize = `${model.titleFontSize}px`;
-  bottom.append(title, element("div", "bsp-b-up", `UP 主 · ${model.uploader}`));
-
-  const stats = element("div", "bsp-b-stats");
-  for (const statistic of model.stats) {
-    const cell = element("div", "bsp-b-stat");
-    cell.append(element("strong", "", statistic.value), element("span", "", statistic.label));
-    stats.append(cell);
-  }
-  bottom.append(stats, element("div", "bsp-b-identity", model.identity));
-
-  const destination = element("div", "bsp-b-destination");
-  const qr = element("img", "bsp-b-qr");
-  qr.alt = `二维码：${model.shareTarget}`;
-  qr.src = await posterQrDataUrl(model.shareTarget);
-  const linkSide = element("div", "bsp-b-link-side");
-  const visibleLink = element("span", "bsp-b-link", model.shareTarget);
-  visibleLink.style.overflowWrap = model.linkWrap;
-  linkSide.append(element("span", "bsp-b-link-label", "扫码观看 · SHARE TARGET"), visibleLink);
-  destination.append(qr, linkSide);
-  bottom.append(destination);
-  content.append(bottom);
-  poster.append(content);
-  return poster;
-}
-
-
+} from "../options";
+import { buildShareText } from "../share-text";
+import { buildCanonicalShareTarget, type ShareTargetSelection } from "../share-target";
+import { element } from "./dom";
+import { setEntryTheme } from "./entry";
+import { createIcon, type IconName } from "./icons";
+import { createPoster } from "./posters";
+import { selectThemeSurfaceClasses } from "./tokens";
 export class SharePanel {
   private readonly backdrop = element("div", "bsp-backdrop");
   private readonly panel = element("section", "bsp-panel");
@@ -158,6 +50,7 @@ export class SharePanel {
   private loading = false;
   private updating = false;
   private exportButtons: HTMLButtonElement[] = [];
+  private statusTimer = 0;
   private readonly onClosed: () => void;
 
   constructor(onClosed: () => void) {
@@ -169,16 +62,13 @@ export class SharePanel {
     this.panel.tabIndex = -1;
 
     const heading = element("header", "bsp-panel-head");
-    const headingText = element("div");
-    headingText.append(element("p", "bsp-kicker", "BILIBILI · POSTER WORKSPACE"));
-    const title = element("h2", "bsp-panel-title", "生成分享海报");
-    title.id = "bsp-dialog-title";
-    headingText.append(title);
+    const eyebrow = element("span", "bsp-eyebrow", "BILIBILI SHARE");
+    eyebrow.id = "bsp-dialog-title";
     const close = element("button", "bsp-close", "×");
     close.type = "button";
     close.setAttribute("aria-label", "关闭分享面板");
     close.addEventListener("click", () => this.close(true));
-    heading.append(headingText, close);
+    heading.append(eyebrow, close);
 
     const workspace = element("div", "bsp-workspace");
     workspace.append(this.previewPane, this.controls);
@@ -191,9 +81,7 @@ export class SharePanel {
   }
 
   open(): void {
-    this.options = createPanelShareOptions(
-      typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null,
-    );
+    this.options = createPanelShareOptions(loadRememberedPreferences());
     document.body.append(this.backdrop);
     document.addEventListener("keydown", this.onKeyDown, true);
     this.renderLoading();
@@ -215,9 +103,13 @@ export class SharePanel {
     if (this.closed) return;
     this.closed = true;
     document.removeEventListener("keydown", this.onKeyDown, true);
-    this.backdrop.remove();
-    if (restore && this.capture) restorePlayback(this.capture);
-    this.onClosed();
+    this.backdrop.classList.add("bsp-backdrop-closing");
+    this.panel.classList.add("bsp-panel-closing");
+    window.setTimeout(() => {
+      this.backdrop.remove();
+      if (restore && this.capture) restorePlayback(this.capture);
+      this.onClosed();
+    }, 170);
   }
 
   private onKeyDown(event: KeyboardEvent): void {
@@ -276,28 +168,18 @@ export class SharePanel {
     frame.append(poster);
     this.previewPane.replaceChildren(frame); this.applyThemeClasses(model.theme); this.updating = false; this.exportButtons = []; if (!this.snapshot) return; const snapshot = this.snapshot;
 
-    const snapshotBox = element("div", "bsp-snapshot");
-    appendRow(snapshotBox, "主题", model.theme === "A" ? "A · 报刊信息卡" : "B · 沉浸封面");
-    appendRow(snapshotBox, "链接", targetSelection.source === "short" ? "已校验短链" : "规范长链接（降级）");
-    appendRow(snapshotBox, "落点", model.shareTarget);
-    appendRow(snapshotBox, "画布", "1080 × 1440 PNG");
-    appendRow(snapshotBox, "播放状态", "已为生成暂停"); const shareText = buildShareText(snapshot, model.shareTarget, this.options); const textPreview = element("pre", "bsp-text-preview", shareText); textPreview.setAttribute("aria-label", "分享文案预览");
-    const actions = element("div", "bsp-actions"); const help = element("p", "bsp-help", "预览、复制和下载使用同一已生成海报；关闭面板后，仅恢复此前正在播放的同一视频。"); const status: HTMLElement = element("p", "bsp-status");
-    const download = element("button", "bsp-button bsp-button-secondary", "下载 PNG");
-    download.type = "button";
-    download.addEventListener("click", () => void this.download(download, status));
+    const shareText = buildShareText(snapshot, model.shareTarget, this.options);
+    const textPreview = this.renderTextPreview(shareText);
+    const actions = element("div", "bsp-actions");
+    const status: HTMLElement = element("p", "bsp-status");
     status.setAttribute("role", "status");
-    const copy = element("button", "bsp-button bsp-button-primary", "复制海报"); copy.type = "button"; copy.addEventListener("click", () => void this.copyPoster(copy, status, help)); const copyTextButton = element("button", "bsp-button bsp-button-secondary", "复制文案"); copyTextButton.type = "button"; copyTextButton.addEventListener("click", () => void this.copyShareText(copyTextButton, shareText, status, help)); const combinedButton = element("button", "bsp-button bsp-button-secondary", "组合复制"); combinedButton.type = "button"; combinedButton.addEventListener("click", () => void this.copyCombined(combinedButton, shareText, status, help));
-    actions.append(copy, download, copyTextButton, combinedButton, help, status); this.exportButtons.push(copy, download, copyTextButton, combinedButton); const themePicker = this.renderThemePicker(); const optionControls = this.renderShareOptions();
-    const summary =
-      targetSelection.source === "short"
-        ? "本次使用经过落点校验的 b23.tv 短链接。二维码与可见链接指向完全相同的视频。"
-        : "短链未通过校验，本次已统一改用规范长链接。二维码、可见链接与下载海报仍然可用。";
-    const content: HTMLElement[] = [
-      element("p", "bsp-step", "02 / DEFAULT SHARE"),
-      element("h3", "", "海报已经生成"),
-      element("p", "", summary),
-    ];
+    const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(copy, status));
+    const download = this.actionButton("download", "下载 PNG", "下载 PNG", false, () => void this.download(download, status));
+    const copyTextButton = this.actionButton("copy-text", "复制文案", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
+    const combinedButton = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(combinedButton, shareText, status));
+    actions.append(copy, download, copyTextButton, combinedButton, status); this.exportButtons.push(copy, download, copyTextButton, combinedButton);
+
+    const content: HTMLElement[] = [this.renderThemePicker(), this.renderShareOptions()];
     if (targetSelection.source === "canonical-fallback") {
       const fallback = element("div", "bsp-fallback");
       fallback.setAttribute("role", "status");
@@ -307,25 +189,61 @@ export class SharePanel {
       );
       content.push(fallback);
     }
-    content.push(themePicker, optionControls, textPreview, snapshotBox, actions);
+    content.push(textPreview, actions);
     this.controls.replaceChildren(...content);
   }
 
+  private renderTextPreview(shareText: string): HTMLElement {
+    const lines = shareText.split("\n");
+    const link = lines.pop() ?? "";
+    const body = lines.join("\n");
+    const card = element("div", "bsp-text-card");
+    card.setAttribute("aria-label", "分享文案预览");
+    card.append(element("span", "bsp-text-card-body", body), element("span", "bsp-text-card-link", link));
+    return card;
+  }
+
+  private actionButton(
+    iconName: IconName,
+    label: string,
+    tip: string,
+    primary: boolean,
+    onClick: () => void,
+  ): HTMLButtonElement {
+    const button = element("button", primary ? "bsp-action bsp-action-primary" : "bsp-action", label);
+    button.type = "button";
+    button.dataset.tip = tip;
+    button.setAttribute("aria-label", tip);
+    button.prepend(createIcon(iconName));
+    button.addEventListener("click", onClick);
+    return button;
+  }
+
+  private showStatus(message: string, error = false): void {
+    const status = this.controls.querySelector<HTMLElement>(".bsp-status");
+    if (!status) return;
+    clearTimeout(this.statusTimer);
+    status.textContent = message;
+    status.classList.toggle("is-error", error);
+    status.classList.add("is-show");
+    this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), error ? 0 : 3000);
+  }
+
   private optionToggle(
+    iconName: IconName,
     labelText: string,
-    description: string,
     checked: boolean,
     disabled: boolean,
     onChange: (checked: boolean) => void,
-  ): HTMLLabelElement {
-    const label = element("label", "bsp-option");
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = checked;
-    input.disabled = disabled;
-    input.addEventListener("change", () => onChange(input.checked));
-    label.append(input, element("span", "bsp-option-label", labelText), element("small", "", description));
-    return label;
+  ): HTMLButtonElement {
+    const button = element("button", "bsp-option-pill", labelText);
+    button.type = "button";
+    button.disabled = disabled;
+    button.setAttribute("aria-pressed", String(checked));
+    button.classList.toggle("is-on", checked);
+    button.addEventListener("click", () => onChange(button.getAttribute("aria-pressed") !== "true"));
+    button.prepend(createIcon(iconName));
+    return button;
   }
 
   private renderShareOptions(): HTMLElement {
@@ -334,18 +252,18 @@ export class SharePanel {
     if (!snapshot) return container;
 
     container.append(
-      this.optionToggle("分P分享", "分享当前分P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("list", "分P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
         void checked;
         this.applyOptions(togglePartShare(this.options, snapshot));
       }),
-      this.optionToggle("时间戳", "从当前播放位置开始", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("clock", "时间戳", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
       }),
-      this.optionToggle("详细文案", "统计与身份信息", this.options.detailedText, this.updating, (checked) => {
+      this.optionToggle("detail", "详细", this.options.detailedText, this.updating, (checked) => {
         this.applyOptions({ ...this.options, detailedText: checked });
       }),
-      this.optionToggle("Markdown", "Markdown 格式文案", this.options.markdownText, this.updating, (checked) => {
+      this.optionToggle("markdown", "Markdown", this.options.markdownText, this.updating, (checked) => {
         this.applyOptions({ ...this.options, markdownText: checked });
       }),
     );
@@ -362,21 +280,22 @@ export class SharePanel {
   }
 
   private renderThemePicker(): HTMLElement {
-    const picker = element("div", "bsp-theme-picker");
+    const picker = element("div", "bsp-theme-segment");
     picker.setAttribute("role", "group");
     picker.setAttribute("aria-label", "海报主题");
-    const label = element("span", "bsp-theme-picker-label", "海报主题");
-    const buttonA = element("button", "bsp-theme-button", "A 报刊信息卡");
+    const buttonA = element("button", "bsp-theme-option", "A 报刊");
     buttonA.type = "button";
     buttonA.disabled = this.updating;
+    buttonA.setAttribute("aria-pressed", String(this.options.theme === "A"));
     buttonA.classList.toggle("is-active", this.options.theme === "A");
     buttonA.addEventListener("click", () => this.applyTheme("A"));
-    const buttonB = element("button", "bsp-theme-button", "B 沉浸封面");
+    const buttonB = element("button", "bsp-theme-option", "B 沉浸");
     buttonB.type = "button";
     buttonB.disabled = this.updating;
+    buttonB.setAttribute("aria-pressed", String(this.options.theme === "B"));
     buttonB.classList.toggle("is-active", this.options.theme === "B");
     buttonB.addEventListener("click", () => this.applyTheme("B"));
-    picker.append(label, buttonA, buttonB);
+    picker.append(buttonA, buttonB);
     return picker;
   }
 
@@ -391,24 +310,39 @@ export class SharePanel {
     if (!this.snapshot || !this.targetSelection || this.updating) return;
     this.updating = true;
     this.setExportButtonsDisabled(true);
-    this.showUpdatingOverlay();
     try {
       const model = buildSharePoster(this.snapshot, this.targetSelection.shareTarget, this.options);
       const poster = await createPoster(model);
       if (this.closed) return;
       this.model = model;
       this.poster = poster;
-      this.renderReady(model, poster, this.targetSelection);
+      this.applyThemeClasses(model.theme);
+      await this.crossfadePoster(poster);
+      if (!this.closed) this.renderReady(model, poster, this.targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     }
   }
 
+  private async crossfadePoster(nextPoster: HTMLElement): Promise<void> {
+    const oldFrame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
+    const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
+    nextFrame.append(nextPoster);
+    this.previewPane.append(nextFrame);
+    requestAnimationFrame(() => {
+      oldFrame?.classList.add("bsp-preview-frame-exit");
+      nextFrame.classList.add("is-visible");
+    });
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    oldFrame?.remove();
+    nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
+  }
+
   private applyThemeClasses(theme: PosterTheme): void {
-    const isB = theme === "B";
-    this.backdrop.classList.toggle("bsp-theme-b", isB);
-    this.panel.classList.toggle("bsp-theme-b", isB);
-    document.getElementById("bsp-entry")?.classList.toggle("bsp-entry-b", isB);
+    const surface = selectThemeSurfaceClasses(theme);
+    this.backdrop.classList.toggle("bsp-theme-b", surface.panel !== null);
+    this.panel.classList.toggle("bsp-theme-b", surface.panel !== null);
+    setEntryTheme(theme);
   }
 
 
@@ -497,59 +431,55 @@ export class SharePanel {
     return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor });
   }
 
-  private async copyPoster(button: HTMLButtonElement, status: HTMLElement, help: HTMLElement): Promise<void> {
+  private async copyPoster(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
     button.disabled = true;
-    button.textContent = "正在复制海报…";
     status.textContent = "";
     try {
       const dataUrl = await this.posterPngDataUrl();
       const outcome = await copyPosterPngToClipboard(dataUrl);
       const feedback = describePosterCopyResult(outcome);
-      status.textContent = feedback.statusMessage;
-      help.textContent = feedback.helpMessage;
+      this.showStatus(
+        outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
+        outcome.status !== "copied",
+      );
     } catch {
-      status.textContent = "海报复制失败。";
-      help.textContent = "请改用“下载 PNG”保存图片。";
+      this.showStatus("海报复制失败。请改用“下载 PNG”保存图片。", true);
     } finally {
       button.disabled = false;
-      button.textContent = "复制海报";
     }
   }
 
-  private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement, help: HTMLElement): Promise<void> {
+  private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
     button.disabled = true;
-    button.textContent = "正在复制文案…";
     status.textContent = "";
     try {
-      const feedback = describeTextCopyResult(await copyShareTextToClipboard(text));
-      status.textContent = feedback.statusMessage;
-      help.textContent = feedback.helpMessage;
+      const outcome = await copyShareTextToClipboard(text);
+      const feedback = describeTextCopyResult(outcome);
+      this.showStatus(
+        outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
+        outcome.status !== "copied",
+      );
     } catch {
-      status.textContent = "文案复制失败。";
-      help.textContent = "文案仍在上方，可手动全选复制。";
+      this.showStatus("文案复制失败。文案仍在上方，可手动全选复制。", true);
     } finally {
       button.disabled = false;
-      button.textContent = "复制文案";
     }
   }
 
-  private async copyCombined(button: HTMLButtonElement, text: string, status: HTMLElement, help: HTMLElement): Promise<void> {
+  private async copyCombined(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
     button.disabled = true;
-    button.textContent = "正在组合复制…";
     status.textContent = "";
     try {
       const dataUrl = await this.posterPngDataUrl();
-      const feedback = describeCombinedCopyResult(await copyCombinedPosterAndText(dataUrl, text));
-      status.textContent = feedback.statusMessage;
-      help.textContent = feedback.helpMessage;
+      const outcome = await copyCombinedPosterAndText(dataUrl, text);
+      const feedback = describeCombinedCopyResult(outcome);
+      this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
     } catch {
-      status.textContent = "组合复制失败。";
-      help.textContent = "海报请使用“复制海报”或“下载 PNG”；文案仍在上方，可手动全选复制。";
+      this.showStatus("组合复制失败。海报请使用“复制海报”或“下载 PNG”；文案仍在上方，可手动全选复制。", true);
     } finally {
       button.disabled = false;
-      button.textContent = "组合复制";
     }
   }
 
@@ -559,24 +489,18 @@ export class SharePanel {
   private async download(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.snapshot || !this.model) return;
     button.disabled = true;
-    button.textContent = "正在生成 PNG…";
     status.textContent = "";
     try {
       const dataUrl = await this.posterPngDataUrl();
-      // 尺寸与导出比例统一由 posterPngDataUrl 解析。
-      // 海报画布比例校验与 toPng 导出集中在 posterPngDataUrl。
-      // 复制与下载均从同一 poster 节点生成同一尺寸 PNG。
-      // dataUrl 来自共享的 posterPngDataUrl。
       const link = document.createElement("a");
       link.download = buildPosterFilename(this.snapshot.bvid, new Date(), this.options.partShare ? this.snapshot.partNumber : null);
       link.href = dataUrl;
       link.click();
-      status.textContent = "PNG 已下载。";
+      this.showStatus("PNG 已下载。");
     } catch {
-      status.textContent = "PNG 生成失败，预览仍保留；请重试下载。";
+      this.showStatus("PNG 生成失败，预览仍保留；请重试下载。", true);
     } finally {
       button.disabled = false;
-      button.textContent = "下载 PNG";
     }
   }
 }

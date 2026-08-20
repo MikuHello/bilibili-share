@@ -7,6 +7,7 @@ export interface GenerationSnapshot {
   bvid: string;
   aid: number;
   coverDataUrl: string;
+  coverUnavailable: boolean;
   title: string;
   uploader: string;
   partNumber: number;
@@ -28,6 +29,7 @@ export interface SharePoster {
   theme: PosterTheme;
   dimensions: { width: 1080; height: 1440 };
   coverDataUrl: string;
+  coverUnavailable: boolean;
   title: string;
   uploader: string;
   identity: string;
@@ -116,7 +118,7 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
 
 export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: string, options: ShareOptions): SharePoster {
   const title = requireText(snapshot.title, "视频标题");
-  const coverDataUrl = requireText(snapshot.coverDataUrl, "视频封面");
+  const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "视频封面");
   const uploader = requireText(snapshot.uploader, "UP 主");
   const bvid = requireText(snapshot.bvid, "BV 标识");
   if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少AV 标识");
@@ -132,6 +134,7 @@ export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: stri
     theme,
     dimensions: { width: 1080, height: 1440 },
     coverDataUrl,
+    coverUnavailable: snapshot.coverUnavailable,
     title,
     uploader,
     identity: `${bvid} · AV${snapshot.aid}`,

@@ -2349,6 +2349,9 @@
       }
     };
   }
+  function isUsableCover(width, height) {
+    return Number.isFinite(width) && Number.isFinite(height) && width >= 160 && height >= 90;
+  }
   async function blobToImageDataUrl(blob) {
     if (blob.size === 0 || blob.type && !blob.type.startsWith("image/")) {
       throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
@@ -2366,8 +2369,16 @@
     } catch {
       throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6CD5\u89E3\u7801\uFF0C\u8BF7\u91CD\u8BD5\u3002");
     }
-    if (image.naturalWidth <= 0 || image.naturalHeight <= 0) throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    if (!isUsableCover(image.naturalWidth, image.naturalHeight)) throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u5C3A\u5BF8\u4E0D\u53EF\u7528\uFF0C\u8BF7\u91CD\u8BD5\u3002");
     return dataUrl;
+  }
+  async function loadCover(coverUrl) {
+    try {
+      const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
+      return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
+    } catch {
+      return { dataUrl: "", unavailable: true };
+    }
   }
   async function fetchGenerationSnapshot(capture) {
     const endpoint = `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(capture.bvid)}`;
@@ -2379,11 +2390,12 @@
       throw error;
     }
     const video = parseVideoApiResponse(payload, capture.bvid, capture.partNumber);
-    const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
+    const cover = await loadCover(video.coverUrl);
     return {
       bvid: video.bvid,
       aid: video.aid,
-      coverDataUrl: await blobToImageDataUrl(coverBlob),
+      coverDataUrl: cover.dataUrl,
+      coverUnavailable: cover.unavailable,
       title: video.title,
       uploader: video.uploader,
       partNumber: capture.partNumber,
@@ -2470,6 +2482,10 @@
       markdownText: remembered.markdownText
     };
   }
+  function loadRememberedPreferences() {
+    const stored = typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null;
+    return resolveRememberedPreferences(stored);
+  }
   function canEnablePartShare(context) {
     return context.partIdentified;
   }
@@ -2495,134 +2511,89 @@
     };
   }
 
-  // src/styles.ts
-  var STYLES = String.raw`
-:root { --bsp-paper:#f7f5f0; --bsp-ink:#1a1a1a; --bsp-muted:#6b6b66; }
-#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:14px; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background .15s ease,border-color .15s ease; }
-#bsp-entry:hover { background:#f7f5f0; border-color:#77756f; }
-#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:2px; }
-#bsp-entry svg { width:17px; height:17px; }
-.bsp-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:rgba(14,14,13,.68); font-family:"PingFang SC","Microsoft YaHei",sans-serif; }
-.bsp-panel { position:relative; width:min(960px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; border:1px solid #d4d0c7; border-radius:4px; background:#f1eee7; box-shadow:0 28px 80px rgba(0,0,0,.34); color:#1a1a1a; }
-.bsp-panel:focus { outline:none; }
-.bsp-panel-head { display:flex; align-items:center; justify-content:space-between; min-height:62px; padding:0 22px; border-bottom:1px solid #cbc7be; background:#faf8f3; }
-.bsp-kicker { margin:0 0 3px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.18em; text-transform:uppercase; }
-.bsp-panel-title { margin:0; font-size:18px; line-height:1.25; font-weight:650; }
-.bsp-close { appearance:none; width:36px; height:36px; border:0; border-radius:50%; background:transparent; color:#55524c; font-size:25px; line-height:1; cursor:pointer; }
-.bsp-close:hover { background:#e7e3db; }
-.bsp-workspace { display:grid; grid-template-columns:46% 54%; min-height:576px; }
-.bsp-preview-pane { display:flex; align-items:center; justify-content:center; padding:28px; border-right:1px solid #cbc7be; background:#dedad1; }
-.bsp-preview-frame { position:relative; width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); }
-.bsp-poster-updating { position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
-.bsp-loading-card { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; border:1px solid #b9b5ac; background:#f7f5f0; color:#64615b; }
-.bsp-spinner { width:28px; height:28px; margin:0 auto 14px; border:2px solid #c8c4bb; border-top-color:#1a1a1a; border-radius:50%; animation:bsp-spin .75s linear infinite; }
-@keyframes bsp-spin { to { transform:rotate(360deg); } }
-.bsp-controls { display:flex; flex-direction:column; padding:34px 36px; background:#faf8f3; }
-.bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
-.bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
-.bsp-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:20px 0 0; }
-.bsp-option { display:flex; align-items:center; gap:8px; min-height:44px; padding:8px 12px; border:1px solid #cbc7be; border-radius:3px; background:#fff; cursor:pointer; }
-.bsp-option input { margin:0; accent-color:#1a1a1a; }
-.bsp-option-label { color:#24231f; font-size:13px; font-weight:600; }
-.bsp-option small { color:#77736b; font-size:11px; }
-.bsp-option:has(input:disabled) { opacity:.55; cursor:not-allowed; }
-.bsp-option-notice { margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
-.bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
-.bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
-.bsp-fallback strong { font-size:13px; line-height:1.4; }
-.bsp-fallback span { font-size:12px; line-height:1.55; }
-.bsp-text-preview { margin:20px 0 0; padding:12px 14px; border:1px solid #cbc7be; background:#fff; color:#24231f; font:12px/1.7 ui-monospace,Menlo,monospace; white-space:pre-wrap; word-break:break-all; user-select:all; }
-.bsp-snapshot { margin:28px 0; padding:18px 0; border-top:2px solid #1a1a1a; border-bottom:1px solid #bcb8af; }
-.bsp-snapshot-row { display:flex; justify-content:space-between; gap:16px; padding:7px 0; color:#6b6861; font-size:12px; }
-.bsp-snapshot-row strong { max-width:72%; overflow:hidden; color:#24231f; font:600 12px/1.4 ui-monospace,Menlo,monospace; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-actions { margin-top:auto; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.bsp-button-primary { background:#1a1a1a; color:#fff; }
-.bsp-button-secondary { background:#fff; color:#1a1a1a; }
-.bsp-button-secondary:hover { background:#f7f5f0; }
-.bsp-button { appearance:none; width:100%; min-height:46px; border:1px solid #1a1a1a; border-radius:2px; background:#1a1a1a; color:#fff; font:650 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; }
-.bsp-button:hover { background:#353431; }
-.bsp-button:disabled { border-color:#aaa79f; background:#aaa79f; cursor:not-allowed; }
-.bsp-help { margin-top:12px !important; font-size:12px !important; }
-.bsp-error { margin:20px 0; padding:16px; border-left:3px solid #a3452f; background:#f5e6df; color:#6f2f20 !important; }
-.bsp-status { min-height:22px; margin-top:12px !important; color:#3d6b47 !important; font-size:12px !important; }
-.bsp-poster { box-sizing:border-box; position:relative; width:360px; height:480px; overflow:hidden; padding:17px 18px 16px; border:1px solid #b7b4ac; background:#f7f5f0; color:#1a1a1a; }
-.bsp-poster::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; background-image:radial-gradient(#776f62 .45px,transparent .55px); background-size:4px 4px; }
-.bsp-masthead { position:relative; z-index:1; display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid #1a1a1a; }
-.bsp-masthead strong { font:700 9px/1.1 "PingFang SC","Microsoft YaHei",sans-serif; letter-spacing:.08em; }
-.bsp-masthead span { color:#6b6b66; font:600 7px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em; }
-.bsp-cover { position:relative; z-index:1; display:block; width:100%; height:182px; margin:10px 0 13px; border:1px solid #77736b; object-fit:cover; object-position:center; }
-.bsp-poster-title { position:relative; z-index:1; display:-webkit-box; overflow:hidden; margin:0; font-size:19px; line-height:1.26; font-weight:700; letter-spacing:-.02em; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
-.bsp-byline { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; color:#55524c; font-size:9px; }
-.bsp-byline strong { min-width:0; overflow:hidden; color:#262522; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-identity { flex:none; font:600 7.5px/1 ui-monospace,Menlo,monospace; }
-.bsp-part-timestamp { position:relative; z-index:1; display:flex; align-items:center; gap:6px; margin-top:7px; min-height:14px; }
-.bsp-part-chip { max-width:82%; overflow:hidden; padding:2px 7px; border:1px solid #77736b; background:#f0ede6; color:#24231f; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-time-chip { margin-left:auto; color:#1a1a1a; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:13px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
-.bsp-stat { padding:8px 5px 7px; border-right:1px solid #c6c2b9; }
-.bsp-stat:last-child { border-right:0; }
-.bsp-stat strong,.bsp-stat span { display:block; }
-.bsp-stat strong { white-space:nowrap; font:750 clamp(14px,4.3vw,16px)/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; letter-spacing:-.025em; }
-.bsp-stat span { margin-top:5px; color:#6b6b66; font-size:7px; letter-spacing:.18em; }
-.bsp-destination { position:relative; z-index:1; display:grid; grid-template-columns:78px 1fr; gap:13px; align-items:center; margin-top:13px; }
-.bsp-qr { box-sizing:border-box; display:block; width:78px; height:78px; background:#fff; }
-.bsp-link-label { display:block; margin-bottom:7px; color:#6b6b66; font-size:7px; letter-spacing:.17em; }
-.bsp-link { display:block; overflow-wrap:anywhere; color:#1a1a1a; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; }
-.bsp-archive { position:absolute; right:18px; bottom:7px; z-index:1; color:#8b877e; font:600 6px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; }
-.bsp-theme-picker { display:flex; align-items:center; gap:8px; margin-top:18px; }
-.bsp-theme-picker-label { margin-right:4px; color:#77736b; font-size:12px; font-weight:600; }
-.bsp-theme-button { appearance:none; min-height:32px; padding:0 12px; border:1px solid #cbc7be; border-radius:3px; background:#fff; color:#55524c; font-size:12px; cursor:pointer; }
-.bsp-theme-button.is-active { border-color:#1a1a1a; background:#1a1a1a; color:#fff; font-weight:600; }
-#bsp-entry.bsp-entry-b { background:#18191c; border-color:#18191c; color:#fff; }
-#bsp-entry.bsp-entry-b:hover { background:#343a40; border-color:#343a40; }
-.bsp-backdrop.bsp-theme-b { background:rgba(5,6,8,.78); }
-.bsp-panel.bsp-theme-b { border-color:#3d4045; background:#18191c; color:#f1f2f3; }
-.bsp-panel.bsp-theme-b .bsp-panel-head { border-bottom-color:#2e3135; background:#101113; }
-.bsp-panel.bsp-theme-b .bsp-panel-title { color:#fff; }
-.bsp-panel.bsp-theme-b .bsp-close { color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-close:hover { background:#2e3135; }
-.bsp-panel.bsp-theme-b .bsp-preview-pane { border-right-color:#2e3135; background:#222529; }
-.bsp-panel.bsp-theme-b .bsp-controls { background:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-kicker, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-option { border-color:#3d4045; background:#232528; }
-.bsp-panel.bsp-theme-b .bsp-option-label { color:#fff; }
-.bsp-panel.bsp-theme-b .bsp-option small { color:#9aa0a6; }
-.bsp-panel.bsp-theme-b .bsp-text-preview { border-color:#2e3135; background:#101113; color:#e8e9eb; }
-.bsp-panel.bsp-theme-b .bsp-snapshot { border-top-color:#f1f2f3; border-bottom-color:#3d4045; }
-.bsp-panel.bsp-theme-b .bsp-snapshot-row { color:#b8bcc2; }
-.bsp-panel.bsp-theme-b .bsp-snapshot-row strong { color:#f1f2f3; }
-.bsp-panel.bsp-theme-b .bsp-theme-picker-label { color:#9aa0a6; }
-.bsp-panel.bsp-theme-b .bsp-theme-button { border-color:#3d4045; background:#232528; color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-theme-button.is-active { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-button-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-button-secondary { border-color:#8a9096; background:#2e3135; color:#fff; }
-.bsp-panel.bsp-theme-b .bsp-button-secondary:hover { background:#3d4045; }
-.bsp-poster.bsp-poster-b { padding:0; border:0; background:#000; color:#fff; }
-.bsp-poster-b::after { display:none; }
-.bsp-cover-b { position:absolute; inset:0; z-index:0; display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
-.bsp-b-scrim { position:absolute; inset:0; z-index:1; background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.28) 38%,rgba(0,0,0,.86) 78%,rgba(0,0,0,.94) 94%); }
-.bsp-b-content { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; padding:16px; }
-.bsp-b-topline { display:flex; align-items:center; gap:8px; min-height:24px; }
-.bsp-b-part-chip, .bsp-b-time-chip { overflow:hidden; padding:3px 9px; border:1px solid rgba(255,255,255,.32); border-radius:14px; background:rgba(0,0,0,.55); color:#fff; text-overflow:ellipsis; white-space:nowrap; backdrop-filter:blur(2px); }
-.bsp-b-part-chip { max-width:76%; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; }
-.bsp-b-time-chip { margin-left:auto; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.bsp-b-bottom { margin-top:auto; }
-.bsp-b-title { display:-webkit-box; overflow:hidden; margin:0; color:#fff; font-size:19px; font-weight:800; line-height:1.4; letter-spacing:-.02em; text-shadow:0 2px 12px rgba(0,0,0,.7); -webkit-box-orient:vertical; -webkit-line-clamp:3; }
-.bsp-b-up { margin-top:8px; overflow:hidden; color:rgba(255,255,255,.9); font-size:9px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-b-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
-.bsp-b-stat { min-width:0; text-align:center; }
-.bsp-b-stat strong, .bsp-b-stat span { display:block; }
-.bsp-b-stat strong { overflow:hidden; color:#fff; font:750 11px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-b-stat span { margin-top:3px; color:rgba(255,255,255,.62); font-size:7px; letter-spacing:.12em; }
-.bsp-b-identity { margin-top:8px; color:rgba(255,255,255,.6); font:600 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.08em; text-align:center; }
-.bsp-b-destination { display:flex; align-items:center; gap:10px; margin-top:10px; }
-.bsp-b-qr { box-sizing:border-box; flex:none; width:72px; height:72px; padding:4px; border-radius:5px; background:#fff; }
-.bsp-b-link-side { min-width:0; flex:1; }
-.bsp-b-link-label { display:block; margin-bottom:5px; color:rgba(255,255,255,.58); font-size:7px; letter-spacing:.16em; }
-.bsp-b-link { display:block; overflow-wrap:anywhere; color:#fff; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,.8); }
-@media (max-width:760px) { .bsp-workspace { grid-template-columns:1fr; } .bsp-preview-pane { border-right:0; border-bottom:1px solid #cbc7be; } .bsp-controls { min-height:360px; padding:26px 24px; } }
-@media (prefers-reduced-motion:reduce) { .bsp-spinner { animation:none; } }
-`;
+  // src/ui/icons.ts
+  var ICON_PATHS = {
+    poster: ["M4 5.5h16v13H4z", "M7 15l3.2-3.4 2.4 2.4 1.8-1.9 2.6 2.7", "M8.4 8.4h.01"],
+    copy: ["M8 8h11v11H8z", "M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"],
+    download: ["M12 3v11", "m7 10 5 5 5-5", "M4 19h16"],
+    "copy-text": ["M8 9h8", "M8 13h5", "M4 4h16v16H4z"],
+    combined: ["M3 5h12v9H3z", "M6 9h6", "M6 12h4", "M17 9v10a2 2 0 0 1-2 2H7"],
+    list: ["M8 6h12", "M8 12h12", "M8 18h12", "M4 6h.01", "M4 12h.01", "M4 18h.01"],
+    clock: ["M12 12a9 9 0 1 1 0 .01", "M12 7v5l3 2"],
+    detail: ["M4 7h16", "M4 12h10", "M4 17h16", "m16 13 2 2 4-4"],
+    markdown: ["M5 16V8l3 5 3-5v8", "M15 8h4l-4 4 4 4h-4"],
+    close: ["M6 6l12 12", "M18 6 6 18"]
+  };
+  function createIcon(name) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    for (const d of ICON_PATHS[name]) {
+      const path = document.createElementNS(svg.namespaceURI, "path");
+      path.setAttribute("d", d);
+      svg.append(path);
+    }
+    return svg;
+  }
+  function posterIcon() {
+    return createIcon("poster");
+  }
+
+  // src/ui/tokens.ts
+  function selectThemeSurfaceClasses(theme) {
+    if (theme === "B") return { panel: "bsp-theme-b", entry: "bsp-entry-b" };
+    return { panel: null, entry: null };
+  }
+
+  // src/ui/entry.ts
+  var ENTRY_ID = "bsp-entry";
+  var TOOLBAR_ANCHOR_SELECTORS = [
+    "#arc_toolbar_report .toolbar-left-item-wrap",
+    ".video-toolbar-left .toolbar-left-item-wrap",
+    ".video-toolbar-container .toolbar-left-item-wrap",
+    "#arc_toolbar_report [class*='toolbar-left-item-wrap']"
+  ];
+  var LEGACY_SHARE_WRAP_SELECTORS = "#arc_toolbar_report .video-share-wrap, .video-toolbar-left .video-share-wrap, .video-toolbar-container .video-share-wrap";
+  function findToolbarAnchor() {
+    for (const selector of TOOLBAR_ANCHOR_SELECTORS) {
+      const candidate = document.querySelector(selector);
+      if (candidate) return candidate;
+    }
+    const legacyShareWrap = document.querySelector(LEGACY_SHARE_WRAP_SELECTORS);
+    return legacyShareWrap?.parentElement ?? null;
+  }
+  function createSharePosterEntry(theme, onOpen) {
+    const button = document.createElement("button");
+    button.id = ENTRY_ID;
+    button.type = "button";
+    button.title = "\u751F\u6210\u5206\u4EAB\u6D77\u62A5";
+    button.append(posterIcon(), document.createTextNode("\u751F\u6210\u6D77\u62A5"));
+    button.addEventListener("click", onOpen);
+    const surface = selectThemeSurfaceClasses(theme);
+    if (surface.entry) button.classList.add(surface.entry);
+    return button;
+  }
+  function removeSharePosterEntry() {
+    document.getElementById(ENTRY_ID)?.remove();
+  }
+  function mountSharePosterEntry(theme, onOpen) {
+    if (document.getElementById(ENTRY_ID)) return false;
+    const anchor = findToolbarAnchor();
+    if (!anchor?.parentElement) return false;
+    anchor.insertAdjacentElement("afterend", createSharePosterEntry(theme, onOpen));
+    return true;
+  }
+  function setEntryTheme(theme) {
+    const entry = document.getElementById(ENTRY_ID);
+    if (!entry) return;
+    const surface = selectThemeSurfaceClasses(theme);
+    entry.classList.toggle("bsp-entry-b", surface.entry !== null);
+  }
 
   // node_modules/html-to-image/es/util.js
   function resolveUrl(url, baseUrl) {
@@ -3419,9 +3390,6 @@
     return canvas.toDataURL();
   }
 
-  // src/ui.ts
-  var import_qrcode = __toESM(require_browser(), 1);
-
   // src/clipboard.ts
   function browserClipboard() {
     const clipboard = navigator.clipboard;
@@ -3648,7 +3616,7 @@
   }
   function buildSharePoster(snapshot, shareTarget, options) {
     const title = requireText(snapshot.title, "\u89C6\u9891\u6807\u9898");
-    const coverDataUrl = requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
+    const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
     const uploader = requireText(snapshot.uploader, "UP \u4E3B");
     const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
     if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
@@ -3660,6 +3628,7 @@
       theme,
       dimensions: { width: 1080, height: 1440 },
       coverDataUrl,
+      coverUnavailable: snapshot.coverUnavailable,
       title,
       uploader,
       identity: `${bvid} \xB7 AV${snapshot.aid}`,
@@ -3731,18 +3700,16 @@ ${shareTarget}`;
     return buildCompactShareText(snapshot.title, snapshot.uploader, shareTarget);
   }
 
-  // src/ui.ts
+  // src/ui/dom.ts
   function element(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
     if (text !== void 0) node.textContent = text;
     return node;
   }
-  function appendRow(parent, label, value) {
-    const row = element("div", "bsp-snapshot-row");
-    row.append(element("span", "", label), element("strong", "", value));
-    parent.append(row);
-  }
+
+  // src/ui/posters.ts
+  var import_qrcode = __toESM(require_browser(), 1);
   function posterQrDataUrl(shareTarget) {
     return import_qrcode.default.toDataURL(shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
   }
@@ -3752,9 +3719,7 @@ ${shareTarget}`;
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
     const masthead = element("header", "bsp-masthead");
     masthead.append(element("strong", "", "BILIBILI \u5206\u4EAB\u6D77\u62A5"), element("span", "", "SHARE CARD"));
-    const cover = element("img", "bsp-cover");
-    cover.src = model.coverDataUrl;
-    cover.alt = "";
+    const cover = model.coverUnavailable ? element("div", "bsp-cover bsp-cover-missing", "COVER UNAVAILABLE") : Object.assign(element("img", "bsp-cover"), { src: model.coverDataUrl, alt: "" });
     const title = element("h4", "bsp-poster-title", model.title);
     title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
     const byline = element("div", "bsp-byline");
@@ -3794,10 +3759,13 @@ ${shareTarget}`;
   async function createPosterB(model) {
     const poster = element("article", "bsp-poster bsp-poster-b");
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
-    const cover = element("img", "bsp-cover-b");
-    cover.src = model.coverDataUrl;
-    cover.alt = "";
-    poster.append(cover);
+    if (model.coverUnavailable) {
+      poster.classList.add("bsp-cover-missing");
+      poster.append(element("div", "bsp-b-cover-missing", "COVER UNAVAILABLE"));
+    } else {
+      const cover = Object.assign(element("img", "bsp-cover-b"), { src: model.coverDataUrl, alt: "" });
+      poster.append(cover);
+    }
     const scrim = element("div", "bsp-b-scrim");
     const content = element("div", "bsp-b-content");
     content.append(scrim);
@@ -3831,6 +3799,8 @@ ${shareTarget}`;
     poster.append(content);
     return poster;
   }
+
+  // src/ui/panel.ts
   var SharePanel = class {
     backdrop = element("div", "bsp-backdrop");
     panel = element("section", "bsp-panel");
@@ -3846,6 +3816,7 @@ ${shareTarget}`;
     loading = false;
     updating = false;
     exportButtons = [];
+    statusTimer = 0;
     onClosed;
     constructor(onClosed) {
       this.onClosed = onClosed;
@@ -3855,16 +3826,13 @@ ${shareTarget}`;
       this.panel.setAttribute("aria-labelledby", "bsp-dialog-title");
       this.panel.tabIndex = -1;
       const heading = element("header", "bsp-panel-head");
-      const headingText = element("div");
-      headingText.append(element("p", "bsp-kicker", "BILIBILI \xB7 POSTER WORKSPACE"));
-      const title = element("h2", "bsp-panel-title", "\u751F\u6210\u5206\u4EAB\u6D77\u62A5");
-      title.id = "bsp-dialog-title";
-      headingText.append(title);
+      const eyebrow = element("span", "bsp-eyebrow", "BILIBILI SHARE");
+      eyebrow.id = "bsp-dialog-title";
       const close = element("button", "bsp-close", "\xD7");
       close.type = "button";
       close.setAttribute("aria-label", "\u5173\u95ED\u5206\u4EAB\u9762\u677F");
       close.addEventListener("click", () => this.close(true));
-      heading.append(headingText, close);
+      heading.append(eyebrow, close);
       const workspace = element("div", "bsp-workspace");
       workspace.append(this.previewPane, this.controls);
       this.panel.append(heading, workspace);
@@ -3875,9 +3843,7 @@ ${shareTarget}`;
       this.onKeyDown = this.onKeyDown.bind(this);
     }
     open() {
-      this.options = createPanelShareOptions(
-        typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null
-      );
+      this.options = createPanelShareOptions(loadRememberedPreferences());
       document.body.append(this.backdrop);
       document.addEventListener("keydown", this.onKeyDown, true);
       this.renderLoading();
@@ -3896,9 +3862,13 @@ ${shareTarget}`;
       if (this.closed) return;
       this.closed = true;
       document.removeEventListener("keydown", this.onKeyDown, true);
-      this.backdrop.remove();
-      if (restore && this.capture) restorePlayback(this.capture);
-      this.onClosed();
+      this.backdrop.classList.add("bsp-backdrop-closing");
+      this.panel.classList.add("bsp-panel-closing");
+      window.setTimeout(() => {
+        this.backdrop.remove();
+        if (restore && this.capture) restorePlayback(this.capture);
+        this.onClosed();
+      }, 170);
     }
     onKeyDown(event) {
       if (event.key === "Escape") {
@@ -3956,41 +3926,18 @@ ${shareTarget}`;
       this.exportButtons = [];
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
-      const snapshotBox = element("div", "bsp-snapshot");
-      appendRow(snapshotBox, "\u4E3B\u9898", model.theme === "A" ? "A \xB7 \u62A5\u520A\u4FE1\u606F\u5361" : "B \xB7 \u6C89\u6D78\u5C01\u9762");
-      appendRow(snapshotBox, "\u94FE\u63A5", targetSelection.source === "short" ? "\u5DF2\u6821\u9A8C\u77ED\u94FE" : "\u89C4\u8303\u957F\u94FE\u63A5\uFF08\u964D\u7EA7\uFF09");
-      appendRow(snapshotBox, "\u843D\u70B9", model.shareTarget);
-      appendRow(snapshotBox, "\u753B\u5E03", "1080 \xD7 1440 PNG");
-      appendRow(snapshotBox, "\u64AD\u653E\u72B6\u6001", "\u5DF2\u4E3A\u751F\u6210\u6682\u505C");
       const shareText = buildShareText(snapshot, model.shareTarget, this.options);
-      const textPreview = element("pre", "bsp-text-preview", shareText);
-      textPreview.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
+      const textPreview = this.renderTextPreview(shareText);
       const actions = element("div", "bsp-actions");
-      const help = element("p", "bsp-help", "\u9884\u89C8\u3001\u590D\u5236\u548C\u4E0B\u8F7D\u4F7F\u7528\u540C\u4E00\u5DF2\u751F\u6210\u6D77\u62A5\uFF1B\u5173\u95ED\u9762\u677F\u540E\uFF0C\u4EC5\u6062\u590D\u6B64\u524D\u6B63\u5728\u64AD\u653E\u7684\u540C\u4E00\u89C6\u9891\u3002");
       const status = element("p", "bsp-status");
-      const download = element("button", "bsp-button bsp-button-secondary", "\u4E0B\u8F7D PNG");
-      download.type = "button";
-      download.addEventListener("click", () => void this.download(download, status));
       status.setAttribute("role", "status");
-      const copy = element("button", "bsp-button bsp-button-primary", "\u590D\u5236\u6D77\u62A5");
-      copy.type = "button";
-      copy.addEventListener("click", () => void this.copyPoster(copy, status, help));
-      const copyTextButton = element("button", "bsp-button bsp-button-secondary", "\u590D\u5236\u6587\u6848");
-      copyTextButton.type = "button";
-      copyTextButton.addEventListener("click", () => void this.copyShareText(copyTextButton, shareText, status, help));
-      const combinedButton = element("button", "bsp-button bsp-button-secondary", "\u7EC4\u5408\u590D\u5236");
-      combinedButton.type = "button";
-      combinedButton.addEventListener("click", () => void this.copyCombined(combinedButton, shareText, status, help));
-      actions.append(copy, download, copyTextButton, combinedButton, help, status);
+      const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(copy, status));
+      const download = this.actionButton("download", "\u4E0B\u8F7D PNG", "\u4E0B\u8F7D PNG", false, () => void this.download(download, status));
+      const copyTextButton = this.actionButton("copy-text", "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyTextButton, shareText, status));
+      const combinedButton = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(combinedButton, shareText, status));
+      actions.append(copy, download, copyTextButton, combinedButton, status);
       this.exportButtons.push(copy, download, copyTextButton, combinedButton);
-      const themePicker = this.renderThemePicker();
-      const optionControls = this.renderShareOptions();
-      const summary = targetSelection.source === "short" ? "\u672C\u6B21\u4F7F\u7528\u7ECF\u8FC7\u843D\u70B9\u6821\u9A8C\u7684 b23.tv \u77ED\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u4E0E\u53EF\u89C1\u94FE\u63A5\u6307\u5411\u5B8C\u5168\u76F8\u540C\u7684\u89C6\u9891\u3002" : "\u77ED\u94FE\u672A\u901A\u8FC7\u6821\u9A8C\uFF0C\u672C\u6B21\u5DF2\u7EDF\u4E00\u6539\u7528\u89C4\u8303\u957F\u94FE\u63A5\u3002\u4E8C\u7EF4\u7801\u3001\u53EF\u89C1\u94FE\u63A5\u4E0E\u4E0B\u8F7D\u6D77\u62A5\u4ECD\u7136\u53EF\u7528\u3002";
-      const content = [
-        element("p", "bsp-step", "02 / DEFAULT SHARE"),
-        element("h3", "", "\u6D77\u62A5\u5DF2\u7ECF\u751F\u6210"),
-        element("p", "", summary)
-      ];
+      const content = [this.renderThemePicker(), this.renderShareOptions()];
       if (targetSelection.source === "canonical-fallback") {
         const fallback = element("div", "bsp-fallback");
         fallback.setAttribute("role", "status");
@@ -4000,36 +3947,63 @@ ${shareTarget}`;
         );
         content.push(fallback);
       }
-      content.push(themePicker, optionControls, textPreview, snapshotBox, actions);
+      content.push(textPreview, actions);
       this.controls.replaceChildren(...content);
     }
-    optionToggle(labelText, description, checked, disabled, onChange) {
-      const label = element("label", "bsp-option");
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = checked;
-      input.disabled = disabled;
-      input.addEventListener("change", () => onChange(input.checked));
-      label.append(input, element("span", "bsp-option-label", labelText), element("small", "", description));
-      return label;
+    renderTextPreview(shareText) {
+      const lines = shareText.split("\n");
+      const link = lines.pop() ?? "";
+      const body = lines.join("\n");
+      const card = element("div", "bsp-text-card");
+      card.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
+      card.append(element("span", "bsp-text-card-body", body), element("span", "bsp-text-card-link", link));
+      return card;
+    }
+    actionButton(iconName, label, tip, primary, onClick) {
+      const button = element("button", primary ? "bsp-action bsp-action-primary" : "bsp-action", label);
+      button.type = "button";
+      button.dataset.tip = tip;
+      button.setAttribute("aria-label", tip);
+      button.prepend(createIcon(iconName));
+      button.addEventListener("click", onClick);
+      return button;
+    }
+    showStatus(message, error = false) {
+      const status = this.controls.querySelector(".bsp-status");
+      if (!status) return;
+      clearTimeout(this.statusTimer);
+      status.textContent = message;
+      status.classList.toggle("is-error", error);
+      status.classList.add("is-show");
+      this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), error ? 0 : 3e3);
+    }
+    optionToggle(iconName, labelText, checked, disabled, onChange) {
+      const button = element("button", "bsp-option-pill", labelText);
+      button.type = "button";
+      button.disabled = disabled;
+      button.setAttribute("aria-pressed", String(checked));
+      button.classList.toggle("is-on", checked);
+      button.addEventListener("click", () => onChange(button.getAttribute("aria-pressed") !== "true"));
+      button.prepend(createIcon(iconName));
+      return button;
     }
     renderShareOptions() {
       const container = element("div", "bsp-options");
       const snapshot = this.snapshot;
       if (!snapshot) return container;
       container.append(
-        this.optionToggle("\u5206P\u5206\u4EAB", "\u5206\u4EAB\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("list", "\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
           void checked;
           this.applyOptions(togglePartShare(this.options, snapshot));
         }),
-        this.optionToggle("\u65F6\u95F4\u6233", "\u4ECE\u5F53\u524D\u64AD\u653E\u4F4D\u7F6E\u5F00\u59CB", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("clock", "\u65F6\u95F4\u6233", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
           void checked;
           this.applyOptions(toggleTimestampShare(this.options, snapshot));
         }),
-        this.optionToggle("\u8BE6\u7EC6\u6587\u6848", "\u7EDF\u8BA1\u4E0E\u8EAB\u4EFD\u4FE1\u606F", this.options.detailedText, this.updating, (checked) => {
+        this.optionToggle("detail", "\u8BE6\u7EC6", this.options.detailedText, this.updating, (checked) => {
           this.applyOptions({ ...this.options, detailedText: checked });
         }),
-        this.optionToggle("Markdown", "Markdown \u683C\u5F0F\u6587\u6848", this.options.markdownText, this.updating, (checked) => {
+        this.optionToggle("markdown", "Markdown", this.options.markdownText, this.updating, (checked) => {
           this.applyOptions({ ...this.options, markdownText: checked });
         })
       );
@@ -4043,21 +4017,22 @@ ${shareTarget}`;
       return container;
     }
     renderThemePicker() {
-      const picker = element("div", "bsp-theme-picker");
+      const picker = element("div", "bsp-theme-segment");
       picker.setAttribute("role", "group");
       picker.setAttribute("aria-label", "\u6D77\u62A5\u4E3B\u9898");
-      const label = element("span", "bsp-theme-picker-label", "\u6D77\u62A5\u4E3B\u9898");
-      const buttonA = element("button", "bsp-theme-button", "A \u62A5\u520A\u4FE1\u606F\u5361");
+      const buttonA = element("button", "bsp-theme-option", "A \u62A5\u520A");
       buttonA.type = "button";
       buttonA.disabled = this.updating;
+      buttonA.setAttribute("aria-pressed", String(this.options.theme === "A"));
       buttonA.classList.toggle("is-active", this.options.theme === "A");
       buttonA.addEventListener("click", () => this.applyTheme("A"));
-      const buttonB = element("button", "bsp-theme-button", "B \u6C89\u6D78\u5C01\u9762");
+      const buttonB = element("button", "bsp-theme-option", "B \u6C89\u6D78");
       buttonB.type = "button";
       buttonB.disabled = this.updating;
+      buttonB.setAttribute("aria-pressed", String(this.options.theme === "B"));
       buttonB.classList.toggle("is-active", this.options.theme === "B");
       buttonB.addEventListener("click", () => this.applyTheme("B"));
-      picker.append(label, buttonA, buttonB);
+      picker.append(buttonA, buttonB);
       return picker;
     }
     applyTheme(theme) {
@@ -4070,23 +4045,37 @@ ${shareTarget}`;
       if (!this.snapshot || !this.targetSelection || this.updating) return;
       this.updating = true;
       this.setExportButtonsDisabled(true);
-      this.showUpdatingOverlay();
       try {
         const model = buildSharePoster(this.snapshot, this.targetSelection.shareTarget, this.options);
         const poster = await createPoster(model);
         if (this.closed) return;
         this.model = model;
         this.poster = poster;
-        this.renderReady(model, poster, this.targetSelection);
+        this.applyThemeClasses(model.theme);
+        await this.crossfadePoster(poster);
+        if (!this.closed) this.renderReady(model, poster, this.targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
       }
     }
+    async crossfadePoster(nextPoster) {
+      const oldFrame = this.previewPane.querySelector(".bsp-preview-frame");
+      const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
+      nextFrame.append(nextPoster);
+      this.previewPane.append(nextFrame);
+      requestAnimationFrame(() => {
+        oldFrame?.classList.add("bsp-preview-frame-exit");
+        nextFrame.classList.add("is-visible");
+      });
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      oldFrame?.remove();
+      nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
+    }
     applyThemeClasses(theme) {
-      const isB = theme === "B";
-      this.backdrop.classList.toggle("bsp-theme-b", isB);
-      this.panel.classList.toggle("bsp-theme-b", isB);
-      document.getElementById("bsp-entry")?.classList.toggle("bsp-entry-b", isB);
+      const surface = selectThemeSurfaceClasses(theme);
+      this.backdrop.classList.toggle("bsp-theme-b", surface.panel !== null);
+      this.panel.classList.toggle("bsp-theme-b", surface.panel !== null);
+      setEntryTheme(theme);
     }
     applyOptions(next) {
       if (!this.snapshot || this.updating) return;
@@ -4165,63 +4154,58 @@ ${shareTarget}`;
       const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
       return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor });
     }
-    async copyPoster(button, status, help) {
+    async copyPoster(button, status) {
       if (!this.poster || !this.model) return;
       button.disabled = true;
-      button.textContent = "\u6B63\u5728\u590D\u5236\u6D77\u62A5\u2026";
       status.textContent = "";
       try {
         const dataUrl = await this.posterPngDataUrl();
         const outcome = await copyPosterPngToClipboard(dataUrl);
         const feedback = describePosterCopyResult(outcome);
-        status.textContent = feedback.statusMessage;
-        help.textContent = feedback.helpMessage;
+        this.showStatus(
+          outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
+          outcome.status !== "copied"
+        );
       } catch {
-        status.textContent = "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002";
-        help.textContent = "\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002";
+        this.showStatus("\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002", true);
       } finally {
         button.disabled = false;
-        button.textContent = "\u590D\u5236\u6D77\u62A5";
       }
     }
-    async copyShareText(button, text, status, help) {
+    async copyShareText(button, text, status) {
       button.disabled = true;
-      button.textContent = "\u6B63\u5728\u590D\u5236\u6587\u6848\u2026";
       status.textContent = "";
       try {
-        const feedback = describeTextCopyResult(await copyShareTextToClipboard(text));
-        status.textContent = feedback.statusMessage;
-        help.textContent = feedback.helpMessage;
+        const outcome = await copyShareTextToClipboard(text);
+        const feedback = describeTextCopyResult(outcome);
+        this.showStatus(
+          outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
+          outcome.status !== "copied"
+        );
       } catch {
-        status.textContent = "\u6587\u6848\u590D\u5236\u5931\u8D25\u3002";
-        help.textContent = "\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002";
+        this.showStatus("\u6587\u6848\u590D\u5236\u5931\u8D25\u3002\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
       } finally {
         button.disabled = false;
-        button.textContent = "\u590D\u5236\u6587\u6848";
       }
     }
-    async copyCombined(button, text, status, help) {
+    async copyCombined(button, text, status) {
       if (!this.poster || !this.model) return;
       button.disabled = true;
-      button.textContent = "\u6B63\u5728\u7EC4\u5408\u590D\u5236\u2026";
       status.textContent = "";
       try {
         const dataUrl = await this.posterPngDataUrl();
-        const feedback = describeCombinedCopyResult(await copyCombinedPosterAndText(dataUrl, text));
-        status.textContent = feedback.statusMessage;
-        help.textContent = feedback.helpMessage;
+        const outcome = await copyCombinedPosterAndText(dataUrl, text);
+        const feedback = describeCombinedCopyResult(outcome);
+        this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
       } catch {
-        status.textContent = "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002";
-        help.textContent = "\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002";
+        this.showStatus("\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
       } finally {
         button.disabled = false;
-        button.textContent = "\u7EC4\u5408\u590D\u5236";
       }
     }
     async download(button, status) {
       if (!this.poster || !this.snapshot || !this.model) return;
       button.disabled = true;
-      button.textContent = "\u6B63\u5728\u751F\u6210 PNG\u2026";
       status.textContent = "";
       try {
         const dataUrl = await this.posterPngDataUrl();
@@ -4229,18 +4213,167 @@ ${shareTarget}`;
         link.download = buildPosterFilename(this.snapshot.bvid, /* @__PURE__ */ new Date(), this.options.partShare ? this.snapshot.partNumber : null);
         link.href = dataUrl;
         link.click();
-        status.textContent = "PNG \u5DF2\u4E0B\u8F7D\u3002";
+        this.showStatus("PNG \u5DF2\u4E0B\u8F7D\u3002");
       } catch {
-        status.textContent = "PNG \u751F\u6210\u5931\u8D25\uFF0C\u9884\u89C8\u4ECD\u4FDD\u7559\uFF1B\u8BF7\u91CD\u8BD5\u4E0B\u8F7D\u3002";
+        this.showStatus("PNG \u751F\u6210\u5931\u8D25\uFF0C\u9884\u89C8\u4ECD\u4FDD\u7559\uFF1B\u8BF7\u91CD\u8BD5\u4E0B\u8F7D\u3002", true);
       } finally {
         button.disabled = false;
-        button.textContent = "\u4E0B\u8F7D PNG";
       }
     }
   };
 
+  // src/ui/styles.ts
+  var STYLES = String.raw`
+:root { --bsp-paper:#f7f5f0; --bsp-ink:#1a1a1a; --bsp-muted:#6b6b66; --bsp-stage:#232629; --bsp-stage-line:#2e3135; --bsp-radius:16px; }
+#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:0; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background .15s ease,border-color .15s ease; }
+#bsp-entry:hover { background:#f7f5f0; border-color:#77756f; }
+#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:2px; }
+#bsp-entry svg { width:18px; height:18px; }
+.bsp-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:rgba(14,14,13,.68); font-family:"PingFang SC","Microsoft YaHei",sans-serif; animation:bsp-backdrop-in 200ms ease-out; }
+.bsp-backdrop.bsp-backdrop-closing { opacity:0; transition:opacity 160ms ease-in-out; }
+.bsp-panel { position:relative; width:min(1040px,calc(100vw - 56px)); max-height:calc(100vh - 56px); overflow:auto; border:1px solid #d4d0c7; border-radius:var(--bsp-radius); background:#f1eee7; box-shadow:0 28px 80px rgba(0,0,0,.34); color:#1a1a1a; animation:bsp-panel-in 240ms cubic-bezier(0.22,0.61,0.36,1); }
+.bsp-panel.bsp-panel-closing { opacity:0; transform:translateY(8px) scale(0.985); transition:opacity 160ms ease-in-out,transform 160ms ease-in-out; }
+.bsp-panel:focus { outline:none; }
+.bsp-panel-head { display:flex; align-items:center; justify-content:space-between; min-height:52px; padding:0 18px; border-bottom:1px solid #cbc7be; background:#faf8f3; }
+.bsp-close { appearance:none; width:36px; height:36px; border:0; border-radius:50%; background:transparent; color:#55524c; font-size:25px; line-height:1; cursor:pointer; }
+.bsp-close:hover { background:#e7e3db; }
+.bsp-eyebrow { color:var(--bsp-muted); font:700 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.22em; }
+.bsp-workspace { display:grid; grid-template-columns:54% 46%; min-height:600px; }
+.bsp-preview-pane { display:grid; align-items:center; justify-items:center; padding:24px; border-right:1px solid var(--bsp-stage-line); background:var(--bsp-stage); }
+.bsp-preview-frame { position:relative; grid-area:1/1; width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); transition:opacity 160ms ease,transform 160ms ease; }
+.bsp-preview-frame-incoming { opacity:0; transform:translateY(4px); }
+.bsp-preview-frame-incoming.is-visible { opacity:1; transform:translateY(0); }
+.bsp-preview-frame-exit { opacity:0; }
+.bsp-poster-updating { position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
+.bsp-loading-card { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; border:1px solid #b9b5ac; background:#f7f5f0; color:#64615b; }
+.bsp-spinner { width:28px; height:28px; margin:0 auto 14px; border:2px solid #c8c4bb; border-top-color:#1a1a1a; border-radius:50%; animation:bsp-spin .75s linear infinite; }
+@keyframes bsp-spin { to { transform:rotate(360deg); } }
+.bsp-controls { display:flex; flex-direction:column; padding:20px 22px; overflow:auto; background:#faf8f3; }
+.bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
+.bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
+.bsp-options { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:14px; }
+.bsp-option-pill { appearance:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background 150ms ease,color 150ms ease,border-color 150ms ease,transform 150ms ease; }
+.bsp-option-pill:hover { border-color:#a9a59b; color:var(--bsp-ink); }
+.bsp-option-pill svg { width:15px; height:15px; }
+.bsp-option-pill.is-on { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
+.bsp-option-pill:disabled { opacity:.55; cursor:not-allowed; }
+.bsp-option-notice { margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
+.bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
+.bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
+.bsp-fallback strong { font-size:13px; line-height:1.4; }
+.bsp-fallback span { font-size:12px; line-height:1.55; }
+.bsp-text-card { display:grid; gap:6px; max-height:96px; overflow:auto; margin-top:14px; padding:12px 14px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#24231f; user-select:all; }
+.bsp-text-card-body { font:400 13px/1.65 "PingFang SC","Microsoft YaHei",sans-serif; white-space:pre-wrap; word-break:break-word; }
+.bsp-text-card-link { font:500 11px/1.6 ui-monospace,Menlo,monospace; color:#4f6d5b; overflow-wrap:anywhere; word-break:break-all; }
+.bsp-actions { margin-top:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.bsp-action { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:7px; height:44px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background 150ms ease,color 150ms ease,border-color 150ms ease,transform 150ms ease; }
+.bsp-action:hover { border-color:#a9a59b; color:var(--bsp-ink); transform:translateY(-1px); }
+.bsp-action svg { width:18px; height:18px; }
+.bsp-action-primary { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
+.bsp-action-primary:hover { filter:brightness(1.08); }
+.bsp-action:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.bsp-action::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translate(-50%,4px); padding:5px 8px; border-radius:6px; background:rgba(18,18,18,.88); color:#fff; font-size:11px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 140ms ease,transform 140ms ease; z-index:3; }
+.bsp-action:hover::after, .bsp-action:focus-visible::after { opacity:1; transform:translate(-50%,0); }
+.bsp-button-primary { background:#1a1a1a; color:#fff; }
+.bsp-button-secondary { background:#fff; color:#1a1a1a; }
+.bsp-button-secondary:hover { background:#f7f5f0; }
+.bsp-button { appearance:none; width:100%; min-height:46px; border:1px solid #1a1a1a; border-radius:2px; background:#1a1a1a; color:#fff; font:650 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; }
+.bsp-button:hover { background:#353431; }
+.bsp-button:disabled { border-color:#aaa79f; background:#aaa79f; cursor:not-allowed; }
+.bsp-help { margin-top:12px !important; font-size:12px !important; }
+.bsp-error { margin:20px 0; padding:16px; border-left:3px solid #a3452f; background:#f5e6df; color:#6f2f20 !important; }
+.bsp-status { min-height:20px; margin-top:10px !important; color:#3d6b47 !important; font-size:12px !important; opacity:0; transform:translateY(3px); transition:opacity 180ms ease,transform 180ms ease; }
+.bsp-status.is-show { opacity:1; transform:translateY(0); }
+.bsp-status.is-error { color:#a3452f !important; }
+.bsp-poster { box-sizing:border-box; position:relative; width:360px; height:480px; overflow:hidden; padding:17px 18px 16px; border:1px solid #b7b4ac; background:#f7f5f0; color:#1a1a1a; }
+.bsp-poster::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; background-image:radial-gradient(#776f62 .45px,transparent .55px); background-size:4px 4px; }
+.bsp-masthead { position:relative; z-index:1; display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid #1a1a1a; }
+.bsp-masthead strong { font:700 9px/1.1 "PingFang SC","Microsoft YaHei",sans-serif; letter-spacing:.08em; }
+.bsp-masthead span { color:#6b6b66; font:600 7px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em; }
+.bsp-cover { position:relative; z-index:1; display:block; width:100%; height:182px; margin:10px 0 13px; border:1px solid #77736b; object-fit:cover; object-position:center; }
+.bsp-cover-missing { display:grid; place-items:center; background:repeating-linear-gradient(135deg,#ece8df 0 8px,#e2ddd2 8px 16px); color:#8b877e; font:700 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.14em; }
+.bsp-b-cover-missing { position:absolute; inset:0; display:grid; place-items:center; background:repeating-linear-gradient(135deg,#20252a 0 10px,#15191d 10px 20px); color:rgba(255,255,255,.62); font:700 9px/1 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
+.bsp-poster-b.bsp-cover-missing .bsp-b-scrim { background:rgba(0,0,0,.35); }
+.bsp-poster-title { position:relative; z-index:1; display:-webkit-box; overflow:hidden; margin:0; font-size:19px; line-height:1.26; font-weight:700; letter-spacing:-.02em; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.bsp-byline { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; color:#55524c; font-size:9px; }
+.bsp-byline strong { min-width:0; overflow:hidden; color:#262522; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-identity { flex:none; font:600 7.5px/1 ui-monospace,Menlo,monospace; }
+.bsp-part-timestamp { position:relative; z-index:1; display:flex; align-items:center; gap:6px; margin-top:7px; min-height:14px; }
+.bsp-part-chip { max-width:82%; overflow:hidden; padding:2px 7px; border:1px solid #77736b; background:#f0ede6; color:#24231f; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-time-chip { margin-left:auto; color:#1a1a1a; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
+.bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:13px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
+.bsp-stat { padding:8px 5px 7px; border-right:1px solid #c6c2b9; }
+.bsp-stat:last-child { border-right:0; }
+.bsp-stat strong,.bsp-stat span { display:block; }
+.bsp-stat strong { white-space:nowrap; font:750 clamp(14px,4.3vw,16px)/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; letter-spacing:-.025em; }
+.bsp-stat span { margin-top:5px; color:#6b6b66; font-size:7px; letter-spacing:.18em; }
+.bsp-destination { position:relative; z-index:1; display:grid; grid-template-columns:78px 1fr; gap:13px; align-items:center; margin-top:13px; }
+.bsp-qr { box-sizing:border-box; display:block; width:78px; height:78px; background:#fff; }
+.bsp-link-label { display:block; margin-bottom:7px; color:#6b6b66; font-size:7px; letter-spacing:.17em; }
+.bsp-link { display:block; overflow-wrap:anywhere; color:#1a1a1a; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; }
+.bsp-archive { position:absolute; right:18px; bottom:7px; z-index:1; color:#8b877e; font:600 6px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; }
+.bsp-theme-segment { display:inline-flex; align-self:flex-start; padding:3px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:rgba(0,0,0,.04); }
+.bsp-theme-option { appearance:none; display:inline-flex; align-items:center; height:30px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--bsp-muted); font-size:12px; font-weight:600; cursor:pointer; transition:background 160ms ease,color 160ms ease,box-shadow 160ms ease; }
+.bsp-theme-option.is-active { background:var(--bsp-ink); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.16); }
+#bsp-entry.bsp-entry-b { background:#18191c; border-color:#18191c; color:#fff; }
+#bsp-entry.bsp-entry-b:hover { background:#343a40; border-color:#343a40; }
+.bsp-backdrop.bsp-theme-b { background:rgba(5,6,8,.78); }
+.bsp-panel.bsp-theme-b { border-color:#3d4045; background:#18191c; color:#f1f2f3; }
+.bsp-panel.bsp-theme-b .bsp-panel-head { border-bottom-color:#2e3135; background:#101113; }
+.bsp-panel.bsp-theme-b .bsp-close { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-close:hover { background:#2e3135; }
+.bsp-panel.bsp-theme-b .bsp-preview-pane { border-right-color:#2e3135; background:var(--bsp-stage); }
+.bsp-panel.bsp-theme-b .bsp-controls { background:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-kicker, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-option-pill { border-color:#3d4045; background:#232528; color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-option-pill.is-on { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-text-card { border-color:#2e3135; background:#101113; color:#e8e9eb; }
+.bsp-panel.bsp-theme-b .bsp-text-card-link { color:#9fc4ac; }
+.bsp-panel.bsp-theme-b .bsp-theme-segment { border-color:#3d4045; background:#232528; }
+.bsp-panel.bsp-theme-b .bsp-theme-option { color:#c9cdd2; }
+.bsp-panel.bsp-theme-b .bsp-theme-option.is-active { background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-action { border-color:#3d4045; background:#232528; color:#e8e9eb; }
+.bsp-panel.bsp-theme-b .bsp-action-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-button-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-button-secondary { border-color:#8a9096; background:#2e3135; color:#fff; }
+.bsp-panel.bsp-theme-b .bsp-button-secondary:hover { background:#3d4045; }
+.bsp-poster.bsp-poster-b { padding:0; border:0; background:#000; color:#fff; }
+.bsp-poster-b::after { display:none; }
+.bsp-cover-b { position:absolute; inset:0; z-index:0; display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
+.bsp-b-scrim { position:absolute; inset:0; z-index:1; background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.28) 38%,rgba(0,0,0,.86) 78%,rgba(0,0,0,.94) 94%); }
+.bsp-b-content { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; padding:16px; }
+.bsp-b-topline { display:flex; align-items:center; gap:8px; min-height:24px; }
+.bsp-b-part-chip, .bsp-b-time-chip { overflow:hidden; padding:3px 9px; border:1px solid rgba(255,255,255,.32); border-radius:14px; background:rgba(0,0,0,.55); color:#fff; text-overflow:ellipsis; white-space:nowrap; backdrop-filter:blur(2px); }
+.bsp-b-part-chip { max-width:76%; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; }
+.bsp-b-time-chip { margin-left:auto; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
+.bsp-b-bottom { margin-top:auto; }
+.bsp-b-title { display:-webkit-box; overflow:hidden; margin:0; color:#fff; font-size:19px; font-weight:800; line-height:1.4; letter-spacing:-.02em; text-shadow:0 2px 12px rgba(0,0,0,.7); -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.bsp-b-up { margin-top:8px; overflow:hidden; color:rgba(255,255,255,.9); font-size:9px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-b-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
+.bsp-b-stat { min-width:0; text-align:center; }
+.bsp-b-stat strong, .bsp-b-stat span { display:block; }
+.bsp-b-stat strong { overflow:hidden; color:#fff; font:750 11px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; text-overflow:ellipsis; white-space:nowrap; }
+.bsp-b-stat span { margin-top:3px; color:rgba(255,255,255,.62); font-size:7px; letter-spacing:.12em; }
+.bsp-b-identity { margin-top:8px; color:rgba(255,255,255,.6); font:600 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.08em; text-align:center; }
+.bsp-b-destination { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.bsp-b-qr { box-sizing:border-box; flex:none; width:72px; height:72px; padding:4px; border-radius:5px; background:#fff; }
+.bsp-b-link-side { min-width:0; flex:1; }
+.bsp-b-link-label { display:block; margin-bottom:5px; color:rgba(255,255,255,.58); font-size:7px; letter-spacing:.16em; }
+.bsp-b-link { display:block; overflow-wrap:anywhere; color:#fff; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+@keyframes bsp-backdrop-in { from { opacity:0; } }
+@keyframes bsp-panel-in { from { opacity:0; transform:translateY(10px) scale(0.985); } }
+@media (max-width:880px) { .bsp-workspace { grid-template-columns:1fr; min-height:0; } .bsp-preview-pane { border-right:0; border-bottom:1px solid var(--bsp-stage-line); } .bsp-controls { min-height:360px; padding:20px; } }
+@media (prefers-reduced-motion:reduce) {
+  .bsp-spinner { animation:none; }
+  .bsp-backdrop, .bsp-panel, .bsp-preview-frame, .bsp-option-pill, .bsp-action, .bsp-theme-option, .bsp-status, #bsp-entry { transition:none; animation:none; }
+  .bsp-backdrop.bsp-backdrop-closing { opacity:0; }
+  .bsp-panel.bsp-panel-closing { opacity:0; transform:none; }
+  .bsp-preview-frame-incoming { opacity:1; transform:none; }
+  .bsp-preview-frame-exit { opacity:0; }
+}
+`;
+
   // src/index.ts
-  var ENTRY_ID = "bsp-entry";
   var activePanel = null;
   var mountQueued = false;
   function installStyles() {
@@ -4249,42 +4382,6 @@ ${shareTarget}`;
     style.id = "bsp-styles";
     style.textContent = STYLES;
     document.head.append(style);
-  }
-  function posterIcon() {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    const frame = document.createElementNS(svg.namespaceURI, "rect");
-    frame.setAttribute("x", "3");
-    frame.setAttribute("y", "3");
-    frame.setAttribute("width", "18");
-    frame.setAttribute("height", "18");
-    frame.setAttribute("rx", "1");
-    frame.setAttribute("fill", "none");
-    frame.setAttribute("stroke", "currentColor");
-    frame.setAttribute("stroke-width", "1.8");
-    const image = document.createElementNS(svg.namespaceURI, "path");
-    image.setAttribute("d", "M6 17l4.2-4.4 2.7 2.6 2.1-2.1 3 3.1M8.2 8.2h.01");
-    image.setAttribute("fill", "none");
-    image.setAttribute("stroke", "currentColor");
-    image.setAttribute("stroke-width", "1.8");
-    image.setAttribute("stroke-linecap", "round");
-    image.setAttribute("stroke-linejoin", "round");
-    svg.append(frame, image);
-    return svg;
-  }
-  function findShareAnchor() {
-    const selectors = [
-      "#arc_toolbar_report .video-share-wrap",
-      ".video-toolbar-left .video-share-wrap",
-      ".video-toolbar-container .video-share-wrap",
-      "#arc_toolbar_report [class*='video-share']"
-    ];
-    for (const selector of selectors) {
-      const candidate = document.querySelector(selector);
-      if (candidate) return candidate.closest(".video-share-wrap") ?? candidate;
-    }
-    return null;
   }
   function openPanel() {
     if (activePanel) {
@@ -4296,21 +4393,14 @@ ${shareTarget}`;
     });
     activePanel.open();
   }
+  function rememberedTheme() {
+    return loadRememberedPreferences().theme;
+  }
   function mountEntry() {
     mountQueued = false;
     if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
-    if (!readPageIdentity() || document.getElementById(ENTRY_ID)) return;
-    const anchor = findShareAnchor();
-    if (!anchor?.parentElement) return;
-    const button = document.createElement("button");
-    button.id = ENTRY_ID;
-    button.type = "button";
-    const remembered = createPanelShareOptions(typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null);
-    button.classList.toggle("bsp-entry-b", remembered.theme === "B");
-    button.title = "\u751F\u6210\u5206\u4EAB\u6D77\u62A5";
-    button.append(posterIcon(), document.createTextNode("\u751F\u6210\u6D77\u62A5"));
-    button.addEventListener("click", openPanel);
-    anchor.insertAdjacentElement("afterend", button);
+    if (!readPageIdentity()) return;
+    mountSharePosterEntry(rememberedTheme(), openPanel);
   }
   function queueMount() {
     if (mountQueued) return;
@@ -4319,7 +4409,7 @@ ${shareTarget}`;
   }
   function handleLocationChange() {
     if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
-    document.getElementById(ENTRY_ID)?.remove();
+    removeSharePosterEntry();
     queueMount();
   }
   installStyles();

@@ -50,6 +50,17 @@ export function createPanelShareOptions(storedPreferences: unknown = null): Shar
   };
 }
 
+/**
+ * Reads the persisted panel preferences via Tampermonkey's GM_getValue when
+ * available, falling back to defaults. Centralised so the entry mount and the
+ * panel open path read the same source instead of duplicating the GM_getValue
+ * guard.
+ */
+export function loadRememberedPreferences(): RememberedPanelPreferences {
+  const stored = typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null;
+  return resolveRememberedPreferences(stored);
+}
+
 export function canEnablePartShare(context: PartShareContext): boolean {
   return context.partIdentified;
 }

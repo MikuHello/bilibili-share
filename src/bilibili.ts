@@ -222,6 +222,10 @@ export function parseVideoApiResponse(
   };
 }
 
+export function isUsableCover(width: number, height: number): boolean {
+  return Number.isFinite(width) && Number.isFinite(height) && width >= 160 && height >= 90;
+}
+
 async function blobToImageDataUrl(blob: Blob): Promise<string> {
   if (blob.size === 0 || (blob.type && !blob.type.startsWith("image/"))) {
     throw new Error("Bilibili 返回的视频封面无效，请重试。");
@@ -239,8 +243,17 @@ async function blobToImageDataUrl(blob: Blob): Promise<string> {
   } catch {
     throw new Error("Bilibili 返回的视频封面无法解码，请重试。");
   }
-  if (image.naturalWidth <= 0 || image.naturalHeight <= 0) throw new Error("Bilibili 返回的视频封面无效，请重试。");
+  if (!isUsableCover(image.naturalWidth, image.naturalHeight)) throw new Error("Bilibili 返回的视频封面尺寸不可用，请重试。");
   return dataUrl;
+}
+
+async function loadCover(coverUrl: string): Promise<{ dataUrl: string; unavailable: boolean }> {
+  try {
+    const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
+    return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
+  } catch {
+    return { dataUrl: "", unavailable: true };
+  }
 }
 
 export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise<GenerationSnapshot> {
@@ -253,12 +266,13 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
     throw error;
   }
   const video = parseVideoApiResponse(payload, capture.bvid, capture.partNumber);
-  const coverBlob = await gmBlobRequest(video.coverUrl.replace(/^http:/, "https:"));
+  const cover = await loadCover(video.coverUrl);
 
   return {
     bvid: video.bvid,
     aid: video.aid,
-    coverDataUrl: await blobToImageDataUrl(coverBlob),
+    coverDataUrl: cover.dataUrl,
+    coverUnavailable: cover.unavailable,
     title: video.title,
     uploader: video.uploader,
     partNumber: capture.partNumber,

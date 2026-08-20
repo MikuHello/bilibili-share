@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseVideoApiResponse } from "../src/bilibili";
+import { isUsableCover, parseVideoApiResponse } from "../src/bilibili";
 
 const validResponse = {
   code: 0,
@@ -59,5 +59,13 @@ describe("public video information adapter", () => {
         2,
       ),
     ).toMatchObject({ partTitle: "P2 花絮", partIdentified: true });
+  });
+
+  it("accepts usable cover dimensions and rejects degenerate placeholders", () => {
+    expect(isUsableCover(160, 90)).toBe(true);
+    expect(isUsableCover(1920, 1080)).toBe(true);
+    expect(isUsableCover(1, 1)).toBe(false);
+    expect(isUsableCover(159, 90)).toBe(false);
+    expect(isUsableCover(160, 89)).toBe(false);
   });
 });

@@ -35,6 +35,7 @@ describe("detailed and markdown share text", () => {
     bvid: "BV1xx411c7mD",
     aid: 170001,
     coverDataUrl: "data:image/png;base64,cover",
+  coverUnavailable: false,
     title: "【测试】详细文案标题",
     uploader: "UP 主甲",
     partNumber: 2,
