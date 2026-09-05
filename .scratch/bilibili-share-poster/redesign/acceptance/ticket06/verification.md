@@ -1,7 +1,7 @@
-# Ticket 06 verification
+# Ticket 06 controlled browser verification
 
-Production bundle browser checks: initial dark, live light/dark, unknown retains last known, first unknown light despite system dark, modern oklab background, event payload ignored, fixed poster DOM and palette, native borderless entry remount, official share retained and menu fallback. All PASS.
+Browser: 151.0.7922.34. Production bundle with controlled page/GM ports.
 
-RED before index/panel wiring: initial actual-page dark rendered white panel. GREEN after wiring.
+PASS: initial dark, live light/dark, unknown retains last known, first unknown light despite system dark, modern oklab background, event payload ignored, fixed poster DOM and palette, native borderless entry remount, official share retained and menu fallback.
 
-Real Edge Bilibili/BewlyCat page observer probe returned light → dark → light using the actual sidebar setting. Original light state restored and temporary observer/global removed. This validates the production appearance adapter on the actual page, not installation or execution in the userscript manager. Manager version/permission acceptance remains unverified due blocked extension-management access.
+This script does not operate actual BewlyCat settings or validate userscript-manager installation. Real-page evidence is recorded separately in implementation-evidence/live-theme-signals.md.

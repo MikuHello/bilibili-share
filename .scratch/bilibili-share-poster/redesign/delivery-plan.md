@@ -1,6 +1,6 @@
 # 整批实施与统一交付约定
 
-Status: IN PROGRESS — continuous implementation authorized
+Status: IMPLEMENTED — unified build ready; real-manager product acceptance pending
 
 主人接受7票粒度，希望整套改版一次落地，不逐步接收中间版本。
 
@@ -13,10 +13,14 @@ Status: IN PROGRESS — continuous implementation authorized
 - 最后统一提供一个最终用户脚本构建、变更说明、测试证据和仍存在的环境限制，进行一次整体产品验收。发布/切换以这一最终构建为单位。
 - 正常实施不逐票停下来请求继续；只有新的产品取舍、不可自行解决的阻塞或超出授权的操作才需要主人介入。
 
-本约定不把“一次交付”解释成取消测试、把7票塞入同一上下文，或跳过依赖。当前请求是核对并准备下一步流程，本轮未执行生产实现。
+本约定不把“一次交付”解释成取消测试、把7票塞入同一上下文，或跳过依赖。本轮已按后续明确授权连续执行实现与验证。
 
 ## Execution
 
 - 主人明确要求“按照 matt skills流程继续”，整批实施已授权。
 - 集成分支：codex/default-theme-delivery。工作区：bilibili-share-delivery。
 - 每票实现前固定其开始提交为审查基准；整批审查基准为4d1f35510b5226b17695589386427302d1df284a。该基准由本次实施边界确定，无需重复询问。
+
+## Final delivery
+
+统一构建为0.2.0，6套浏览器回归、66项单测、类型检查通过。完整证据见 acceptance/final-verification.md；审查见 reviews/。真实管理器安装与封面链路未验证，保留待验收状态。
