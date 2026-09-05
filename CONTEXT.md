@@ -6,7 +6,6 @@ This context names the user-visible concepts of producing and exporting a sharea
 
 **Share poster**:
 A static image representing one Bilibili video, including its identity, scan destination, and a snapshot of selected public information.
-Theme A may print the approved decorative masthead label `SHARE CARD`; that label does not rename the product object.
 _Avoid as an object name_: Share card, screenshot
 
 **Poster preview**:
@@ -30,7 +29,7 @@ An alternative share-text representation containing Markdown syntax for Markdown
 _Avoid_: Rich-text clipboard, styled poster
 
 **Combined copy**:
-A best-effort clipboard action offering the share poster and selected share text together. Capable destinations may paste the poster before the text; other destinations may choose only one representation.
+A best-effort clipboard action offering the share poster and plain share text at the selected detail level together. Capable destinations may paste the poster before the text; other destinations may choose only one representation.
 _Avoid_: Guaranteed image-and-text paste, third text mode
 
 **Share target**:
