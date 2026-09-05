@@ -22,11 +22,11 @@ A formatted text representation of the same video and share target as the share 
 _Avoid_: Poster caption, raw metadata
 
 **Detailed share text**:
-An optional expanded share-text form containing the uploader, title, and generation-snapshot statistics. It is off by default.
+An optional expanded share-text form containing the uploader, title, and generation-snapshot statistics. The share panel calls this detail level “详细信息”; it is off by default.
 _Avoid_: Poster text, debug data
 
 **Markdown share text**:
-An optional share-text representation containing Markdown syntax for Markdown-aware destinations. It is independent from detail level and is off by default.
+An alternative share-text representation containing Markdown syntax for Markdown-aware destinations, selected through a dedicated copy action. Its format is independent from the selected detail level.
 _Avoid_: Rich-text clipboard, styled poster
 
 **Combined copy**:

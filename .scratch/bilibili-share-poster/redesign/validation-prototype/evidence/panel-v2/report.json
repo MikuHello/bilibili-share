@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "browser": "151.0.7922.34",
+  "errors": [],
+  "checks": [
+    "visible options",
+    "icon download beside poster",
+    "two copy actions",
+    "6 states",
+    "cover-failure text/retry available and image actions disabled",
+    "part/time preserved semantics",
+    "Escape focus return",
+    "390/320 viewport and action access"
+  ]
+}
