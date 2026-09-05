@@ -4,12 +4,12 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** implemented — review and final integrated real-manager validation pending
+**Status:** implemented and reviewed — real-manager acceptance pending
 
 - [x] 封面声明采用 hdslb.com 所需范围，保留API/短链精确域，不使用全域通配。
 - [ ] 在真实管理器中核对构建与安装版本，原故障视频完成请求、有效图片解码、预览及PNG导出。
 - [ ] 保留无凭据的请求结果、类型/字节、解码尺寸与导出证据；不把静态声明检查或原型通过记为真实修复。
-- [ ] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
+- [x] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
 
 **规格覆盖：** 56、57；11、43、55的基础链路。
 

@@ -55,8 +55,7 @@ describe("detailed and markdown share text", () => {
   it("builds plain detailed text with exact values and conditional fields", () => {
     expect(
       buildShareText(snapshot, target, {
-        theme: "A",
-        partShare: true,
+          partShare: true,
         timestampShare: true,
         detailedText: true,
         markdownText: false,
@@ -69,8 +68,7 @@ describe("detailed and markdown share text", () => {
   it("builds compact markdown with title, uploader and a bare link line", () => {
     expect(
       buildShareText(snapshot, target, {
-        theme: "A",
-        partShare: false,
+          partShare: false,
         timestampShare: false,
         detailedText: false,
         markdownText: true,
@@ -81,8 +79,7 @@ describe("detailed and markdown share text", () => {
   it("builds detailed markdown as a field list with only enabled part and timestamp fields", () => {
     expect(
       buildShareText(snapshot, target, {
-        theme: "A",
-        partShare: true,
+          partShare: true,
         timestampShare: true,
         detailedText: true,
         markdownText: true,
@@ -94,7 +91,6 @@ describe("detailed and markdown share text", () => {
 
   it("omits part and timestamp fields when their options are off", () => {
     const text = buildShareText(snapshot, target, {
-      theme: "A",
       partShare: false,
       timestampShare: false,
       detailedText: true,

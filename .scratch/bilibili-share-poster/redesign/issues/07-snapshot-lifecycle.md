@@ -4,14 +4,14 @@
 
 **Blocked by:** 03、04。
 
-**Status:** implemented — independent review and final integrated acceptance pending
+**Status:** implemented and reviewed — controlled lifecycle regression passed; final integrated verification recorded separately
 
 - [x] 打开立即显示加载并捕获稳定身份/分P/时间/原播放状态；重复入口只聚焦，不重新请求或捕获。
 - [x] 换视频或分P关闭旧面板；重试、目标更新或初次请求的迟到结果均不能重挂载或覆盖新面板。
 - [x] 所有关闭路径只恢复脚本暂停过且仍为同一视频/分P的播放器；原本暂停及导航后的新视频不受影响。
 - [x] 重试保留原快照和选项；上下文失效则关闭，重开重新捕获且标记重置。
 - [x] 以播放/暂停初态、重试中关闭、更新中导航、重复打开和迟到异步结果进行用户路径回归；既有正确行为保留，仅补齐缺口。
-- [ ] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
+- [x] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
 
 **规格覆盖：** 5–8、48–49；23、27、53的跨路径回归。
 

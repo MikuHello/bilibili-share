@@ -176,6 +176,7 @@ export function describeCombinedCopyResult(outcome: CombinedCopyOutcome): Combin
 export async function copyCombinedPosterAndText(
   posterDataUrl: string,
   shareText: string,
+  canContinue: () => boolean = () => true,
 ): Promise<CombinedCopyOutcome> {
   const clipboardItemCtor = clipboardItemConstructor();
   const clipboard = browserClipboard();
@@ -192,12 +193,15 @@ export async function copyCombinedPosterAndText(
           }),
         ]);
       },
-      writeText: (text) => copyShareTextToClipboard(text).then((outcome) => {
+      writeText: async (text) => {
+        if (!canContinue()) throw new Error("分享上下文已失效");
+        const outcome = await copyShareTextToClipboard(text);
         if (outcome.status === "failed") throw new Error(outcome.reason);
-      }),
+      },
     };
     return copyCombined(posterDataUrl, shareText, ports);
   }
+  if (!canContinue()) return { status: "failed", reason: "分享上下文已失效" };
   const textOutcome = await copyShareTextToClipboard(shareText);
   return textOutcome.status === "copied"
     ? { status: "text-fallback", reason: "当前浏览器不支持组合剪贴板写入" }

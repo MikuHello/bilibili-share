@@ -97,7 +97,7 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
   return url.toString();
 }
 
-export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: string, _options: ShareOptions): SharePoster {
+export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: string): SharePoster {
   const title = requireText(snapshot.title, "视频标题");
   const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "视频封面");
   const uploader = requireText(snapshot.uploader, "UP 主");
@@ -124,11 +124,5 @@ export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: stri
 }
 
 export function buildDefaultPoster(snapshot: GenerationSnapshot, shareTarget: string): DefaultPoster {
-  return buildSharePoster(snapshot, shareTarget, {
-    theme: "A",
-    partShare: false,
-    timestampShare: false,
-    detailedText: false,
-    markdownText: false,
-  });
+  return buildSharePoster(snapshot, shareTarget);
 }

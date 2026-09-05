@@ -1,7 +1,4 @@
-export type PosterTheme = "A" | "B";
-
 export interface ShareOptions {
-  theme: PosterTheme;
   partShare: boolean;
   timestampShare: boolean;
   detailedText: boolean;
@@ -16,7 +13,6 @@ export interface PartShareContext {
 
 export function createDefaultShareOptions(): ShareOptions {
   return {
-    theme: "A",
     partShare: false,
     timestampShare: false,
     detailedText: false,
@@ -25,7 +21,6 @@ export function createDefaultShareOptions(): ShareOptions {
 }
 
 export interface RememberedPanelPreferences {
-  theme: PosterTheme;
   detailedText: boolean;
   markdownText: boolean;
 }
@@ -33,7 +28,6 @@ export interface RememberedPanelPreferences {
 export function resolveRememberedPreferences(stored: unknown): RememberedPanelPreferences {
   const record = typeof stored === "object" && stored !== null ? (stored as Record<string, unknown>) : {};
   return {
-    theme: "A",
     detailedText: record.detailedText === true,
     markdownText: false,
   };
@@ -42,7 +36,6 @@ export function resolveRememberedPreferences(stored: unknown): RememberedPanelPr
 export function createPanelShareOptions(storedPreferences: unknown = null): ShareOptions {
   const remembered = resolveRememberedPreferences(storedPreferences);
   return {
-    theme: remembered.theme,
     partShare: false,
     timestampShare: false,
     detailedText: remembered.detailedText,
@@ -52,9 +45,8 @@ export function createPanelShareOptions(storedPreferences: unknown = null): Shar
 
 /**
  * Reads the persisted panel preferences via Tampermonkey's GM_getValue when
- * available, falling back to defaults. Centralised so the entry mount and the
- * panel open path read the same source instead of duplicating the GM_getValue
- * guard.
+ * available, falling back to defaults. Only the panel detail preference is restored; retired theme and Markdown
+ * selections are ignored.
  */
 export function loadRememberedPreferences(): RememberedPanelPreferences {
   const stored = typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null;

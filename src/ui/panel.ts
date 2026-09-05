@@ -186,7 +186,7 @@ export class SharePanel {
       const snapshot = await fetchGenerationSnapshot(this.capture);
       const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
       const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
-      const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
+      const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget);
       const poster = model ? await createPoster(model) : null;
       if (!this.ensureCurrentContext()) return;
       this.snapshot = snapshot;
@@ -404,7 +404,7 @@ export class SharePanel {
     try {
       const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
       const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-      const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
+      const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget);
       const poster = model ? await createPoster(model) : null;
       if (!this.ensureCurrentContext()) return;
       this.model = model;
@@ -537,7 +537,7 @@ export class SharePanel {
     try {
       const dataUrl = await this.posterPngDataUrl();
       if (!this.ensureCurrentContext()) return;
-      const outcome = await copyCombinedPosterAndText(dataUrl, text);
+      const outcome = await copyCombinedPosterAndText(dataUrl, text, () => this.ensureCurrentContext());
       const feedback = describeCombinedCopyResult(outcome);
       this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
     } catch {

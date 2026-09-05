@@ -1,12 +1,15 @@
 import { build } from "esbuild";
+import { readFile } from "node:fs/promises";
+
+const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
 const development = process.argv.includes("--dev");
 
 const header = `// ==UserScript==
 // @name         Bilibili 分享海报${development ? " · 开发调试" : ""}
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.1.0
-// @description  在 Bilibili 标准视频页生成 A/B 主题分享海报、复制分享文案与组合剪贴板内容
+// @version      ${version}
+// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制普通文案、Markdown 与图文组合内容
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard

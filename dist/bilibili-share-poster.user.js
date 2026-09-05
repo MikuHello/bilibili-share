@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.1.0
-// @description  在 Bilibili 标准视频页生成 A/B 主题分享海报、复制分享文案与组合剪贴板内容
+// @version      0.2.0
+// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制普通文案、Markdown 与图文组合内容
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard
@@ -2454,72 +2454,89 @@
     void capture.player.play().catch(() => void 0);
   }
 
-  // src/options.ts
-  function createDefaultShareOptions() {
-    return {
-      theme: "A",
-      partShare: false,
-      timestampShare: false,
-      detailedText: false,
-      markdownText: false
+  // src/ui/appearance.ts
+  function backgroundAppearance(node) {
+    const color = getComputedStyle(node).backgroundColor;
+    if (!CSS.supports("color", color)) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return null;
+    context.fillStyle = color;
+    context.fillRect(0, 0, 1, 1);
+    const [r, g, b, alpha] = context.getImageData(0, 0, 1, 1).data;
+    if (alpha < 250) return null;
+    const brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    if (brightness < 0.4) return "dark";
+    if (brightness > 0.65) return "light";
+    return null;
+  }
+  function readPageAppearance() {
+    const roots = [document.documentElement, document.body].filter((node) => node !== null);
+    const dark = roots.some((node) => node.classList.contains("dark") || node.classList.contains("bili_dark"));
+    const light = roots.some((node) => node.classList.contains("light"));
+    if (dark && light) return null;
+    if (dark) return "dark";
+    if (light) return "light";
+    for (const node of [...roots].reverse()) {
+      const appearance = backgroundAppearance(node);
+      if (appearance) return appearance;
+    }
+    return null;
+  }
+  function observePageAppearance(onChange) {
+    let current = readPageAppearance() ?? "light";
+    let frame = 0;
+    let stopped = false;
+    let body = document.body;
+    const refresh = () => {
+      frame = 0;
+      if (stopped) return;
+      if (body !== document.body) {
+        body = document.body;
+        if (body) observer.observe(body, { attributes: true, attributeFilter: ["class", "style"] });
+      }
+      const next = readPageAppearance() ?? current;
+      if (next !== current) {
+        current = next;
+        onChange(current);
+      }
     };
-  }
-  function resolveRememberedPreferences(stored) {
-    const record = typeof stored === "object" && stored !== null ? stored : {};
-    return {
-      theme: "A",
-      detailedText: record.detailedText === true,
-      markdownText: false
+    const schedule = () => {
+      if (!frame && !stopped) frame = requestAnimationFrame(refresh);
     };
-  }
-  function createPanelShareOptions(storedPreferences = null) {
-    const remembered = resolveRememberedPreferences(storedPreferences);
-    return {
-      theme: remembered.theme,
-      partShare: false,
-      timestampShare: false,
-      detailedText: remembered.detailedText,
-      markdownText: remembered.markdownText
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style"], childList: true });
+    if (body) observer.observe(body, { attributes: true, attributeFilter: ["class", "style"] });
+    if (document.head) observer.observe(document.head, { childList: true, subtree: true, attributes: true, characterData: true });
+    const events = ["global.themeChange", "darkModeBaseColorChange", "pageshow"];
+    for (const event of events) window.addEventListener(event, schedule);
+    const stylesheetLoaded = (event) => {
+      if (event.target instanceof HTMLLinkElement) schedule();
     };
-  }
-  function loadRememberedPreferences() {
-    const stored = typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null;
-    return resolveRememberedPreferences(stored);
-  }
-  function canEnablePartShare(context) {
-    return context.partIdentified;
-  }
-  function canEnableTimestampShare(context) {
-    return context.partIdentified && Math.floor(context.playbackSeconds) >= 1;
-  }
-  function togglePartShare(options, context) {
-    if (!canEnablePartShare(context)) return options;
-    const partShare = !options.partShare;
-    return {
-      ...options,
-      partShare,
-      timestampShare: partShare ? options.timestampShare : false
-    };
-  }
-  function toggleTimestampShare(options, context) {
-    if (!canEnableTimestampShare(context)) return options;
-    const timestampShare = !options.timestampShare;
-    return {
-      ...options,
-      timestampShare,
-      partShare: timestampShare && context.partNumber > 1 ? true : options.partShare
+    document.addEventListener("load", stylesheetLoaded, true);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener("change", schedule);
+    onChange(current);
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      for (const event of events) window.removeEventListener(event, schedule);
+      document.removeEventListener("load", stylesheetLoaded, true);
+      media.removeEventListener("change", schedule);
     };
   }
 
   // src/ui/icons.ts
   var ICON_PATHS = {
     poster: ["M4 5.5h16v13H4z", "M7 15l3.2-3.4 2.4 2.4 1.8-1.9 2.6 2.7", "M8.4 8.4h.01"],
-    copy: ["M8 8h11v11H8z", "M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"],
-    download: ["M12 3v11", "m7 10 5 5 5-5", "M4 19h16"],
+    copy: ["M10 8h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z", "M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"],
+    download: ["M12 3v12", "m8 11 4 4 4-4", "M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"],
     "copy-text": ["M8 9h8", "M8 13h5", "M4 4h16v16H4z"],
-    combined: ["M3 5h12v9H3z", "M6 9h6", "M6 12h4", "M17 9v10a2 2 0 0 1-2 2H7"],
-    list: ["M8 6h12", "M8 12h12", "M8 18h12", "M4 6h.01", "M4 12h.01", "M4 18h.01"],
-    clock: ["M12 12a9 9 0 1 1 0 .01", "M12 7v5l3 2"],
+    combined: ["M5 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "m6 12 3-3 3 3", "M18 8h3M18 12h3M8 20h13"],
+    list: ["M5 5h14", "M5 12h14", "M5 19h14"],
+    clock: ["M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0", "M12 7v5l3 2"],
     detail: ["M4 7h16", "M4 12h10", "M4 17h16", "m16 13 2 2 4-4"],
     markdown: ["M5 16V8l3 5 3-5v8", "M15 8h4l-4 4 4 4h-4"],
     close: ["M6 6l12 12", "M18 6 6 18"]
@@ -2544,12 +2561,6 @@
     return createIcon("poster");
   }
 
-  // src/ui/tokens.ts
-  function selectThemeSurfaceClasses(theme) {
-    if (theme === "B") return { panel: "bsp-theme-b", entry: "bsp-entry-b" };
-    return { panel: null, entry: null };
-  }
-
   // src/ui/entry.ts
   var ENTRY_ID = "bsp-entry";
   var TOOLBAR_ANCHOR_SELECTORS = [
@@ -2567,26 +2578,28 @@
     const legacyShareWrap = document.querySelector(LEGACY_SHARE_WRAP_SELECTORS);
     return legacyShareWrap?.parentElement ?? null;
   }
-  function createSharePosterEntry(theme, onOpen) {
+  function createSharePosterEntry(appearance, onOpen) {
     const button = document.createElement("button");
     button.id = ENTRY_ID;
     button.type = "button";
     button.title = "\u751F\u6210\u5206\u4EAB\u6D77\u62A5";
     button.append(posterIcon(), document.createTextNode("\u751F\u6210\u6D77\u62A5"));
     button.addEventListener("click", onOpen);
-    const surface = selectThemeSurfaceClasses(theme);
-    if (surface.entry) button.classList.add(surface.entry);
+    button.classList.toggle("bsp-entry-dark", appearance === "dark");
     return button;
   }
   function removeSharePosterEntry() {
     document.getElementById(ENTRY_ID)?.remove();
   }
-  function mountSharePosterEntry(theme, onOpen) {
+  function mountSharePosterEntry(appearance, onOpen) {
     if (document.getElementById(ENTRY_ID)) return false;
     const anchor = findToolbarAnchor();
     if (!anchor?.parentElement) return false;
-    anchor.insertAdjacentElement("afterend", createSharePosterEntry(theme, onOpen));
+    anchor.insertAdjacentElement("afterend", createSharePosterEntry(appearance, onOpen));
     return true;
+  }
+  function setEntryAppearance(appearance) {
+    document.getElementById(ENTRY_ID)?.classList.toggle("bsp-entry-dark", appearance === "dark");
   }
 
   // src/clipboard.ts
@@ -2619,7 +2632,7 @@
     }
     return {
       statusMessage: "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: `${outcome.reason} \u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002`,
+      helpMessage: "\u8BF7\u4F7F\u7528\u6D77\u62A5\u4E0B\u65B9\u7684\u4E0B\u8F7D\u56FE\u6807\u4FDD\u5B58 PNG\u3002",
       downloadGuidance: true
     };
   }
@@ -2686,15 +2699,15 @@
     if (outcome.status === "text-fallback") {
       return {
         statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\uFF0C\u5DF2\u6539\u4E3A\u4EC5\u590D\u5236\u6587\u6848\u3002",
-        helpMessage: `${outcome.reason} \u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002`
+        helpMessage: "\u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002"
       };
     }
     return {
       statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002`
+      helpMessage: "\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002"
     };
   }
-  async function copyCombinedPosterAndText(posterDataUrl, shareText) {
+  async function copyCombinedPosterAndText(posterDataUrl, shareText, canContinue = () => true) {
     const clipboardItemCtor = clipboardItemConstructor();
     const clipboard = browserClipboard();
     if (clipboardItemCtor && clipboard) {
@@ -2710,12 +2723,15 @@
             })
           ]);
         },
-        writeText: (text) => copyShareTextToClipboard(text).then((outcome) => {
+        writeText: async (text) => {
+          if (!canContinue()) throw new Error("\u5206\u4EAB\u4E0A\u4E0B\u6587\u5DF2\u5931\u6548");
+          const outcome = await copyShareTextToClipboard(text);
           if (outcome.status === "failed") throw new Error(outcome.reason);
-        })
+        }
       };
       return copyCombined(posterDataUrl, shareText, ports);
     }
+    if (!canContinue()) return { status: "failed", reason: "\u5206\u4EAB\u4E0A\u4E0B\u6587\u5DF2\u5931\u6548" };
     const textOutcome = await copyShareTextToClipboard(shareText);
     return textOutcome.status === "copied" ? { status: "text-fallback", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u7EC4\u5408\u526A\u8D34\u677F\u5199\u5165" } : { status: "failed", reason: textOutcome.reason };
   }
@@ -2789,7 +2805,7 @@
     }
     return url.toString();
   }
-  function buildSharePoster(snapshot, shareTarget, _options) {
+  function buildSharePoster(snapshot, shareTarget) {
     const title = requireText(snapshot.title, "\u89C6\u9891\u6807\u9898");
     const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
     const uploader = requireText(snapshot.uploader, "UP \u4E3B");
@@ -2812,6 +2828,60 @@
         { label: "\u6295\u5E01", value: formatCompactStat(snapshot.stats.coins) },
         { label: "\u6536\u85CF", value: formatCompactStat(snapshot.stats.favorites) }
       ]
+    };
+  }
+
+  // src/options.ts
+  function createDefaultShareOptions() {
+    return {
+      partShare: false,
+      timestampShare: false,
+      detailedText: false,
+      markdownText: false
+    };
+  }
+  function resolveRememberedPreferences(stored) {
+    const record = typeof stored === "object" && stored !== null ? stored : {};
+    return {
+      detailedText: record.detailedText === true,
+      markdownText: false
+    };
+  }
+  function createPanelShareOptions(storedPreferences = null) {
+    const remembered = resolveRememberedPreferences(storedPreferences);
+    return {
+      partShare: false,
+      timestampShare: false,
+      detailedText: remembered.detailedText,
+      markdownText: remembered.markdownText
+    };
+  }
+  function loadRememberedPreferences() {
+    const stored = typeof GM_getValue === "function" ? GM_getValue("bsp-panel-preferences", null) : null;
+    return resolveRememberedPreferences(stored);
+  }
+  function canEnablePartShare(context) {
+    return context.partIdentified;
+  }
+  function canEnableTimestampShare(context) {
+    return context.partIdentified && Math.floor(context.playbackSeconds) >= 1;
+  }
+  function togglePartShare(options, context) {
+    if (!canEnablePartShare(context)) return options;
+    const partShare = !options.partShare;
+    return {
+      ...options,
+      partShare,
+      timestampShare: partShare ? options.timestampShare : false
+    };
+  }
+  function toggleTimestampShare(options, context) {
+    if (!canEnableTimestampShare(context)) return options;
+    const timestampShare = !options.timestampShare;
+    return {
+      ...options,
+      timestampShare,
+      partShare: timestampShare && context.partNumber > 1 ? true : options.partShare
     };
   }
 
@@ -3860,6 +3930,7 @@ ${shareTarget}`;
     panel = element("section", "bsp-panel");
     previewPane = element("div", "bsp-preview-pane");
     controls = element("div", "bsp-controls");
+    openedIdentity = readPageIdentity();
     capture = null;
     snapshot = null;
     model = null;
@@ -3869,10 +3940,14 @@ ${shareTarget}`;
     closed = false;
     loading = false;
     updating = false;
+    exporting = false;
     exportButtons = [];
     statusTimer = 0;
     previewObserver = new ResizeObserver(() => this.fitPoster());
     onClosed;
+    setAppearance(appearance) {
+      this.backdrop.classList.toggle("bsp-appearance-dark", appearance === "dark");
+    }
     constructor(onClosed) {
       this.onClosed = onClosed;
       this.backdrop.setAttribute("role", "presentation");
@@ -3881,13 +3956,14 @@ ${shareTarget}`;
       this.panel.setAttribute("aria-labelledby", "bsp-dialog-title");
       this.panel.tabIndex = -1;
       const heading = element("header", "bsp-panel-head");
-      const eyebrow = element("span", "bsp-eyebrow", "BILIBILI SHARE");
-      eyebrow.id = "bsp-dialog-title";
-      const close = element("button", "bsp-close", "\xD7");
+      const title = element("h2", "", "\u5206\u4EAB\u6D77\u62A5");
+      title.id = "bsp-dialog-title";
+      const close = element("button", "bsp-close");
+      close.append(createIcon("close"));
       close.type = "button";
       close.setAttribute("aria-label", "\u5173\u95ED\u5206\u4EAB\u9762\u677F");
       close.addEventListener("click", () => this.close(true));
-      heading.append(eyebrow, close);
+      heading.append(title, close);
       const workspace = element("div", "bsp-workspace");
       workspace.append(this.previewPane, this.controls);
       this.panel.append(heading, workspace);
@@ -3896,12 +3972,15 @@ ${shareTarget}`;
         if (event.target === this.backdrop) this.close(true);
       });
       this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocusIn = this.onFocusIn.bind(this);
+      this.previewPane.setAttribute("aria-label", "\u6D77\u62A5\u9884\u89C8");
     }
     open() {
       this.options = createPanelShareOptions(loadRememberedPreferences());
       document.body.append(this.backdrop);
       this.previewObserver.observe(this.previewPane);
       document.addEventListener("keydown", this.onKeyDown, true);
+      document.addEventListener("focusin", this.onFocusIn, true);
       this.renderLoading();
       this.panel.focus();
       void this.captureThenLoad();
@@ -3910,9 +3989,15 @@ ${shareTarget}`;
       this.panel.focus();
     }
     matchesCurrentPage() {
-      if (!this.capture) return true;
+      const identity = this.capture ?? this.openedIdentity;
       const current = readPageIdentity();
-      return Boolean(current && current.bvid.toUpperCase() === this.capture.bvid.toUpperCase() && current.partNumber === this.capture.partNumber);
+      return Boolean(current && identity && current.bvid.toUpperCase() === identity.bvid.toUpperCase() && current.partNumber === identity.partNumber);
+    }
+    ensureCurrentContext() {
+      if (this.closed) return false;
+      if (this.matchesCurrentPage()) return true;
+      this.close(false);
+      return false;
     }
     close(restore) {
       if (this.closed) return;
@@ -3920,33 +4005,55 @@ ${shareTarget}`;
       clearTimeout(this.statusTimer);
       this.previewObserver.disconnect();
       document.removeEventListener("keydown", this.onKeyDown, true);
+      document.removeEventListener("focusin", this.onFocusIn, true);
+      this.backdrop.inert = true;
+      this.backdrop.setAttribute("aria-hidden", "true");
       this.backdrop.classList.add("bsp-backdrop-closing");
       this.panel.classList.add("bsp-panel-closing");
-      window.setTimeout(() => {
-        this.backdrop.remove();
-        if (restore && this.capture) restorePlayback(this.capture);
-        this.onClosed();
-      }, motionDelay(MOTION.fast));
+      if (restore && this.capture) restorePlayback(this.capture);
+      this.onClosed();
+      if (restore) document.getElementById("bsp-entry")?.focus({ preventScroll: true });
+      window.setTimeout(() => this.backdrop.remove(), motionDelay(MOTION.fast));
+    }
+    onFocusIn(event) {
+      if (!this.closed && event.target instanceof Node && !this.panel.contains(event.target)) this.panel.focus();
     }
     onKeyDown(event) {
       if (event.key === "Escape") {
         event.preventDefault();
         this.close(true);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(this.panel.querySelectorAll("button,input,textarea,a[href],[tabindex]")).filter((node) => node.tabIndex >= 0 && !node.matches(":disabled") && node.getClientRects().length > 0);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+        this.panel.focus();
+        return;
+      }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === this.panel)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
+    previewState(message, retry) {
+      const state = element("div", "bsp-loading-card");
+      if (!retry) state.append(element("div", "bsp-spinner"));
+      state.append(element("p", "", message));
+      if (retry) state.append(retry);
+      return state;
+    }
     renderLoading() {
-      this.previewPane.replaceChildren();
-      const loading = element("div", "bsp-loading-card");
-      const message = element("div");
-      message.append(element("div", "bsp-spinner"), element("div", "", "\u6B63\u5728\u6355\u83B7\u89C6\u9891\u4FE1\u606F\u2026"));
-      loading.append(message);
-      this.previewPane.append(loading);
-      this.controls.replaceChildren(
-        element("h3", "", "\u6B63\u5728\u751F\u6210\u6D77\u62A5"),
-        element("p", "", "\u6B63\u5728\u8BFB\u53D6\u5C01\u9762\u4E0E\u89C6\u9891\u4FE1\u606F\u2026")
-      );
+      this.previewPane.replaceChildren(this.previewState("\u6B63\u5728\u751F\u6210\u6D77\u62A5"));
+      this.controls.replaceChildren();
     }
     async captureThenLoad() {
+      if (!this.ensureCurrentContext()) return;
       try {
         this.capture = captureAndPausePlayback();
       } catch (error) {
@@ -3956,27 +4063,29 @@ ${shareTarget}`;
       await this.loadSnapshot();
     }
     async loadSnapshot() {
-      if (!this.capture || this.loading) return;
+      if (!this.ensureCurrentContext() || !this.capture || this.loading) return;
       this.loading = true;
       try {
         const snapshot = await fetchGenerationSnapshot(this.capture);
         const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
         const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
-        const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
+        const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget);
         const poster = model ? await createPoster(model) : null;
-        if (this.closed) return;
+        if (!this.ensureCurrentContext()) return;
         this.snapshot = snapshot;
         this.model = model;
         this.poster = poster;
         this.targetSelection = targetSelection;
         this.renderReady(poster, targetSelection);
       } catch (error) {
-        if (!this.closed) this.renderError(error, false);
+        if (this.ensureCurrentContext()) this.renderError(error, false);
       } finally {
         this.loading = false;
       }
     }
     renderReady(poster, targetSelection) {
+      const active = document.activeElement;
+      const focusName = active instanceof HTMLElement && this.panel.contains(active) ? active.getAttribute("aria-label") ?? active.textContent : null;
       if (!poster) {
         const retry = element("button", "bsp-button", "\u91CD\u8BD5");
         retry.type = "button";
@@ -3984,7 +4093,7 @@ ${shareTarget}`;
           this.renderLoading();
           void this.loadSnapshot();
         });
-        this.previewPane.replaceChildren(element("p", "bsp-error", "\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D"), retry);
+        this.previewPane.replaceChildren(this.previewState("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D", retry));
       } else if (!this.previewPane.contains(poster)) {
         const frame = element("div", "bsp-preview-frame");
         frame.append(poster);
@@ -3997,36 +4106,51 @@ ${shareTarget}`;
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
       const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
-      const actions = element("div", "bsp-actions");
+      const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
-      const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(copy, status));
-      const download = this.actionButton("download", "", "\u4E0B\u8F7D\u6D77\u62A5", false, () => void this.download(download, status));
-      const copyTextButton = this.actionButton("copy-text", "", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyTextButton, shareText, status));
-      const combinedButton = this.actionButton("combined", "\u6D77\u62A5+\u6587\u6848", "\u590D\u5236\u6D77\u62A5\u4E0E\u6587\u6848\u7684\u517C\u5BB9\u683C\u5F0F", false, () => void this.copyCombined(combinedButton, shareText, status));
-      copyTextButton.classList.add("bsp-text-copy");
-      const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
-      const markdownButton = this.actionButton("markdown", "", "\u590D\u5236 Markdown", false, () => void this.copyShareText(markdownButton, markdownText, status, "Markdown"));
-      const textPreview = this.renderTextPreview(shareText);
-      textPreview.append(copyTextButton, markdownButton);
-      actions.append(copy, download, combinedButton);
-      this.exportButtons.push(copy, download, copyTextButton, markdownButton, combinedButton);
-      for (const button of [copy, download, combinedButton]) button.disabled = !poster;
-      const content = [this.renderShareOptions()];
+      status.setAttribute("aria-live", "polite");
+      const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(status));
+      const download = this.actionButton("download", "", "\u4E0B\u8F7D\u6D77\u62A5 PNG", false, () => void this.download(status));
+      download.classList.add("bsp-download");
+      const combined = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(shareText, status));
+      combined.title = "\u540C\u65F6\u63D0\u4F9B\u6D77\u62A5\u4E0E\u6587\u6848\uFF0C\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u7C98\u8D34\u5176\u4E2D\u4E00\u79CD";
+      const copyText2 = this.actionButton(null, "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyText2, shareText, status));
+      const copyMarkdown = this.actionButton(null, "\u590D\u5236 Markdown", "\u590D\u5236 Markdown", false, () => void this.copyShareText(copyMarkdown, markdownText, status, "Markdown"));
+      this.exportButtons.push(copy, download, copyText2, copyMarkdown, combined);
+      for (const button of [copy, download, combined]) button.disabled = !poster;
+      const textSection = this.renderTextPreview(shareText);
+      const textHeading = element("div", "bsp-section-heading");
+      const textActions = element("div", "bsp-text-copy-actions");
+      textActions.append(copyText2, copyMarkdown);
+      textHeading.append(element("h3", "", "\u5206\u4EAB\u6587\u6848"), textActions);
+      textSection.prepend(textHeading);
+      const detail = element("input");
+      detail.type = "checkbox";
+      detail.checked = this.options.detailedText;
+      detail.setAttribute("aria-label", "\u8BE6\u7EC6\u4FE1\u606F");
+      detail.addEventListener("change", () => this.applyOptions({ ...this.options, detailedText: detail.checked }));
+      const detailLabel = element("label");
+      detailLabel.append(detail, document.createTextNode("\u8BE6\u7EC6\u4FE1\u606F"));
+      const textOptions = element("div", "bsp-text-options");
+      textOptions.append(detailLabel);
+      textSection.append(textOptions);
       if (targetSelection.source === "canonical-fallback") {
-        const fallback = element("div", "bsp-fallback");
+        const fallback = element("p", "bsp-fallback", "\u5DF2\u4F7F\u7528\u5B8C\u6574\u94FE\u63A5");
         fallback.setAttribute("role", "status");
-        fallback.append(
-          element("strong", "", "\u77ED\u94FE\u4E0D\u53EF\u7528\uFF0C\u5DF2\u4F7F\u7528\u89C4\u8303\u957F\u94FE\u63A5"),
-          element("span", "", `\u539F\u56E0\uFF1A${targetSelection.fallbackReason ?? "\u77ED\u94FE\u672A\u901A\u8FC7\u6821\u9A8C"}\u3002\u4E0D\u4F1A\u5F71\u54CD\u9884\u89C8\u6216\u4E0B\u8F7D\u3002`)
-        );
-        content.push(fallback);
+        textSection.append(fallback);
       }
-      content.push(textPreview, actions, status);
-      const focused = document.activeElement instanceof HTMLButtonElement && this.controls.contains(document.activeElement) ? document.activeElement.getAttribute("aria-label") ?? document.activeElement.textContent : null;
-      this.controls.replaceChildren(...content);
-      if (focused) {
-        Array.from(this.controls.querySelectorAll("button")).find((button) => (button.getAttribute("aria-label") ?? button.textContent) === focused)?.focus({ preventScroll: true });
+      const actions = element("div", "bsp-actions");
+      actions.append(copy, combined);
+      const actionGroup = element("div", "bsp-action-group");
+      actionGroup.append(actions, status);
+      const downloadArea = element("div", "bsp-preview-download");
+      downloadArea.append(download);
+      this.previewPane.querySelector(".bsp-preview-download")?.remove();
+      this.previewPane.append(downloadArea);
+      this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
+      if (focusName) {
+        Array.from(this.panel.querySelectorAll("button,input,textarea,[tabindex]")).find((node) => (node.getAttribute("aria-label") ?? node.textContent) === focusName)?.focus({ preventScroll: true });
       }
     }
     renderTextPreview(shareText) {
@@ -4047,9 +4171,9 @@ ${shareTarget}`;
     actionButton(iconName, label, tip, primary, onClick) {
       const button = element("button", primary ? "bsp-action bsp-action-primary" : "bsp-action", label);
       button.type = "button";
-      button.dataset.tip = tip;
+      button.title = tip;
       button.setAttribute("aria-label", tip);
-      button.prepend(createIcon(iconName));
+      if (iconName) button.prepend(createIcon(iconName));
       button.addEventListener("click", onClick);
       return button;
     }
@@ -4083,16 +4207,13 @@ ${shareTarget}`;
       const snapshot = this.snapshot;
       if (!snapshot) return container;
       container.append(
-        this.optionToggle("list", "\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("list", "\u6807\u8BB0\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
           void checked;
           this.applyOptions(togglePartShare(this.options, snapshot));
         }),
-        this.optionToggle("clock", "\u65F6\u95F4\u6233", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("clock", "\u6807\u8BB0\u5F53\u524D\u65F6\u95F4", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
           void checked;
           this.applyOptions(toggleTimestampShare(this.options, snapshot));
-        }),
-        this.optionToggle("detail", "\u8BE6\u7EC6\u4FE1\u606F", this.options.detailedText, this.updating, (checked) => {
-          this.applyOptions({ ...this.options, detailedText: checked });
         })
       );
       if (!snapshot.partIdentified) {
@@ -4111,7 +4232,7 @@ ${shareTarget}`;
       }
     }
     applyOptions(next) {
-      if (!this.snapshot || this.updating) return;
+      if (!this.ensureCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
       const previous = this.options;
       const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
       const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
@@ -4139,9 +4260,9 @@ ${shareTarget}`;
       try {
         const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
         const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-        const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
+        const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget);
         const poster = model ? await createPoster(model) : null;
-        if (this.closed) return;
+        if (!this.ensureCurrentContext()) return;
         this.model = model;
         this.poster = poster;
         this.targetSelection = targetSelection;
@@ -4154,25 +4275,25 @@ ${shareTarget}`;
           await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
           overlay.remove();
         }
-        if (!this.closed) this.renderReady(poster, targetSelection);
+        if (this.ensureCurrentContext()) this.renderReady(poster, targetSelection);
       } catch (error) {
-        if (!this.closed) this.renderError(error, false);
+        if (this.ensureCurrentContext()) this.renderError(error, false);
       }
     }
     setExportButtonsDisabled(disabled) {
       for (const button of this.exportButtons) button.disabled = disabled;
-      for (const button of this.controls.querySelectorAll(".bsp-option-pill")) {
+      for (const button of this.previewPane.querySelectorAll("button")) button.disabled = disabled;
+      for (const button of this.controls.querySelectorAll(".bsp-option-pill,input")) {
         if (disabled) button.disabled = true;
       }
     }
     showUpdatingOverlay() {
       const frame = this.previewPane.querySelector(".bsp-preview-frame");
       if (!frame || frame.querySelector(".bsp-poster-updating")) return;
-      frame.append(element("div", "bsp-poster-updating", "\u6B63\u5728\u66F4\u65B0\u2026"));
+      frame.append(element("div", "bsp-poster-updating", "\u6B63\u5728\u66F4\u65B0\u6807\u8BB0"));
     }
     renderError(error, retryCapture) {
       const message = error instanceof Error ? error.message : "\u751F\u6210\u6D77\u62A5\u65F6\u53D1\u751F\u672A\u77E5\u9519\u8BEF\u3002";
-      this.previewPane.replaceChildren(element("div", "bsp-loading-card", "\u6682\u65F6\u65E0\u6CD5\u751F\u6210\u9884\u89C8"));
       const retry = element("button", "bsp-button", "\u91CD\u8BD5");
       retry.type = "button";
       retry.addEventListener("click", () => {
@@ -4180,24 +4301,39 @@ ${shareTarget}`;
         if (retryCapture) void this.captureThenLoad();
         else void this.loadSnapshot();
       });
-      this.controls.replaceChildren(
-        element("p", "bsp-step", "GENERATION BLOCKED"),
-        element("h3", "", "\u6D77\u62A5\u5C1A\u672A\u751F\u6210"),
-        element("p", "bsp-error", message),
-        retry,
-        element("p", "bsp-help", retryCapture ? "\u8BF7\u786E\u8BA4\u4E3B\u64AD\u653E\u5668\u5DF2\u7ECF\u52A0\u8F7D\uFF0C\u518D\u91CD\u8BD5\u3002" : "\u91CD\u8BD5\u4F1A\u4FDD\u7559\u6700\u521D\u6355\u83B7\u7684\u89C6\u9891\u3001\u5206P\u548C\u64AD\u653E\u4F4D\u7F6E\uFF0C\u53EA\u91CD\u65B0\u83B7\u53D6\u751F\u6210\u6240\u9700\u8D44\u6E90\u3002")
-      );
+      this.previewPane.replaceChildren(this.previewState("\u6682\u65F6\u65E0\u6CD5\u751F\u6210\u6D77\u62A5", retry));
+      this.controls.replaceChildren(element("p", "bsp-error", message));
+      if (retryCapture) this.controls.append(element("p", "bsp-help", "\u8BF7\u786E\u8BA4\u4E3B\u64AD\u653E\u5668\u5DF2\u7ECF\u52A0\u8F7D\uFF0C\u518D\u91CD\u8BD5\u3002"));
     }
     async posterPngDataUrl() {
       if (!this.poster || !this.model) throw new Error("\u6D77\u62A5\u9884\u89C8\u5C1A\u672A\u751F\u6210");
       return exportPosterPng(this.poster);
     }
-    async copyPoster(button, status) {
+    /** Keep the chosen output stable through asynchronous encoding and clipboard writes. */
+    beginExport() {
+      if (!this.ensureCurrentContext() || this.loading || this.updating || this.exporting) return null;
+      this.exporting = true;
+      const controls = /* @__PURE__ */ new Set([
+        ...this.exportButtons,
+        ...this.controls.querySelectorAll("button,input"),
+        ...this.previewPane.querySelectorAll("button")
+      ]);
+      const states = Array.from(controls, (control) => ({ control, disabled: control.disabled }));
+      for (const { control } of states) control.disabled = true;
+      return () => {
+        this.exporting = false;
+        if (this.closed || this.loading || this.updating) return;
+        for (const { control, disabled } of states) if (control.isConnected) control.disabled = disabled;
+      };
+    }
+    async copyPoster(status) {
       if (!this.poster || !this.model) return;
-      button.disabled = true;
+      const finish = this.beginExport();
+      if (!finish) return;
       this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
+        if (!this.ensureCurrentContext()) return;
         const outcome = await copyPosterPngToClipboard(dataUrl);
         const feedback = describePosterCopyResult(outcome);
         this.showStatus(
@@ -4205,24 +4341,25 @@ ${shareTarget}`;
           outcome.status !== "copied"
         );
       } catch {
-        this.showStatus("\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D\u201D\u4FDD\u5B58\u56FE\u7247\u3002", true);
+        this.showStatus("\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002\u8BF7\u4F7F\u7528\u6D77\u62A5\u4E0B\u65B9\u7684\u4E0B\u8F7D\u56FE\u6807\u4FDD\u5B58 PNG\u3002", true);
       } finally {
-        button.disabled = this.updating;
+        finish();
       }
     }
     async copyShareText(button, text, status, format = "\u666E\u901A\u6587\u6848") {
-      button.disabled = true;
+      const finish = this.beginExport();
+      if (!finish) return;
       this.clearStatus(status);
       this.controls.querySelector(".bsp-manual-copy")?.remove();
       try {
         const outcome = await copyShareTextToClipboard(text);
-        if (this.closed || !button.isConnected) return;
+        if (!this.ensureCurrentContext() || !button.isConnected) return;
         if (outcome.status === "copied") this.showStatus(`${format}\u5DF2\u590D\u5236\u3002`);
         else this.offerManualCopy(text, format);
       } catch {
-        if (!this.closed && button.isConnected) this.offerManualCopy(text, format);
+        if (this.ensureCurrentContext() && button.isConnected) this.offerManualCopy(text, format);
       } finally {
-        button.disabled = this.updating;
+        finish();
       }
     }
     offerManualCopy(text, format) {
@@ -4231,34 +4368,37 @@ ${shareTarget}`;
       source.readOnly = true;
       source.value = text;
       source.rows = 6;
-      source.style.width = "100%";
       source.setAttribute("aria-label", `\u624B\u52A8\u590D\u5236 ${format}`);
       this.controls.append(source);
       this.showStatus(`${format}\u590D\u5236\u5931\u8D25\u3002\u8BF7\u5728\u4E0B\u65B9\u6587\u672C\u6846\u4E2D\u624B\u52A8\u590D\u5236\u3002`, true);
       source.focus();
       source.select();
     }
-    async copyCombined(button, text, status) {
+    async copyCombined(text, status) {
       if (!this.poster || !this.model) return;
-      button.disabled = true;
+      const finish = this.beginExport();
+      if (!finish) return;
       this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
-        const outcome = await copyCombinedPosterAndText(dataUrl, text);
+        if (!this.ensureCurrentContext()) return;
+        const outcome = await copyCombinedPosterAndText(dataUrl, text, () => this.ensureCurrentContext());
         const feedback = describeCombinedCopyResult(outcome);
         this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
       } catch {
         this.showStatus("\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
       } finally {
-        button.disabled = this.updating;
+        finish();
       }
     }
-    async download(button, status) {
+    async download(status) {
       if (!this.poster || !this.snapshot || !this.model) return;
-      button.disabled = true;
+      const finish = this.beginExport();
+      if (!finish) return;
       this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
+        if (!this.ensureCurrentContext()) return;
         const link = document.createElement("a");
         link.download = buildPosterFilename(this.snapshot.bvid, /* @__PURE__ */ new Date(), this.options.partShare ? this.snapshot.partNumber : null);
         link.href = dataUrl;
@@ -4267,7 +4407,7 @@ ${shareTarget}`;
       } catch {
         this.showStatus("PNG \u751F\u6210\u5931\u8D25\uFF0C\u9884\u89C8\u4ECD\u4FDD\u7559\uFF1B\u8BF7\u91CD\u8BD5\u4E0B\u8F7D\u3002", true);
       } finally {
-        button.disabled = this.updating;
+        finish();
       }
     }
   };
@@ -4275,181 +4415,73 @@ ${shareTarget}`;
   // src/ui/styles.ts
   var STYLES = String.raw`
 ${MOTION_STYLES}
-:root { --bsp-paper:#f7f5f0; --bsp-ink:#1a1a1a; --bsp-muted:#6b6b66; --bsp-stage:#232629; --bsp-stage-line:#2e3135; --bsp-radius:16px; }
-#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:0; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background-color var(--bsp-motion-color) var(--bsp-ease-out),border-color var(--bsp-motion-color) var(--bsp-ease-out); }
-#bsp-entry:hover { background:#f7f5f0; border-color:#77756f; }
-#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:2px; }
-#bsp-entry svg { width:18px; height:18px; }
-.bsp-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:rgba(14,14,13,.68); font-family:"PingFang SC","Microsoft YaHei",sans-serif; animation:bsp-backdrop-in var(--bsp-motion-backdrop) var(--bsp-ease-out); }
-.bsp-backdrop.bsp-backdrop-closing { opacity:0; transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out); }
-.bsp-panel { position:relative; width:min(1040px,calc(100vw - 56px)); max-height:calc(100vh - 56px); overflow:auto; border:1px solid #d4d0c7; border-radius:var(--bsp-radius); background:#f1eee7; box-shadow:0 28px 80px rgba(0,0,0,.34); color:#1a1a1a; animation:bsp-panel-in var(--bsp-motion-open) var(--bsp-ease-out); }
-.bsp-panel.bsp-panel-closing { opacity:0; transform:translateY(8px) scale(0.985); transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out),transform var(--bsp-motion-fast) var(--bsp-ease-in-out); }
-.bsp-panel:focus { outline:none; }
-.bsp-panel-head { display:flex; align-items:center; justify-content:space-between; min-height:52px; padding:0 18px; border-bottom:1px solid #cbc7be; background:#faf8f3; }
-.bsp-close { appearance:none; width:36px; height:36px; border:0; border-radius:50%; background:transparent; color:#55524c; font-size:25px; line-height:1; cursor:pointer; }
-.bsp-close:hover { background:#e7e3db; }
-.bsp-eyebrow { color:var(--bsp-muted); font:700 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.22em; }
-.bsp-workspace { display:grid; min-width:0; grid-template-columns:54% 46%; min-height:600px; }
-.bsp-preview-pane { display:grid; min-width:0; align-items:center; justify-items:center; padding:24px; border-right:1px solid var(--bsp-stage-line); background:var(--bsp-stage); }
-.bsp-preview-frame { overflow:hidden; position:relative; grid-area:1/1; width:min(100%,360px); aspect-ratio:3/4; display:block; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out),transform var(--bsp-motion-fast) var(--bsp-ease-in-out); }
-.bsp-preview-frame-incoming { opacity:0; transform:translateY(4px); }
-.bsp-preview-frame-incoming.is-visible { opacity:1; transform:translateY(0); }
-.bsp-preview-frame-exit { opacity:0; }
-.bsp-poster-updating { animation:bsp-backdrop-in var(--bsp-motion-overlay) var(--bsp-ease-out); transition:opacity var(--bsp-motion-overlay) var(--bsp-ease-out); position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
-.bsp-loading-card { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; border:1px solid #b9b5ac; background:#f7f5f0; color:#64615b; }
-.bsp-spinner { width:28px; height:28px; margin:0 auto 14px; border:2px solid #c8c4bb; border-top-color:#1a1a1a; border-radius:50%; animation:bsp-spin .75s linear infinite; }
-@keyframes bsp-spin { to { transform:rotate(360deg); } }
-.bsp-controls { min-width:0; display:flex; flex-direction:column; padding:20px 22px; overflow:auto; background:#faf8f3; }
-.bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
-.bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
-.bsp-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:14px; }
-.bsp-option-pill { appearance:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-overlay) var(--bsp-ease-out),color var(--bsp-motion-overlay) var(--bsp-ease-out),border-color var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); }
-.bsp-option-pill:hover { border-color:#a9a59b; color:var(--bsp-ink); }
-.bsp-option-pill svg { width:15px; height:15px; }
-.bsp-option-pill.is-on { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
-.bsp-option-pill:disabled { opacity:.55; cursor:not-allowed; }
-.bsp-option-notice { grid-column:1/-1; margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
-.bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
-.bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
-.bsp-fallback strong { font-size:13px; line-height:1.4; }
-.bsp-fallback span { font-size:12px; line-height:1.55; }
-.bsp-text-card { position:relative; margin-top:20px; border:0; border-radius:10px; background:#fff; color:#24231f; }
-.bsp-text-content { max-height:96px; overflow:auto; padding:12px 42px 12px 14px; white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; }
-.bsp-text-card-body { font:400 13px/1.65 "PingFang SC","Microsoft YaHei",sans-serif; }
-.bsp-text-card-link { font:500 11px/1.6 ui-monospace,Menlo,monospace; color:#4f6d5b; }
-.bsp-text-card .bsp-text-copy { position:absolute; right:6px; top:6px; height:28px; width:28px; padding:0; border:0; border-radius:6px; }
-.bsp-text-copy svg { width:15px; height:15px; }
-.bsp-text-copy::after { left:auto; right:0; transform:translateY(4px); }
-.bsp-text-copy:hover::after, .bsp-text-copy:focus-visible::after { transform:translateY(0); }
-.bsp-actions { margin-top:auto; padding-top:24px; display:grid; grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr); gap:8px; }
-.bsp-action { min-width:0; position:relative; display:inline-flex; align-items:center; justify-content:center; gap:7px; height:44px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-overlay) var(--bsp-ease-out),color var(--bsp-motion-overlay) var(--bsp-ease-out),border-color var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); }
-.bsp-action:hover { border-color:#a9a59b; color:var(--bsp-ink); transform:translateY(-1px); }
-.bsp-action svg { flex:none; width:18px; height:18px; }
-.bsp-action-primary { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
-.bsp-action-primary:hover { background:#353431; color:#fff; }
-.bsp-action:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-.bsp-action::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translate(-50%,4px); padding:5px 8px; border-radius:6px; background:rgba(18,18,18,.88); color:#fff; font-size:11px; width:max-content; max-width:180px; white-space:normal; text-align:center; opacity:0; pointer-events:none; transition:opacity var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); z-index:3; }
-.bsp-actions > :last-child::after { left:auto; right:0; transform:translateY(4px); }
-.bsp-actions > :last-child:hover::after, .bsp-actions > :last-child:focus-visible::after { transform:translateY(0); }
-.bsp-action:hover::after, .bsp-action:focus-visible::after { opacity:1; transform:translate(-50%,0); }
-.bsp-button-primary { background:#1a1a1a; color:#fff; }
-.bsp-button-secondary { background:#fff; color:#1a1a1a; }
-.bsp-button-secondary:hover { background:#f7f5f0; }
-.bsp-button { appearance:none; width:100%; min-height:46px; border:1px solid #1a1a1a; border-radius:2px; background:#1a1a1a; color:#fff; font:650 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; }
-.bsp-button:hover { background:#353431; }
-.bsp-button:disabled { border-color:#aaa79f; background:#aaa79f; cursor:not-allowed; }
-.bsp-help { margin-top:12px !important; font-size:12px !important; }
-.bsp-error { margin:20px 0; padding:16px; border-left:3px solid #a3452f; background:#f5e6df; color:#6f2f20 !important; }
-.bsp-status { min-height:20px; margin-top:10px !important; color:#3d6b47 !important; font-size:12px !important; opacity:0; transform:translateY(3px); transition:opacity var(--bsp-motion-color) var(--bsp-ease-in-out),transform var(--bsp-motion-color) var(--bsp-ease-in-out); }
-.bsp-status.is-show { opacity:1; transform:translateY(0); }
-.bsp-status.is-error { color:#a3452f !important; }
-.bsp-poster { transform-origin:top left; box-sizing:border-box; position:relative; width:360px; height:480px; overflow:hidden; padding:17px 18px 16px; border:1px solid #b7b4ac; background:#f7f5f0; color:#1a1a1a; }
-.bsp-poster::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; background-image:radial-gradient(#776f62 .45px,transparent .55px); background-size:4px 4px; }
-.bsp-masthead { position:relative; z-index:1; display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid #1a1a1a; }
-.bsp-masthead strong { font:700 9px/1.1 "PingFang SC","Microsoft YaHei",sans-serif; letter-spacing:.08em; }
-.bsp-masthead span { color:#6b6b66; font:600 7px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em; }
-.bsp-cover { position:relative; z-index:1; display:block; width:100%; height:182px; margin:10px 0 9px; border:1px solid #77736b; object-fit:cover; object-position:center; }
-.bsp-cover-missing { display:grid; place-items:center; background:repeating-linear-gradient(135deg,#ece8df 0 8px,#e2ddd2 8px 16px); color:#8b877e; font:700 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.14em; }
-.bsp-b-cover-missing { position:absolute; inset:0; display:grid; justify-items:center; align-items:start; padding-top:120px; background:repeating-linear-gradient(135deg,#20252a 0 10px,#15191d 10px 20px); color:rgba(255,255,255,.62); font:700 9px/1 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
-.bsp-poster-b.bsp-cover-missing .bsp-b-scrim { background:rgba(0,0,0,.35); }
-.bsp-poster-title { position:relative; z-index:1; display:-webkit-box; overflow:hidden; margin:0; font-size:19px; line-height:1.26; font-weight:700; letter-spacing:-.02em; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
-.bsp-byline { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; color:#55524c; font-size:9px; }
-.bsp-byline strong { min-width:0; overflow:hidden; color:#262522; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-identity { flex:none; font:600 7.5px/1 ui-monospace,Menlo,monospace; }
-.bsp-part-timestamp { position:relative; z-index:1; display:flex; align-items:center; gap:6px; margin-top:7px; min-height:14px; }
-.bsp-part-timestamp:empty { display:none; }
-.bsp-part-chip { max-width:82%; overflow:hidden; padding:2px 7px; border:1px solid #77736b; background:#f0ede6; color:#24231f; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-time-chip { margin-left:auto; color:#1a1a1a; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:9px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
-.bsp-stat { padding:6px 5px 5px; border-right:1px solid #c6c2b9; }
-.bsp-stat:last-child { border-right:0; }
-.bsp-stat strong,.bsp-stat span { display:block; }
-.bsp-stat strong { white-space:nowrap; font:750 clamp(14px,4.3vw,16px)/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; letter-spacing:-.025em; }
-.bsp-stat span { margin-top:5px; color:#6b6b66; font-size:7px; letter-spacing:.18em; }
-.bsp-destination { position:relative; z-index:1; display:grid; grid-template-columns:78px 1fr; gap:13px; align-items:center; margin-top:9px; }
-.bsp-qr { box-sizing:border-box; display:block; width:78px; height:78px; background:#fff; }
-.bsp-link-label { display:block; margin-bottom:7px; color:#6b6b66; font-size:7px; letter-spacing:.17em; }
-.bsp-link { display:block; overflow-wrap:anywhere; color:#1a1a1a; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; }
-.bsp-archive { position:absolute; right:18px; bottom:7px; z-index:1; color:#8b877e; font:600 6px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; }
-.bsp-theme-segment { display:inline-flex; align-self:flex-start; padding:3px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:rgba(0,0,0,.04); }
-.bsp-theme-option { appearance:none; display:inline-flex; align-items:center; height:30px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--bsp-muted); font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-fast) var(--bsp-ease-in-out),color var(--bsp-motion-fast) var(--bsp-ease-in-out); }
-.bsp-theme-option.is-active { background:var(--bsp-ink); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.16); }
-#bsp-entry.bsp-entry-b { background:#18191c; border-color:#18191c; color:#fff; }
-#bsp-entry.bsp-entry-b:hover { background:#343a40; border-color:#343a40; }
-.bsp-backdrop.bsp-theme-b { background:rgba(5,6,8,.78); }
-.bsp-panel.bsp-theme-b { border-color:#3d4045; background:#18191c; color:#f1f2f3; }
-.bsp-panel.bsp-theme-b .bsp-panel-head { border-bottom-color:#2e3135; background:#101113; }
-.bsp-panel.bsp-theme-b .bsp-close { color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-close:hover { background:#2e3135; }
-.bsp-panel.bsp-theme-b .bsp-preview-pane { border-right-color:#2e3135; background:var(--bsp-stage); }
-.bsp-panel.bsp-theme-b .bsp-controls { background:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-controls p, .bsp-panel.bsp-theme-b .bsp-step { color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-option-pill { border-color:#3d4045; background:#232528; color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-option-pill.is-on { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-text-card { border-color:#2e3135; background:#101113; color:#e8e9eb; }
-.bsp-panel.bsp-theme-b .bsp-text-card-link { color:#9fc4ac; }
-.bsp-panel.bsp-theme-b .bsp-theme-segment { border-color:#3d4045; background:#232528; }
-.bsp-panel.bsp-theme-b .bsp-theme-option { color:#c9cdd2; }
-.bsp-panel.bsp-theme-b .bsp-theme-option.is-active { background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-action { border-color:#3d4045; background:#232528; color:#e8e9eb; }
-.bsp-panel.bsp-theme-b .bsp-action-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-button-primary { border-color:#f1f2f3; background:#f1f2f3; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-button-secondary { border-color:#8a9096; background:#2e3135; color:#fff; }
-.bsp-panel.bsp-theme-b .bsp-button-secondary:hover { background:#3d4045; }
-.bsp-poster.bsp-poster-b { padding:0; border:0; background:#000; color:#fff; }
-.bsp-poster-b::after { display:none; }
-.bsp-cover-b { position:absolute; inset:0; z-index:0; display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
-.bsp-b-scrim { position:absolute; inset:0; z-index:1; background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.28) 38%,rgba(0,0,0,.86) 78%,rgba(0,0,0,.94) 94%); }
-.bsp-b-content { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; padding:16px; }
-.bsp-b-topline { display:flex; align-items:center; gap:8px; min-height:24px; }
-.bsp-b-part-chip, .bsp-b-time-chip { overflow:hidden; padding:3px 9px; border:1px solid rgba(255,255,255,.32); border-radius:14px; background:rgba(0,0,0,.55); color:#fff; text-overflow:ellipsis; white-space:nowrap; backdrop-filter:blur(2px); }
-.bsp-b-part-chip { max-width:76%; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; }
-.bsp-b-time-chip { margin-left:auto; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.bsp-b-bottom { margin-top:auto; }
-.bsp-b-title { display:-webkit-box; overflow:hidden; margin:0; color:#fff; font-size:19px; font-weight:800; line-height:1.4; letter-spacing:-.02em; text-shadow:0 2px 12px rgba(0,0,0,.7); -webkit-box-orient:vertical; -webkit-line-clamp:3; }
-.bsp-b-up { margin-top:8px; overflow:hidden; color:rgba(255,255,255,.9); font-size:9px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-b-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
-.bsp-b-stat { min-width:0; text-align:center; }
-.bsp-b-stat strong, .bsp-b-stat span { display:block; }
-.bsp-b-stat strong { overflow:hidden; color:#fff; font:750 11px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; text-overflow:ellipsis; white-space:nowrap; }
-.bsp-b-stat span { margin-top:3px; color:rgba(255,255,255,.62); font-size:7px; letter-spacing:.12em; }
-.bsp-b-identity { margin-top:8px; color:rgba(255,255,255,.6); font:600 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.08em; text-align:center; }
-.bsp-b-destination { display:flex; align-items:center; gap:10px; margin-top:10px; }
-.bsp-b-qr { box-sizing:border-box; flex:none; width:72px; height:72px; padding:4px; border-radius:5px; background:#fff; }
-.bsp-b-link-side { min-width:0; flex:1; }
-.bsp-b-link-label { display:block; margin-bottom:5px; color:rgba(255,255,255,.58); font-size:7px; letter-spacing:.16em; }
-.bsp-b-link { display:block; overflow-wrap:anywhere; color:#fff; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,.8); }
-.bsp-backdrop *, .bsp-backdrop *::before, .bsp-backdrop *::after { box-sizing:border-box; }
-.bsp-panel button:focus-visible, .bsp-text-content:focus-visible { outline:2px solid #00aeec; outline-offset:3px; }
-.bsp-panel, .bsp-panel-head, .bsp-controls, .bsp-text-card { transition:color var(--bsp-motion-color) var(--bsp-ease-in-out),background-color var(--bsp-motion-color) var(--bsp-ease-in-out),border-color var(--bsp-motion-color) var(--bsp-ease-in-out); }
-.bsp-poster-updating.is-leaving { opacity:0; }
-.bsp-panel.bsp-theme-b .bsp-status { color:#a9d4b3 !important; }
-.bsp-panel.bsp-theme-b .bsp-status.is-error { color:#ffb39f !important; }
-.bsp-panel.bsp-theme-b .bsp-option-notice { color:#e6c391 !important; }
-.bsp-panel.bsp-theme-b .bsp-action-primary:hover { background:#d8dadc; color:#18191c; }
-.bsp-panel.bsp-theme-b .bsp-option-pill:hover { border-color:#92979d; }
-@keyframes bsp-backdrop-in { from { opacity:0; } }
-@keyframes bsp-panel-in { from { opacity:0; transform:translateY(10px) scale(0.985); } }
-@media (width < 880px) { .bsp-workspace { grid-template-columns:1fr; min-height:0; } .bsp-preview-pane { border-right:0; border-bottom:1px solid var(--bsp-stage-line); } .bsp-controls { min-height:0; padding:20px; overflow:visible; }
-  .bsp-backdrop { padding:8px; }
-  .bsp-panel { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
-  .bsp-actions { grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:0; }
-  .bsp-actions > :last-child { grid-column:1/-1; }
-  .bsp-preview-pane { padding:20px; }
-}
-@media (prefers-reduced-motion:reduce) {
-  .bsp-spinner { animation:none; }
-  .bsp-backdrop, .bsp-panel, .bsp-preview-frame, .bsp-option-pill, .bsp-action, .bsp-theme-option, .bsp-status, #bsp-entry { transition:none; animation:none; }
-  .bsp-backdrop.bsp-backdrop-closing { opacity:0; }
-  .bsp-panel.bsp-panel-closing { opacity:0; transform:none; }
-  .bsp-preview-frame-incoming { opacity:1; transform:none; }
-  .bsp-preview-frame-exit { opacity:0; }
+#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:8px; height:36px; margin-left:0; padding:0; border:0; border-radius:4px; background:transparent; color:#61666d; font:400 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:color var(--bsp-motion-color) var(--bsp-ease-out); }
+#bsp-entry.bsp-entry-dark { color:#b7bcc4; }
+#bsp-entry:hover { color:#00aeec; }
+#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:3px; }
+#bsp-entry svg { width:24px; height:24px; }
+.bsp-backdrop{--bsp-surface:#fff;--bsp-soft:#f6f7f8;--bsp-text:#18191c;--bsp-muted:#61666d;--bsp-line:#e3e5e7;--bsp-blue:#00aeec;--bsp-blue-bg:#e5f5fc;--bsp-error:#c95042;position:fixed;z-index:2147483646;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:24px;overflow:auto;font:14px/1.5 "PingFang SC","Microsoft YaHei",sans-serif;color:var(--bsp-text);animation:bsp-backdrop-in var(--bsp-motion-backdrop) var(--bsp-ease-out)}
+.bsp-backdrop.bsp-appearance-dark{--bsp-surface:#24262b;--bsp-soft:#1d1f23;--bsp-text:#edf0f3;--bsp-muted:#a2a9b3;--bsp-line:#3a3e46;--bsp-blue:#62c9ef;--bsp-blue-bg:#203d48;--bsp-error:#ffab9d}
+.bsp-backdrop *,.bsp-backdrop *::before,.bsp-backdrop *::after{box-sizing:border-box}
+.bsp-backdrop.bsp-backdrop-closing{opacity:0;transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out)}
+.bsp-panel{position:relative;width:min(920px,100%);max-height:calc(100dvh - 48px);background:var(--bsp-surface);border:0;border-radius:8px;box-shadow:0 2px 12px #00000014;overflow:auto;animation:bsp-panel-in var(--bsp-motion-open) var(--bsp-ease-out)}
+.bsp-panel:focus{outline:none}.bsp-panel.bsp-panel-closing{opacity:0;transform:translateY(8px);transition:opacity var(--bsp-motion-fast),transform var(--bsp-motion-fast)}
+.bsp-panel button,.bsp-panel input,.bsp-panel textarea{font:inherit}
+.bsp-panel button{appearance:none;cursor:pointer;border:1px solid var(--bsp-line);border-radius:6px;color:var(--bsp-text);background:var(--bsp-surface);padding:9px 16px}
+.bsp-panel button:hover:not(:disabled){border-color:var(--bsp-blue);color:var(--bsp-blue)}
+.bsp-panel button:disabled{cursor:not-allowed;opacity:.45}
+.bsp-panel button:focus-visible,.bsp-panel input:focus-visible,.bsp-panel textarea:focus-visible,.bsp-text-content:focus-visible{outline:3px solid var(--bsp-blue);outline-offset:4px}
+.bsp-panel-head{position:relative;min-height:64px;display:flex;align-items:center;justify-content:center;padding:20px 54px 12px}
+#bsp-dialog-title{margin:0;font-size:16px;line-height:24px;font-weight:400}
+.bsp-panel .bsp-close{position:absolute;right:14px;top:14px;width:32px;height:32px;border:0;background:none;padding:7px;color:var(--bsp-muted);display:grid;place-content:center}
+.bsp-close svg{width:18px;height:18px;stroke-width:1.8}.bsp-panel .bsp-close:hover{background:var(--bsp-soft);color:var(--bsp-blue)}
+.bsp-workspace{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,1fr);gap:32px;padding:12px 28px 26px}
+.bsp-preview-pane{min-width:0;padding:0;background:transparent;border:0}
+.bsp-preview-frame{width:100%;max-width:380px;aspect-ratio:3/4;position:relative;margin:auto;overflow:hidden;box-shadow:0 2px 10px #0000000d;border-radius:2px;background:#dce8e7}
+.bsp-preview-frame>.bsp-poster{position:absolute;top:0;left:0}
+.bsp-preview-download{max-width:380px;display:flex;justify-content:center;margin:10px auto 0}
+.bsp-panel .bsp-download{width:36px;height:32px;padding:6px;border:0;background:transparent;color:var(--bsp-muted);display:grid;place-content:center;border-radius:6px}
+.bsp-download svg{width:20px;height:20px}.bsp-panel .bsp-download:hover:not(:disabled){background:var(--bsp-soft)}
+.bsp-controls{padding:0;display:flex;flex-direction:column;gap:24px;min-width:0}
+.bsp-options{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:12px;min-width:0}
+.bsp-panel .bsp-option-pill{position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 8px;border:1px solid var(--bsp-line);border-radius:6px;font-size:12px;white-space:nowrap;background:transparent;color:var(--bsp-muted)}
+.bsp-option-pill svg{width:16px;height:16px;flex:none}.bsp-panel .bsp-option-pill.is-on{background:var(--bsp-blue-bg);border-color:var(--bsp-blue);color:var(--bsp-blue)}
+.bsp-option-notice{flex-basis:100%;font-size:11px;line-height:1.6;margin:0;color:var(--bsp-muted)}
+.bsp-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.bsp-section-heading h3{margin:0;font-size:14px;font-weight:400;white-space:nowrap}
+.bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
+.bsp-panel .bsp-text-copy-actions button:hover:not(:disabled){color:#40c5f1}
+.bsp-text-content{border:0;background:var(--bsp-soft);border-radius:6px;padding:16px;font-size:13px;line-height:1.85;max-height:270px;min-height:190px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
+.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin-top:14px;color:var(--bsp-blue)}
+.bsp-text-options{display:flex;margin-top:14px}.bsp-text-options label{font-size:12px;color:var(--bsp-muted);display:flex;gap:7px;align-items:center;cursor:pointer}
+.bsp-text-options input{accent-color:var(--bsp-blue);width:14px;height:14px;margin:0}
+.bsp-fallback{font-size:11px;color:var(--bsp-muted);margin:10px 0 0}
+.bsp-action-group{margin-top:auto;margin-bottom:42px}
+.bsp-actions{display:flex;gap:12px}.bsp-panel .bsp-actions button{flex:1;min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;padding:8px;border-radius:6px}
+.bsp-actions svg{width:18px;height:18px;flex:none}.bsp-panel .bsp-action-primary{background:var(--bsp-blue);border-color:var(--bsp-blue);color:#fff}.bsp-panel .bsp-action-primary:hover:not(:disabled){background:#40c5f1;border-color:#40c5f1;color:#fff}
+.bsp-status{font-size:11px;line-height:1.7;color:var(--bsp-muted);margin:10px 0 0}.bsp-status:empty,.bsp-status:not(.is-show){display:none}.bsp-status.is-error{color:var(--bsp-error)}
+.bsp-loading-card{width:100%;max-width:380px;aspect-ratio:3/4;position:relative;margin:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#eef4f1;color:#405e65;font-size:14px;text-align:center}
+.bsp-loading-card p{margin:0}.bsp-panel .bsp-loading-card button{font-size:13px;background:#f9fbfa;border-color:#adc2c2;color:#405e65}
+.bsp-poster-updating{position:absolute;inset:0;z-index:2;background:#eef4f1b8;display:grid;place-items:center;color:#405e65;font-size:14px;transition:opacity var(--bsp-motion-overlay)}
+.bsp-poster-updating.is-leaving{opacity:0}
+.bsp-spinner{width:22px;height:22px;border:2px solid #b8c9ca;border-top-color:#405e65;border-radius:50%;animation:bsp-spin 1s linear infinite}
+.bsp-error{font-size:13px;color:var(--bsp-error);line-height:1.7;margin:0}.bsp-help{font-size:12px;color:var(--bsp-muted);line-height:1.7;margin:0}
+.bsp-manual-copy{width:100%;padding:12px;background:var(--bsp-soft);color:var(--bsp-text);border:1px solid var(--bsp-line);border-radius:6px;resize:vertical;font-size:13px!important}
+@keyframes bsp-spin{to{transform:rotate(360deg)}}
+@keyframes bsp-backdrop-in{from{opacity:0}to{opacity:1}}
+@keyframes bsp-panel-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+.bsp-backdrop{padding:10px;display:block}.bsp-panel{max-height:none}.bsp-panel-head{padding:17px 48px 12px;min-height:56px}.bsp-panel .bsp-close{right:10px;top:10px}
+.bsp-workspace{grid-template-columns:1fr;padding:6px 20px 22px;gap:22px}.bsp-preview-frame{max-width:340px}.bsp-preview-download{margin-top:8px}.bsp-controls{gap:22px}
+.bsp-options{gap:8px}.bsp-panel .bsp-option-pill{font-size:11px;gap:5px;padding:9px 5px}.bsp-section-heading{gap:6px}.bsp-section-heading h3{font-size:13px}.bsp-text-copy-actions{gap:10px}.bsp-panel .bsp-text-copy-actions button{font-size:11px}
+.bsp-text-content{min-height:140px;padding:14px}.bsp-action-group{margin:0}.bsp-panel .bsp-actions button{font-size:13px}
 }
 `;
 
   // src/index.ts
   var activePanel = null;
   var mountQueued = false;
+  var pageAppearance = "light";
   function installStyles() {
     if (document.getElementById("bsp-styles")) return;
     const style = document.createElement("style");
@@ -4458,6 +4490,7 @@ ${MOTION_STYLES}
     document.head.append(style);
   }
   function openPanel() {
+    if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
     if (activePanel) {
       activePanel.focus();
       return;
@@ -4465,16 +4498,14 @@ ${MOTION_STYLES}
     activePanel = new SharePanel(() => {
       activePanel = null;
     });
+    activePanel.setAppearance(pageAppearance);
     activePanel.open();
-  }
-  function rememberedTheme() {
-    return loadRememberedPreferences().theme;
   }
   function mountEntry() {
     mountQueued = false;
     if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
     if (!readPageIdentity()) return;
-    mountSharePosterEntry(rememberedTheme(), openPanel);
+    mountSharePosterEntry(pageAppearance, openPanel);
   }
   function queueMount() {
     if (mountQueued) return;
@@ -4487,6 +4518,11 @@ ${MOTION_STYLES}
     queueMount();
   }
   installStyles();
+  observePageAppearance((appearance) => {
+    pageAppearance = appearance;
+    setEntryAppearance(appearance);
+    activePanel?.setAppearance(appearance);
+  });
   queueMount();
   new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("urlchange", handleLocationChange);

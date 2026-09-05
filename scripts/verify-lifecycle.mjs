@@ -162,6 +162,56 @@ try {
   assert.equal(await replaced.page.evaluate(() => window.fixture.replacementPlays ?? 0), 0, "closing never resumes a replacement player");
   await replaced.context.close();
   console.log("PASS: stale marker requests rejected and replacement player never resumed");
+  // Navigation may occur after an action starts but before its PNG is ready,
+  // with the manager URL event still pending. Exercise the browser canvas
+  // boundary, never the panel's private methods or state.
+  for (const action of ["复制海报", "组合复制", "下载海报 PNG"]) {
+    const encoded = await openFixture(browser, bundle, { paused: false });
+    const p = encoded.page;
+    let downloads = 0;
+    p.on("download", () => { downloads++; });
+    await p.getByRole("button", { name: "生成海报", exact: true }).click();
+    await p.getByRole("button", { name: action, exact: true }).waitFor();
+    await p.evaluate(() => {
+      const original = HTMLCanvasElement.prototype.toDataURL;
+      HTMLCanvasElement.prototype.toDataURL = function (...args) {
+        const result = original.apply(this, args);
+        if (this.width === 1080 && this.height === 1440) {
+          history.pushState({}, "", "/video/BV1xx411c7mD/?p=1");
+          window.fixture.encodingNavigated = true;
+        }
+        return result;
+      };
+    });
+    await p.getByRole("button", { name: action, exact: true }).click();
+    await p.waitForFunction(() => window.fixture.encodingNavigated === true);
+    await p.getByRole("dialog").waitFor({ state: "detached" });
+    assert.equal(await p.evaluate(() => window.fixture.copiedTypes.length), 0, action + " cannot write an encoded poster after navigation");
+    assert.equal(await p.evaluate(() => window.fixture.copiedText.length), 0, action + " cannot fall back to stale share text after navigation");
+    assert.equal(downloads, 0, action + " cannot download an encoded poster after navigation");
+    assert.equal(await p.evaluate(() => window.fixture.playCount), 0, action + " does not restore playback for a new video");
+    assert.deepEqual(encoded.errors, []);
+    await encoded.context.close();
+  }
+  console.log("PASS: navigation at PNG completion blocks stale copy, combined copy and download");
+  const fallback = await openFixture(browser, bundle, { paused: false });
+  try {
+    const p = fallback.page;
+    await p.getByRole("button", { name: "生成海报", exact: true }).click();
+    await p.getByRole("button", { name: "组合复制", exact: true }).waitFor();
+    await p.evaluate(() => {
+      navigator.clipboard.write = async () => {
+        history.pushState({}, "", "/video/BV1xx411c7mD/?p=1");
+        throw new Error("Controlled clipboard rejection after navigation");
+      };
+    });
+    await p.getByRole("button", { name: "组合复制", exact: true }).click();
+    await p.getByRole("dialog").waitFor({ state: "detached" });
+    assert.equal(await p.evaluate(() => window.fixture.copiedText.length), 0, "a rejected combined write cannot start a stale text fallback after navigation");
+    assert.equal(await p.evaluate(() => window.fixture.playCount), 0);
+    assert.deepEqual(fallback.errors, []);
+  } finally { await fallback.context.close(); }
+  console.log("PASS: combined-write rejection after navigation cannot start stale text fallback");
 } finally {
   await browser.close();
 }

@@ -32,3 +32,10 @@ Unchanged production `src/index.ts` bundle; browser UI and actual registered GM 
 ## Remaining evidence
 
 Independent Standards/Spec review is coordinated by the primary agent. Actual Edge + installed userscript-manager validation has not been performed for this commit and must not be inferred from this controlled browser evidence.
+
+## Review follow-up: asynchronous export boundaries
+
+- Independent Spec review reproduced a stale image export against fixed commit `85fb9e9`: the browser's 1080×1440 canvas serialization completed while the page identity changed before manager URL-event delivery. The observed state had the new BVID URL and one old `image/png` clipboard write. The initial export guard was insufficient because navigation occurred during the awaited encoding.
+- Production now revalidates context after encoding, before starting PNG copy, combined copy or download. `scripts/verify-lifecycle.mjs` exercises all three through user actions and the external canvas boundary; each now produces zero clipboard writes/downloads and does not resume playback for the new video.
+- A second RED reproduced navigation followed by rejection at the external combined clipboard writer. The later plain-text fallback wrote once, despite the context being invalid (expected zero). The combined-copy adapter now accepts a continuation guard and checks it before starting text fallback; the panel supplies its current-context guard. Existing callers retain the default behavior.
+- GREEN: the complete lifecycle browser script passed, including all three encoding-navigation cases and the rejected-combined-write fallback case. Clipboard unit suite: 8/8 passed. These tests use the unchanged production bundle with controlled browser/GM boundaries; they do not claim that an already-started operating-system clipboard write can be cancelled.

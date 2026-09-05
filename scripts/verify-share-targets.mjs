@@ -43,14 +43,14 @@ async function installClipboardRecorder(page) {
 }
 async function assertOutputs(page, target, name) {
   await ready(page);
-  const preview = await page.getByLabel("分享文案预览", { exact: true }).textContent();
+  const preview = await page.getByRole("dialog").getByLabel("分享文案预览", { exact: true }).textContent();
   assert.ok(preview.endsWith(target));
   await page.getByRole("button", { name: "复制文案", exact: true }).click();
   assert.equal(await page.evaluate(() => window.fixture.copiedText.at(-1)), preview);
   await page.getByRole("button", { name: "复制 Markdown", exact: true }).click();
   const markdown = await page.evaluate(() => window.fixture.copiedText.at(-1));
   assert.ok(markdown.includes(`](${target})`) && markdown.endsWith(target));
-  assert.equal(await page.getByLabel("分享文案预览", { exact: true }).textContent(), preview);
+  assert.equal(await page.getByRole("dialog").getByLabel("分享文案预览", { exact: true }).textContent(), preview);
   if (await page.getByRole("button", { name: "复制海报", exact: true }).isEnabled()) {
     await page.evaluate(() => { window.clipboardWrites = []; });
     await combinedButton(page).click();
@@ -155,7 +155,7 @@ try {
         await ready(page);
         assert.equal(await timeButton(page).getAttribute("aria-pressed"), "false");
         assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
-        assert.ok((await page.getByLabel("分享文案预览", { exact: true }).textContent()).endsWith(canonical));
+        assert.ok((await page.getByRole("dialog").getByLabel("分享文案预览", { exact: true }).textContent()).endsWith(canonical));
         results.push({ scenario: "reopen resets markers", passed: true });
       }
     } finally { await fixture.context.close(); }

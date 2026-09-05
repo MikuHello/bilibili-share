@@ -102,11 +102,9 @@ describe("default poster domain", () => {
     );
   });
 
-  it("keeps body content unchanged when target markers and legacy theme change", () => {
+  it("keeps body content unchanged when target markers change", () => {
     const normal = buildDefaultPoster(completeSnapshot, "https://www.bilibili.com/video/BV1xx411c7mD/");
-    const marked = buildSharePoster(completeSnapshot, "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=62", {
-      theme: "B", partShare: true, timestampShare: true, detailedText: false, markdownText: false,
-    });
+    const marked = buildSharePoster(completeSnapshot, "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=62");
     expect(marked).toEqual({ ...normal, shareTarget: "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=62" });
     expect(marked).not.toHaveProperty("partLabel");
     expect(marked).not.toHaveProperty("timestampLabel");
