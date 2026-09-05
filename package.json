@@ -1,6 +1,6 @@
 {
   "name": "bilibili-share-poster",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,8 @@
     "build:dev": "node scripts/build.mjs --dev",
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:browser": "node scripts/verify-delivery.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",

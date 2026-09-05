@@ -4,14 +4,14 @@
 
 **Blocked by:** 02、03。
 
-**Status:** implemented — independent review and final integrated acceptance pending
+**Status:** done — implementation and scoped review complete; batch acceptance pending
 
 - [x] 每次打开两个标记默认关闭，P2+时间标记带分P，关闭分P关闭时间；P1时间独立，未知分P禁用依赖选项并说明。
 - [x] 时间向下取整且不产生t=0；切换选项不重新捕获播放位置或拉取统计。
 - [x] 海报仅二维码与底部链接改变，普通文案/Markdown/组合复制使用同一确认目标；封面失败时文字目标仍可更新。
 - [x] 短链验证BVID、分P及时间，业务失败或错落点使用规范长链，并仅轻提示“已使用完整链接”。
 - [x] 更新期间保留旧预览并禁用所有导出，新输出一致后恢复对应能力；验证二维码解码及各输出链接，不改变非目标内容。
-- [ ] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
+- [x] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
 
 **规格覆盖：** 22–30；38、46的目标一致性。
 
@@ -20,3 +20,5 @@
 ## Comments
 
 - 2026-09-05：实现与受控浏览器验证完成，审查基准 `9e44b05`。见 `../acceptance/ticket04/verification.md`、`report.json` 及真实生成PNG。验证外部GM替身和生产输出边界，不把这些结果视为管理器实装验收或历史短链故障已修复。
+
+- 精确审查范围d625dc7...27ce8f2；独立Standards/Spec均0发现，详见reviews/04.md。

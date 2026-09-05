@@ -4,14 +4,14 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** implemented — independent review and final manager acceptance pending
+**Status:** done — implementation and scoped review complete; batch acceptance pending
 
 - [x] 文案不依赖海报模型成功；有效身份/目标而封面失败时，两种文案复制、详细信息、重试和关闭可用，图像/组合动作禁用且无占位成品。
 - [x] 普通文案与Markdown独立复制，共享详细信息；首次详情关闭，恢复有效详情偏好，忽略旧Markdown模式。
 - [x] 保留完整标题/UP、既有详细字段和精确统计、条件分P/时间语义；Markdown正确转义，普通预览与组合复制不被Markdown动作改变。
 - [x] 复制失败允许手动选择对应格式源文本，Markdown失败不以普通预览替代。
 - [x] 重试保留捕获身份、分P、时间及选项；受控失败后恢复同一上下文并解锁正确动作。关键身份/目标失败阻断导出。
-- [ ] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
+- [x] 按批准规格的领域核心/浏览器副作用接缝执行适当TDD、类型检查和集成验证；完成code-review及提交，记录真实证据和未验证项。
 
 **规格覆盖：** 15、19、33–38、45–49、58；57的可操作失败反馈。
 
@@ -20,3 +20,5 @@
 ## Comments
 
 - 2026-09-05：实现与内部 TDD 验证完成，证据见 `../acceptance/ticket03/verification.md`。独立 review 由主流程协调，真实 Edge 管理器验证与全部七票最终构建统一进行。
+
+- 独立Standards/Spec两轴均0发现；Spec审查者独立重跑浏览器恢复脚本通过。详细记录reviews/03.md。
