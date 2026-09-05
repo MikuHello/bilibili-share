@@ -31,6 +31,8 @@ import {
 import { buildShareText } from "../share-text";
 import { buildCanonicalShareTarget, type ShareTargetSelection } from "../share-target";
 import { element } from "./dom";
+import { statusDismissDelay } from "./feedback";
+import { MOTION, motionDelay } from "./motion";
 import { setEntryTheme } from "./entry";
 import { createIcon, type IconName } from "./icons";
 import { createPoster } from "./posters";
@@ -51,6 +53,7 @@ export class SharePanel {
   private updating = false;
   private exportButtons: HTMLButtonElement[] = [];
   private statusTimer = 0;
+  private readonly previewObserver = new ResizeObserver(() => this.fitPoster());
   private readonly onClosed: () => void;
 
   constructor(onClosed: () => void) {
@@ -82,7 +85,9 @@ export class SharePanel {
 
   open(): void {
     this.options = createPanelShareOptions(loadRememberedPreferences());
+    this.applyThemeClasses(this.options.theme);
     document.body.append(this.backdrop);
+    this.previewObserver.observe(this.previewPane);
     document.addEventListener("keydown", this.onKeyDown, true);
     this.renderLoading();
     this.panel.focus();
@@ -102,6 +107,8 @@ export class SharePanel {
   close(restore: boolean): void {
     if (this.closed) return;
     this.closed = true;
+    clearTimeout(this.statusTimer);
+    this.previewObserver.disconnect();
     document.removeEventListener("keydown", this.onKeyDown, true);
     this.backdrop.classList.add("bsp-backdrop-closing");
     this.panel.classList.add("bsp-panel-closing");
@@ -109,7 +116,7 @@ export class SharePanel {
       this.backdrop.remove();
       if (restore && this.capture) restorePlayback(this.capture);
       this.onClosed();
-    }, 170);
+    }, motionDelay(MOTION.fast));
   }
 
   private onKeyDown(event: KeyboardEvent): void {
@@ -128,9 +135,8 @@ export class SharePanel {
     this.previewPane.append(loading);
 
     this.controls.replaceChildren(
-      element("p", "bsp-step", "01 / GENERATION SNAPSHOT"),
-      element("h3", "", "正在建立稳定快照"),
-      element("p", "", "播放器暂停后，视频身份、播放位置与公开统计会固定在这一次生成中。"),
+      element("h3", "", "正在生成海报"),
+      element("p", "", "正在读取封面与视频信息…"),
     );
   }
 
@@ -155,7 +161,8 @@ export class SharePanel {
       this.snapshot = snapshot;
       this.model = model;
       this.poster = poster;
-      this.targetSelection = targetSelection; this.renderReady(model, poster, targetSelection);
+      this.targetSelection = targetSelection;
+      this.renderReady(model, poster, targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     } finally {
@@ -164,20 +171,32 @@ export class SharePanel {
   }
 
   private renderReady(model: SharePoster, poster: HTMLElement, targetSelection: ShareTargetSelection): void {
-    const frame = element("div", "bsp-preview-frame");
-    frame.append(poster);
-    this.previewPane.replaceChildren(frame); this.applyThemeClasses(model.theme); this.updating = false; this.exportButtons = []; if (!this.snapshot) return; const snapshot = this.snapshot;
+    if (!this.previewPane.contains(poster)) {
+      const frame = element("div", "bsp-preview-frame");
+      frame.append(poster);
+      this.previewPane.replaceChildren(frame);
+    }
+    this.fitPoster();
+    this.applyThemeClasses(model.theme);
+    this.updating = false;
+    this.exportButtons = [];
+    clearTimeout(this.statusTimer);
+    if (!this.snapshot) return;
+    const snapshot = this.snapshot;
 
     const shareText = buildShareText(snapshot, model.shareTarget, this.options);
-    const textPreview = this.renderTextPreview(shareText);
     const actions = element("div", "bsp-actions");
     const status: HTMLElement = element("p", "bsp-status");
     status.setAttribute("role", "status");
     const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(copy, status));
-    const download = this.actionButton("download", "下载 PNG", "下载 PNG", false, () => void this.download(download, status));
-    const copyTextButton = this.actionButton("copy-text", "复制文案", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
-    const combinedButton = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(combinedButton, shareText, status));
-    actions.append(copy, download, copyTextButton, combinedButton, status); this.exportButtons.push(copy, download, copyTextButton, combinedButton);
+    const download = this.actionButton("download", "", "下载海报", false, () => void this.download(download, status));
+    const copyTextButton = this.actionButton("copy-text", "", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
+    const combinedButton = this.actionButton("combined", "海报+文案", "复制海报与文案的兼容格式", false, () => void this.copyCombined(combinedButton, shareText, status));
+    copyTextButton.classList.add("bsp-text-copy");
+    const textPreview = this.renderTextPreview(shareText);
+    textPreview.append(copyTextButton);
+    actions.append(copy, download, combinedButton);
+    this.exportButtons.push(copy, download, copyTextButton, combinedButton);
 
     const content: HTMLElement[] = [this.renderThemePicker(), this.renderShareOptions()];
     if (targetSelection.source === "canonical-fallback") {
@@ -189,8 +208,16 @@ export class SharePanel {
       );
       content.push(fallback);
     }
-    content.push(textPreview, actions);
+    content.push(textPreview, actions, status);
+    const focused = document.activeElement instanceof HTMLButtonElement && this.controls.contains(document.activeElement)
+      ? document.activeElement.getAttribute("aria-label") ?? document.activeElement.textContent
+      : null;
     this.controls.replaceChildren(...content);
+    if (focused) {
+      Array.from(this.controls.querySelectorAll("button"))
+        .find((button) => (button.getAttribute("aria-label") ?? button.textContent) === focused)
+        ?.focus({ preventScroll: true });
+    }
   }
 
   private renderTextPreview(shareText: string): HTMLElement {
@@ -198,8 +225,14 @@ export class SharePanel {
     const link = lines.pop() ?? "";
     const body = lines.join("\n");
     const card = element("div", "bsp-text-card");
-    card.setAttribute("aria-label", "分享文案预览");
-    card.append(element("span", "bsp-text-card-body", body), element("span", "bsp-text-card-link", link));
+    const content = element("div", "bsp-text-content");
+    content.setAttribute("aria-label", "分享文案预览");
+    content.tabIndex = 0;
+    content.append(
+      element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
+      element("span", "bsp-text-card-link", link),
+    );
+    card.append(content);
     return card;
   }
 
@@ -219,6 +252,12 @@ export class SharePanel {
     return button;
   }
 
+  private clearStatus(status: HTMLElement): void {
+    clearTimeout(this.statusTimer);
+    status.textContent = "";
+    status.classList.remove("is-show", "is-error");
+  }
+
   private showStatus(message: string, error = false): void {
     const status = this.controls.querySelector<HTMLElement>(".bsp-status");
     if (!status) return;
@@ -226,7 +265,8 @@ export class SharePanel {
     status.textContent = message;
     status.classList.toggle("is-error", error);
     status.classList.add("is-show");
-    this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), error ? 0 : 3000);
+    const delay = statusDismissDelay(error);
+    if (delay !== null) this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), delay);
   }
 
   private optionToggle(
@@ -329,13 +369,23 @@ export class SharePanel {
     const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
     nextFrame.append(nextPoster);
     this.previewPane.append(nextFrame);
-    requestAnimationFrame(() => {
-      oldFrame?.classList.add("bsp-preview-frame-exit");
-      nextFrame.classList.add("is-visible");
-    });
-    await new Promise((resolve) => setTimeout(resolve, 180));
+    this.fitPoster();
+    if (motionDelay(MOTION.fast)) {
+      // Establish the transparent layer before starting its CSS transition.
+      nextFrame.getBoundingClientRect();
+    }
+    oldFrame?.classList.add("bsp-preview-frame-exit");
+    nextFrame.classList.add("is-visible");
+    await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.fast)));
     oldFrame?.remove();
     nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
+  }
+
+  private fitPoster(): void {
+    for (const frame of this.previewPane.querySelectorAll<HTMLElement>(".bsp-preview-frame")) {
+      const poster = frame.querySelector<HTMLElement>(".bsp-poster");
+      if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 360)})`;
+    }
   }
 
   private applyThemeClasses(theme: PosterTheme): void {
@@ -385,7 +435,16 @@ export class SharePanel {
       this.model = model;
       this.poster = poster;
       this.targetSelection = targetSelection;
-      this.renderReady(model, poster, targetSelection);
+      const overlay = this.previewPane.querySelector<HTMLElement>(".bsp-poster-updating");
+      const frame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
+      if (frame && overlay) {
+        frame.replaceChildren(poster, overlay);
+        this.fitPoster();
+        overlay.classList.add("is-leaving");
+        await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
+        overlay.remove();
+      }
+      if (!this.closed) this.renderReady(model, poster, targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     }
@@ -393,6 +452,9 @@ export class SharePanel {
 
   private setExportButtonsDisabled(disabled: boolean): void {
     for (const button of this.exportButtons) button.disabled = disabled;
+    for (const button of this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill, .bsp-theme-option")) {
+      if (disabled) button.disabled = true;
+    }
   }
 
   private showUpdatingOverlay(): void {
@@ -428,13 +490,13 @@ export class SharePanel {
     const sourcePixelRatio = this.model.dimensions.width / sourceWidth;
     if (Math.round(sourceHeight * sourcePixelRatio) !== this.model.dimensions.height) throw new Error("海报画布比例不一致");
     const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
-    return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor });
+    return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor, style: { transform: "none" } });
   }
 
   private async copyPoster(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
     button.disabled = true;
-    status.textContent = "";
+    this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
       const outcome = await copyPosterPngToClipboard(dataUrl);
@@ -444,15 +506,15 @@ export class SharePanel {
         outcome.status !== "copied",
       );
     } catch {
-      this.showStatus("海报复制失败。请改用“下载 PNG”保存图片。", true);
+      this.showStatus("海报复制失败。请改用“下载”保存图片。", true);
     } finally {
-      button.disabled = false;
+      button.disabled = this.updating;
     }
   }
 
   private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
     button.disabled = true;
-    status.textContent = "";
+    this.clearStatus(status);
     try {
       const outcome = await copyShareTextToClipboard(text);
       const feedback = describeTextCopyResult(outcome);
@@ -463,23 +525,23 @@ export class SharePanel {
     } catch {
       this.showStatus("文案复制失败。文案仍在上方，可手动全选复制。", true);
     } finally {
-      button.disabled = false;
+      button.disabled = this.updating;
     }
   }
 
   private async copyCombined(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
     button.disabled = true;
-    status.textContent = "";
+    this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
       const outcome = await copyCombinedPosterAndText(dataUrl, text);
       const feedback = describeCombinedCopyResult(outcome);
       this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
     } catch {
-      this.showStatus("组合复制失败。海报请使用“复制海报”或“下载 PNG”；文案仍在上方，可手动全选复制。", true);
+      this.showStatus("组合复制失败。海报请使用“复制海报”或“下载”；文案仍在上方，可手动全选复制。", true);
     } finally {
-      button.disabled = false;
+      button.disabled = this.updating;
     }
   }
 
@@ -489,7 +551,7 @@ export class SharePanel {
   private async download(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.snapshot || !this.model) return;
     button.disabled = true;
-    status.textContent = "";
+    this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
       const link = document.createElement("a");
@@ -500,7 +562,7 @@ export class SharePanel {
     } catch {
       this.showStatus("PNG 生成失败，预览仍保留；请重试下载。", true);
     } finally {
-      button.disabled = false;
+      button.disabled = this.updating;
     }
   }
 }

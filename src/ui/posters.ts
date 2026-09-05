@@ -68,7 +68,7 @@ async function createPosterB(model: SharePoster): Promise<HTMLElement> {
 
   const scrim = element("div", "bsp-b-scrim");
   const content = element("div", "bsp-b-content");
-  content.append(scrim);
+  poster.append(scrim);
 
   const topLine = element("div", "bsp-b-topline");
   if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));

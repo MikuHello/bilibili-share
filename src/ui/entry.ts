@@ -27,7 +27,8 @@ const LEGACY_SHARE_WRAP_SELECTORS =
  */
 function findToolbarAnchor(): HTMLElement | null {
   for (const selector of TOOLBAR_ANCHOR_SELECTORS) {
-    const candidate = document.querySelector<HTMLElement>(selector);
+    const candidate = Array.from(document.querySelectorAll<HTMLElement>(selector))
+      .find((item) => item.querySelector(".video-share-wrap"));
     if (candidate) return candidate;
   }
   const legacyShareWrap = document.querySelector<HTMLElement>(LEGACY_SHARE_WRAP_SELECTORS);

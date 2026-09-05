@@ -2,3 +2,5 @@
 .reasonix/
 node_modules/
 coverage/
+
+dist/bilibili-share-poster.dev.user.js

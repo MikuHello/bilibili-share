@@ -61,6 +61,10 @@ describe("public video information adapter", () => {
     ).toMatchObject({ partTitle: "P2 花絮", partIdentified: true });
   });
 
+  it("allows metadata without a cover to reach the placeholder path", () => {
+    expect(parseVideoApiResponse({ ...validResponse, data: { ...validResponse.data, pic: null } }, "BV1xx411c7mD").coverUrl).toBe("");
+  });
+
   it("accepts usable cover dimensions and rejects degenerate placeholders", () => {
     expect(isUsableCover(160, 90)).toBe(true);
     expect(isUsableCover(1920, 1080)).toBe(true);

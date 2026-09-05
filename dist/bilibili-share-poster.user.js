@@ -2336,7 +2336,7 @@
     return {
       bvid,
       aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
-      coverUrl: requiredText(data.pic, "\u89C6\u9891\u5C01\u9762"),
+      coverUrl: typeof data.pic === "string" ? data.pic.trim() : "",
       title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
       uploader: requiredText(data.owner?.name, "UP \u4E3B"),
       partTitle: partInformation.partTitle,
@@ -2374,6 +2374,7 @@
   }
   async function loadCover(coverUrl) {
     try {
+      if (!coverUrl) return { dataUrl: "", unavailable: true };
       const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
       return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
     } catch {
@@ -2561,7 +2562,7 @@
   var LEGACY_SHARE_WRAP_SELECTORS = "#arc_toolbar_report .video-share-wrap, .video-toolbar-left .video-share-wrap, .video-toolbar-container .video-share-wrap";
   function findToolbarAnchor() {
     for (const selector of TOOLBAR_ANCHOR_SELECTORS) {
-      const candidate = document.querySelector(selector);
+      const candidate = Array.from(document.querySelectorAll(selector)).find((item) => item.querySelector(".video-share-wrap"));
       if (candidate) return candidate;
     }
     const legacyShareWrap = document.querySelector(LEGACY_SHARE_WRAP_SELECTORS);
@@ -3708,6 +3709,33 @@ ${shareTarget}`;
     return node;
   }
 
+  // src/ui/feedback.ts
+  function statusDismissDelay(failed) {
+    return failed ? null : 3e3;
+  }
+
+  // src/ui/motion.ts
+  var MOTION = { fast: 160, backdrop: 200, open: 240, color: 180, overlay: 140 };
+  function motionDelay(duration) {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duration;
+  }
+  var MOTION_STYLES = `
+.bsp-backdrop, #bsp-entry {
+  --bsp-motion-fast:${MOTION.fast}ms;
+  --bsp-motion-backdrop:${MOTION.backdrop}ms;
+  --bsp-motion-open:${MOTION.open}ms;
+  --bsp-motion-color:${MOTION.color}ms;
+  --bsp-motion-overlay:${MOTION.overlay}ms;
+  --bsp-ease-out:cubic-bezier(.22,.61,.36,1);
+  --bsp-ease-in-out:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-reduced-motion:reduce) {
+  .bsp-backdrop *, .bsp-backdrop *::before, .bsp-backdrop *::after, .bsp-backdrop, #bsp-entry {
+    animation-duration:0ms !important;
+    transition-duration:0ms !important;
+  }
+}`;
+
   // src/ui/posters.ts
   var import_qrcode = __toESM(require_browser(), 1);
   function posterQrDataUrl(shareTarget) {
@@ -3768,7 +3796,7 @@ ${shareTarget}`;
     }
     const scrim = element("div", "bsp-b-scrim");
     const content = element("div", "bsp-b-content");
-    content.append(scrim);
+    poster.append(scrim);
     const topLine = element("div", "bsp-b-topline");
     if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));
     if (model.timestampLabel) topLine.append(element("span", "bsp-b-time-chip", model.timestampLabel));
@@ -3817,6 +3845,7 @@ ${shareTarget}`;
     updating = false;
     exportButtons = [];
     statusTimer = 0;
+    previewObserver = new ResizeObserver(() => this.fitPoster());
     onClosed;
     constructor(onClosed) {
       this.onClosed = onClosed;
@@ -3844,7 +3873,9 @@ ${shareTarget}`;
     }
     open() {
       this.options = createPanelShareOptions(loadRememberedPreferences());
+      this.applyThemeClasses(this.options.theme);
       document.body.append(this.backdrop);
+      this.previewObserver.observe(this.previewPane);
       document.addEventListener("keydown", this.onKeyDown, true);
       this.renderLoading();
       this.panel.focus();
@@ -3861,6 +3892,8 @@ ${shareTarget}`;
     close(restore) {
       if (this.closed) return;
       this.closed = true;
+      clearTimeout(this.statusTimer);
+      this.previewObserver.disconnect();
       document.removeEventListener("keydown", this.onKeyDown, true);
       this.backdrop.classList.add("bsp-backdrop-closing");
       this.panel.classList.add("bsp-panel-closing");
@@ -3868,7 +3901,7 @@ ${shareTarget}`;
         this.backdrop.remove();
         if (restore && this.capture) restorePlayback(this.capture);
         this.onClosed();
-      }, 170);
+      }, motionDelay(MOTION.fast));
     }
     onKeyDown(event) {
       if (event.key === "Escape") {
@@ -3884,9 +3917,8 @@ ${shareTarget}`;
       loading.append(message);
       this.previewPane.append(loading);
       this.controls.replaceChildren(
-        element("p", "bsp-step", "01 / GENERATION SNAPSHOT"),
-        element("h3", "", "\u6B63\u5728\u5EFA\u7ACB\u7A33\u5B9A\u5FEB\u7167"),
-        element("p", "", "\u64AD\u653E\u5668\u6682\u505C\u540E\uFF0C\u89C6\u9891\u8EAB\u4EFD\u3001\u64AD\u653E\u4F4D\u7F6E\u4E0E\u516C\u5F00\u7EDF\u8BA1\u4F1A\u56FA\u5B9A\u5728\u8FD9\u4E00\u6B21\u751F\u6210\u4E2D\u3002")
+        element("h3", "", "\u6B63\u5728\u751F\u6210\u6D77\u62A5"),
+        element("p", "", "\u6B63\u5728\u8BFB\u53D6\u5C01\u9762\u4E0E\u89C6\u9891\u4FE1\u606F\u2026")
       );
     }
     async captureThenLoad() {
@@ -3918,24 +3950,30 @@ ${shareTarget}`;
       }
     }
     renderReady(model, poster, targetSelection) {
-      const frame = element("div", "bsp-preview-frame");
-      frame.append(poster);
-      this.previewPane.replaceChildren(frame);
+      if (!this.previewPane.contains(poster)) {
+        const frame = element("div", "bsp-preview-frame");
+        frame.append(poster);
+        this.previewPane.replaceChildren(frame);
+      }
+      this.fitPoster();
       this.applyThemeClasses(model.theme);
       this.updating = false;
       this.exportButtons = [];
+      clearTimeout(this.statusTimer);
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
       const shareText = buildShareText(snapshot, model.shareTarget, this.options);
-      const textPreview = this.renderTextPreview(shareText);
       const actions = element("div", "bsp-actions");
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
       const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(copy, status));
-      const download = this.actionButton("download", "\u4E0B\u8F7D PNG", "\u4E0B\u8F7D PNG", false, () => void this.download(download, status));
-      const copyTextButton = this.actionButton("copy-text", "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyTextButton, shareText, status));
-      const combinedButton = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(combinedButton, shareText, status));
-      actions.append(copy, download, copyTextButton, combinedButton, status);
+      const download = this.actionButton("download", "", "\u4E0B\u8F7D\u6D77\u62A5", false, () => void this.download(download, status));
+      const copyTextButton = this.actionButton("copy-text", "", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyTextButton, shareText, status));
+      const combinedButton = this.actionButton("combined", "\u6D77\u62A5+\u6587\u6848", "\u590D\u5236\u6D77\u62A5\u4E0E\u6587\u6848\u7684\u517C\u5BB9\u683C\u5F0F", false, () => void this.copyCombined(combinedButton, shareText, status));
+      copyTextButton.classList.add("bsp-text-copy");
+      const textPreview = this.renderTextPreview(shareText);
+      textPreview.append(copyTextButton);
+      actions.append(copy, download, combinedButton);
       this.exportButtons.push(copy, download, copyTextButton, combinedButton);
       const content = [this.renderThemePicker(), this.renderShareOptions()];
       if (targetSelection.source === "canonical-fallback") {
@@ -3947,16 +3985,26 @@ ${shareTarget}`;
         );
         content.push(fallback);
       }
-      content.push(textPreview, actions);
+      content.push(textPreview, actions, status);
+      const focused = document.activeElement instanceof HTMLButtonElement && this.controls.contains(document.activeElement) ? document.activeElement.getAttribute("aria-label") ?? document.activeElement.textContent : null;
       this.controls.replaceChildren(...content);
+      if (focused) {
+        Array.from(this.controls.querySelectorAll("button")).find((button) => (button.getAttribute("aria-label") ?? button.textContent) === focused)?.focus({ preventScroll: true });
+      }
     }
     renderTextPreview(shareText) {
       const lines = shareText.split("\n");
       const link = lines.pop() ?? "";
       const body = lines.join("\n");
       const card = element("div", "bsp-text-card");
-      card.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
-      card.append(element("span", "bsp-text-card-body", body), element("span", "bsp-text-card-link", link));
+      const content = element("div", "bsp-text-content");
+      content.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
+      content.tabIndex = 0;
+      content.append(
+        element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
+        element("span", "bsp-text-card-link", link)
+      );
+      card.append(content);
       return card;
     }
     actionButton(iconName, label, tip, primary, onClick) {
@@ -3968,6 +4016,11 @@ ${shareTarget}`;
       button.addEventListener("click", onClick);
       return button;
     }
+    clearStatus(status) {
+      clearTimeout(this.statusTimer);
+      status.textContent = "";
+      status.classList.remove("is-show", "is-error");
+    }
     showStatus(message, error = false) {
       const status = this.controls.querySelector(".bsp-status");
       if (!status) return;
@@ -3975,7 +4028,8 @@ ${shareTarget}`;
       status.textContent = message;
       status.classList.toggle("is-error", error);
       status.classList.add("is-show");
-      this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), error ? 0 : 3e3);
+      const delay = statusDismissDelay(error);
+      if (delay !== null) this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), delay);
     }
     optionToggle(iconName, labelText, checked, disabled, onChange) {
       const button = element("button", "bsp-option-pill", labelText);
@@ -4063,13 +4117,21 @@ ${shareTarget}`;
       const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
       nextFrame.append(nextPoster);
       this.previewPane.append(nextFrame);
-      requestAnimationFrame(() => {
-        oldFrame?.classList.add("bsp-preview-frame-exit");
-        nextFrame.classList.add("is-visible");
-      });
-      await new Promise((resolve) => setTimeout(resolve, 180));
+      this.fitPoster();
+      if (motionDelay(MOTION.fast)) {
+        nextFrame.getBoundingClientRect();
+      }
+      oldFrame?.classList.add("bsp-preview-frame-exit");
+      nextFrame.classList.add("is-visible");
+      await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.fast)));
       oldFrame?.remove();
       nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
+    }
+    fitPoster() {
+      for (const frame of this.previewPane.querySelectorAll(".bsp-preview-frame")) {
+        const poster = frame.querySelector(".bsp-poster");
+        if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 360)})`;
+      }
     }
     applyThemeClasses(theme) {
       const surface = selectThemeSurfaceClasses(theme);
@@ -4114,13 +4176,25 @@ ${shareTarget}`;
         this.model = model;
         this.poster = poster;
         this.targetSelection = targetSelection;
-        this.renderReady(model, poster, targetSelection);
+        const overlay = this.previewPane.querySelector(".bsp-poster-updating");
+        const frame = this.previewPane.querySelector(".bsp-preview-frame");
+        if (frame && overlay) {
+          frame.replaceChildren(poster, overlay);
+          this.fitPoster();
+          overlay.classList.add("is-leaving");
+          await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
+          overlay.remove();
+        }
+        if (!this.closed) this.renderReady(model, poster, targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
       }
     }
     setExportButtonsDisabled(disabled) {
       for (const button of this.exportButtons) button.disabled = disabled;
+      for (const button of this.controls.querySelectorAll(".bsp-option-pill, .bsp-theme-option")) {
+        if (disabled) button.disabled = true;
+      }
     }
     showUpdatingOverlay() {
       const frame = this.previewPane.querySelector(".bsp-preview-frame");
@@ -4152,12 +4226,12 @@ ${shareTarget}`;
       const sourcePixelRatio = this.model.dimensions.width / sourceWidth;
       if (Math.round(sourceHeight * sourcePixelRatio) !== this.model.dimensions.height) throw new Error("\u6D77\u62A5\u753B\u5E03\u6BD4\u4F8B\u4E0D\u4E00\u81F4");
       const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
-      return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor });
+      return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor, style: { transform: "none" } });
     }
     async copyPoster(button, status) {
       if (!this.poster || !this.model) return;
       button.disabled = true;
-      status.textContent = "";
+      this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
         const outcome = await copyPosterPngToClipboard(dataUrl);
@@ -4167,14 +4241,14 @@ ${shareTarget}`;
           outcome.status !== "copied"
         );
       } catch {
-        this.showStatus("\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002", true);
+        this.showStatus("\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002\u8BF7\u6539\u7528\u201C\u4E0B\u8F7D\u201D\u4FDD\u5B58\u56FE\u7247\u3002", true);
       } finally {
-        button.disabled = false;
+        button.disabled = this.updating;
       }
     }
     async copyShareText(button, text, status) {
       button.disabled = true;
-      status.textContent = "";
+      this.clearStatus(status);
       try {
         const outcome = await copyShareTextToClipboard(text);
         const feedback = describeTextCopyResult(outcome);
@@ -4185,28 +4259,28 @@ ${shareTarget}`;
       } catch {
         this.showStatus("\u6587\u6848\u590D\u5236\u5931\u8D25\u3002\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
       } finally {
-        button.disabled = false;
+        button.disabled = this.updating;
       }
     }
     async copyCombined(button, text, status) {
       if (!this.poster || !this.model) return;
       button.disabled = true;
-      status.textContent = "";
+      this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
         const outcome = await copyCombinedPosterAndText(dataUrl, text);
         const feedback = describeCombinedCopyResult(outcome);
         this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
       } catch {
-        this.showStatus("\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
+        this.showStatus("\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
       } finally {
-        button.disabled = false;
+        button.disabled = this.updating;
       }
     }
     async download(button, status) {
       if (!this.poster || !this.snapshot || !this.model) return;
       button.disabled = true;
-      status.textContent = "";
+      this.clearStatus(status);
       try {
         const dataUrl = await this.posterPngDataUrl();
         const link = document.createElement("a");
@@ -4217,62 +4291,70 @@ ${shareTarget}`;
       } catch {
         this.showStatus("PNG \u751F\u6210\u5931\u8D25\uFF0C\u9884\u89C8\u4ECD\u4FDD\u7559\uFF1B\u8BF7\u91CD\u8BD5\u4E0B\u8F7D\u3002", true);
       } finally {
-        button.disabled = false;
+        button.disabled = this.updating;
       }
     }
   };
 
   // src/ui/styles.ts
   var STYLES = String.raw`
+${MOTION_STYLES}
 :root { --bsp-paper:#f7f5f0; --bsp-ink:#1a1a1a; --bsp-muted:#6b6b66; --bsp-stage:#232629; --bsp-stage-line:#2e3135; --bsp-radius:16px; }
-#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:0; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background .15s ease,border-color .15s ease; }
+#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:0; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background-color var(--bsp-motion-color) var(--bsp-ease-out),border-color var(--bsp-motion-color) var(--bsp-ease-out); }
 #bsp-entry:hover { background:#f7f5f0; border-color:#77756f; }
 #bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:2px; }
 #bsp-entry svg { width:18px; height:18px; }
-.bsp-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:rgba(14,14,13,.68); font-family:"PingFang SC","Microsoft YaHei",sans-serif; animation:bsp-backdrop-in 200ms ease-out; }
-.bsp-backdrop.bsp-backdrop-closing { opacity:0; transition:opacity 160ms ease-in-out; }
-.bsp-panel { position:relative; width:min(1040px,calc(100vw - 56px)); max-height:calc(100vh - 56px); overflow:auto; border:1px solid #d4d0c7; border-radius:var(--bsp-radius); background:#f1eee7; box-shadow:0 28px 80px rgba(0,0,0,.34); color:#1a1a1a; animation:bsp-panel-in 240ms cubic-bezier(0.22,0.61,0.36,1); }
-.bsp-panel.bsp-panel-closing { opacity:0; transform:translateY(8px) scale(0.985); transition:opacity 160ms ease-in-out,transform 160ms ease-in-out; }
+.bsp-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:rgba(14,14,13,.68); font-family:"PingFang SC","Microsoft YaHei",sans-serif; animation:bsp-backdrop-in var(--bsp-motion-backdrop) var(--bsp-ease-out); }
+.bsp-backdrop.bsp-backdrop-closing { opacity:0; transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out); }
+.bsp-panel { position:relative; width:min(1040px,calc(100vw - 56px)); max-height:calc(100vh - 56px); overflow:auto; border:1px solid #d4d0c7; border-radius:var(--bsp-radius); background:#f1eee7; box-shadow:0 28px 80px rgba(0,0,0,.34); color:#1a1a1a; animation:bsp-panel-in var(--bsp-motion-open) var(--bsp-ease-out); }
+.bsp-panel.bsp-panel-closing { opacity:0; transform:translateY(8px) scale(0.985); transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out),transform var(--bsp-motion-fast) var(--bsp-ease-in-out); }
 .bsp-panel:focus { outline:none; }
 .bsp-panel-head { display:flex; align-items:center; justify-content:space-between; min-height:52px; padding:0 18px; border-bottom:1px solid #cbc7be; background:#faf8f3; }
 .bsp-close { appearance:none; width:36px; height:36px; border:0; border-radius:50%; background:transparent; color:#55524c; font-size:25px; line-height:1; cursor:pointer; }
 .bsp-close:hover { background:#e7e3db; }
 .bsp-eyebrow { color:var(--bsp-muted); font:700 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.22em; }
-.bsp-workspace { display:grid; grid-template-columns:54% 46%; min-height:600px; }
-.bsp-preview-pane { display:grid; align-items:center; justify-items:center; padding:24px; border-right:1px solid var(--bsp-stage-line); background:var(--bsp-stage); }
-.bsp-preview-frame { position:relative; grid-area:1/1; width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); transition:opacity 160ms ease,transform 160ms ease; }
+.bsp-workspace { display:grid; min-width:0; grid-template-columns:54% 46%; min-height:600px; }
+.bsp-preview-pane { display:grid; min-width:0; align-items:center; justify-items:center; padding:24px; border-right:1px solid var(--bsp-stage-line); background:var(--bsp-stage); }
+.bsp-preview-frame { overflow:hidden; position:relative; grid-area:1/1; width:min(100%,360px); aspect-ratio:3/4; display:block; filter:drop-shadow(0 14px 22px rgba(20,20,18,.22)); transition:opacity var(--bsp-motion-fast) var(--bsp-ease-in-out),transform var(--bsp-motion-fast) var(--bsp-ease-in-out); }
 .bsp-preview-frame-incoming { opacity:0; transform:translateY(4px); }
 .bsp-preview-frame-incoming.is-visible { opacity:1; transform:translateY(0); }
 .bsp-preview-frame-exit { opacity:0; }
-.bsp-poster-updating { position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
+.bsp-poster-updating { animation:bsp-backdrop-in var(--bsp-motion-overlay) var(--bsp-ease-out); transition:opacity var(--bsp-motion-overlay) var(--bsp-ease-out); position:absolute; inset:0; z-index:2; display:grid; place-items:center; background:rgba(255,255,255,.66); color:#55524c; font-size:13px; font-weight:600; }
 .bsp-loading-card { width:min(100%,360px); aspect-ratio:3/4; display:grid; place-items:center; border:1px solid #b9b5ac; background:#f7f5f0; color:#64615b; }
 .bsp-spinner { width:28px; height:28px; margin:0 auto 14px; border:2px solid #c8c4bb; border-top-color:#1a1a1a; border-radius:50%; animation:bsp-spin .75s linear infinite; }
 @keyframes bsp-spin { to { transform:rotate(360deg); } }
-.bsp-controls { display:flex; flex-direction:column; padding:20px 22px; overflow:auto; background:#faf8f3; }
+.bsp-controls { min-width:0; display:flex; flex-direction:column; padding:20px 22px; overflow:auto; background:#faf8f3; }
 .bsp-step { margin:0 0 10px; color:#77736b; font:600 10px/1.2 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
 .bsp-controls h3 { margin:0 0 12px; font-size:24px; line-height:1.25; font-weight:650; }
-.bsp-options { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:14px; }
-.bsp-option-pill { appearance:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background 150ms ease,color 150ms ease,border-color 150ms ease,transform 150ms ease; }
+.bsp-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:14px; }
+.bsp-option-pill { appearance:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-overlay) var(--bsp-ease-out),color var(--bsp-motion-overlay) var(--bsp-ease-out),border-color var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); }
 .bsp-option-pill:hover { border-color:#a9a59b; color:var(--bsp-ink); }
 .bsp-option-pill svg { width:15px; height:15px; }
 .bsp-option-pill.is-on { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
 .bsp-option-pill:disabled { opacity:.55; cursor:not-allowed; }
-.bsp-option-notice { margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
+.bsp-option-notice { grid-column:1/-1; margin:10px 0 0 !important; color:#7a4d1d !important; font-size:12px !important; }
 .bsp-controls p { margin:0; color:#66625b; font-size:14px; line-height:1.7; }
 .bsp-fallback { display:grid; gap:5px; margin-top:18px; padding:14px 16px; border-left:3px solid #9a6528; background:#f4e9d7; color:#5f431f; }
 .bsp-fallback strong { font-size:13px; line-height:1.4; }
 .bsp-fallback span { font-size:12px; line-height:1.55; }
-.bsp-text-card { display:grid; gap:6px; max-height:96px; overflow:auto; margin-top:14px; padding:12px 14px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#24231f; user-select:all; }
-.bsp-text-card-body { font:400 13px/1.65 "PingFang SC","Microsoft YaHei",sans-serif; white-space:pre-wrap; word-break:break-word; }
-.bsp-text-card-link { font:500 11px/1.6 ui-monospace,Menlo,monospace; color:#4f6d5b; overflow-wrap:anywhere; word-break:break-all; }
-.bsp-actions { margin-top:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-.bsp-action { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:7px; height:44px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background 150ms ease,color 150ms ease,border-color 150ms ease,transform 150ms ease; }
+.bsp-text-card { position:relative; margin-top:20px; border:0; border-radius:10px; background:#fff; color:#24231f; }
+.bsp-text-content { max-height:96px; overflow:auto; padding:12px 42px 12px 14px; white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; }
+.bsp-text-card-body { font:400 13px/1.65 "PingFang SC","Microsoft YaHei",sans-serif; }
+.bsp-text-card-link { font:500 11px/1.6 ui-monospace,Menlo,monospace; color:#4f6d5b; }
+.bsp-text-card .bsp-text-copy { position:absolute; right:6px; top:6px; height:28px; width:28px; padding:0; border:0; border-radius:6px; }
+.bsp-text-copy svg { width:15px; height:15px; }
+.bsp-text-copy::after { left:auto; right:0; transform:translateY(4px); }
+.bsp-text-copy:hover::after, .bsp-text-copy:focus-visible::after { transform:translateY(0); }
+.bsp-actions { margin-top:auto; padding-top:24px; display:grid; grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr); gap:8px; }
+.bsp-action { min-width:0; position:relative; display:inline-flex; align-items:center; justify-content:center; gap:7px; height:44px; padding:0 10px; border:1px solid var(--line, #cbc7be); border-radius:10px; background:#fff; color:#55524c; font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-overlay) var(--bsp-ease-out),color var(--bsp-motion-overlay) var(--bsp-ease-out),border-color var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); }
 .bsp-action:hover { border-color:#a9a59b; color:var(--bsp-ink); transform:translateY(-1px); }
-.bsp-action svg { width:18px; height:18px; }
+.bsp-action svg { flex:none; width:18px; height:18px; }
 .bsp-action-primary { border-color:var(--bsp-ink); background:var(--bsp-ink); color:#fff; }
-.bsp-action-primary:hover { filter:brightness(1.08); }
+.bsp-action-primary:hover { background:#353431; color:#fff; }
 .bsp-action:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-.bsp-action::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translate(-50%,4px); padding:5px 8px; border-radius:6px; background:rgba(18,18,18,.88); color:#fff; font-size:11px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 140ms ease,transform 140ms ease; z-index:3; }
+.bsp-action::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translate(-50%,4px); padding:5px 8px; border-radius:6px; background:rgba(18,18,18,.88); color:#fff; font-size:11px; width:max-content; max-width:180px; white-space:normal; text-align:center; opacity:0; pointer-events:none; transition:opacity var(--bsp-motion-overlay) var(--bsp-ease-out),transform var(--bsp-motion-overlay) var(--bsp-ease-out); z-index:3; }
+.bsp-actions > :last-child::after { left:auto; right:0; transform:translateY(4px); }
+.bsp-actions > :last-child:hover::after, .bsp-actions > :last-child:focus-visible::after { transform:translateY(0); }
 .bsp-action:hover::after, .bsp-action:focus-visible::after { opacity:1; transform:translate(-50%,0); }
 .bsp-button-primary { background:#1a1a1a; color:#fff; }
 .bsp-button-secondary { background:#fff; color:#1a1a1a; }
@@ -4282,38 +4364,39 @@ ${shareTarget}`;
 .bsp-button:disabled { border-color:#aaa79f; background:#aaa79f; cursor:not-allowed; }
 .bsp-help { margin-top:12px !important; font-size:12px !important; }
 .bsp-error { margin:20px 0; padding:16px; border-left:3px solid #a3452f; background:#f5e6df; color:#6f2f20 !important; }
-.bsp-status { min-height:20px; margin-top:10px !important; color:#3d6b47 !important; font-size:12px !important; opacity:0; transform:translateY(3px); transition:opacity 180ms ease,transform 180ms ease; }
+.bsp-status { min-height:20px; margin-top:10px !important; color:#3d6b47 !important; font-size:12px !important; opacity:0; transform:translateY(3px); transition:opacity var(--bsp-motion-color) var(--bsp-ease-in-out),transform var(--bsp-motion-color) var(--bsp-ease-in-out); }
 .bsp-status.is-show { opacity:1; transform:translateY(0); }
 .bsp-status.is-error { color:#a3452f !important; }
-.bsp-poster { box-sizing:border-box; position:relative; width:360px; height:480px; overflow:hidden; padding:17px 18px 16px; border:1px solid #b7b4ac; background:#f7f5f0; color:#1a1a1a; }
+.bsp-poster { transform-origin:top left; box-sizing:border-box; position:relative; width:360px; height:480px; overflow:hidden; padding:17px 18px 16px; border:1px solid #b7b4ac; background:#f7f5f0; color:#1a1a1a; }
 .bsp-poster::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; background-image:radial-gradient(#776f62 .45px,transparent .55px); background-size:4px 4px; }
 .bsp-masthead { position:relative; z-index:1; display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:6px; border-bottom:1px solid #1a1a1a; }
 .bsp-masthead strong { font:700 9px/1.1 "PingFang SC","Microsoft YaHei",sans-serif; letter-spacing:.08em; }
 .bsp-masthead span { color:#6b6b66; font:600 7px/1 ui-monospace,Menlo,monospace; letter-spacing:.18em; }
-.bsp-cover { position:relative; z-index:1; display:block; width:100%; height:182px; margin:10px 0 13px; border:1px solid #77736b; object-fit:cover; object-position:center; }
+.bsp-cover { position:relative; z-index:1; display:block; width:100%; height:182px; margin:10px 0 9px; border:1px solid #77736b; object-fit:cover; object-position:center; }
 .bsp-cover-missing { display:grid; place-items:center; background:repeating-linear-gradient(135deg,#ece8df 0 8px,#e2ddd2 8px 16px); color:#8b877e; font:700 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.14em; }
-.bsp-b-cover-missing { position:absolute; inset:0; display:grid; place-items:center; background:repeating-linear-gradient(135deg,#20252a 0 10px,#15191d 10px 20px); color:rgba(255,255,255,.62); font:700 9px/1 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
+.bsp-b-cover-missing { position:absolute; inset:0; display:grid; justify-items:center; align-items:start; padding-top:120px; background:repeating-linear-gradient(135deg,#20252a 0 10px,#15191d 10px 20px); color:rgba(255,255,255,.62); font:700 9px/1 ui-monospace,Menlo,monospace; letter-spacing:.16em; }
 .bsp-poster-b.bsp-cover-missing .bsp-b-scrim { background:rgba(0,0,0,.35); }
 .bsp-poster-title { position:relative; z-index:1; display:-webkit-box; overflow:hidden; margin:0; font-size:19px; line-height:1.26; font-weight:700; letter-spacing:-.02em; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .bsp-byline { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; color:#55524c; font-size:9px; }
 .bsp-byline strong { min-width:0; overflow:hidden; color:#262522; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
 .bsp-identity { flex:none; font:600 7.5px/1 ui-monospace,Menlo,monospace; }
 .bsp-part-timestamp { position:relative; z-index:1; display:flex; align-items:center; gap:6px; margin-top:7px; min-height:14px; }
+.bsp-part-timestamp:empty { display:none; }
 .bsp-part-chip { max-width:82%; overflow:hidden; padding:2px 7px; border:1px solid #77736b; background:#f0ede6; color:#24231f; font:600 8px/1.2 "PingFang SC","Microsoft YaHei",sans-serif; text-overflow:ellipsis; white-space:nowrap; }
 .bsp-time-chip { margin-left:auto; color:#1a1a1a; font:700 9px/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:13px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
-.bsp-stat { padding:8px 5px 7px; border-right:1px solid #c6c2b9; }
+.bsp-stats { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); margin-top:9px; border-top:2px solid #1a1a1a; border-bottom:1px solid #aaa69d; }
+.bsp-stat { padding:6px 5px 5px; border-right:1px solid #c6c2b9; }
 .bsp-stat:last-child { border-right:0; }
 .bsp-stat strong,.bsp-stat span { display:block; }
 .bsp-stat strong { white-space:nowrap; font:750 clamp(14px,4.3vw,16px)/1 ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; letter-spacing:-.025em; }
 .bsp-stat span { margin-top:5px; color:#6b6b66; font-size:7px; letter-spacing:.18em; }
-.bsp-destination { position:relative; z-index:1; display:grid; grid-template-columns:78px 1fr; gap:13px; align-items:center; margin-top:13px; }
+.bsp-destination { position:relative; z-index:1; display:grid; grid-template-columns:78px 1fr; gap:13px; align-items:center; margin-top:9px; }
 .bsp-qr { box-sizing:border-box; display:block; width:78px; height:78px; background:#fff; }
 .bsp-link-label { display:block; margin-bottom:7px; color:#6b6b66; font-size:7px; letter-spacing:.17em; }
 .bsp-link { display:block; overflow-wrap:anywhere; color:#1a1a1a; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; }
 .bsp-archive { position:absolute; right:18px; bottom:7px; z-index:1; color:#8b877e; font:600 6px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; }
 .bsp-theme-segment { display:inline-flex; align-self:flex-start; padding:3px; border:1px solid var(--line, #cbc7be); border-radius:9px; background:rgba(0,0,0,.04); }
-.bsp-theme-option { appearance:none; display:inline-flex; align-items:center; height:30px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--bsp-muted); font-size:12px; font-weight:600; cursor:pointer; transition:background 160ms ease,color 160ms ease,box-shadow 160ms ease; }
+.bsp-theme-option { appearance:none; display:inline-flex; align-items:center; height:30px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--bsp-muted); font-size:12px; font-weight:600; cursor:pointer; transition:background-color var(--bsp-motion-fast) var(--bsp-ease-in-out),color var(--bsp-motion-fast) var(--bsp-ease-in-out); }
 .bsp-theme-option.is-active { background:var(--bsp-ink); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.16); }
 #bsp-entry.bsp-entry-b { background:#18191c; border-color:#18191c; color:#fff; }
 #bsp-entry.bsp-entry-b:hover { background:#343a40; border-color:#343a40; }
@@ -4360,9 +4443,24 @@ ${shareTarget}`;
 .bsp-b-link-side { min-width:0; flex:1; }
 .bsp-b-link-label { display:block; margin-bottom:5px; color:rgba(255,255,255,.58); font-size:7px; letter-spacing:.16em; }
 .bsp-b-link { display:block; overflow-wrap:anywhere; color:#fff; font:600 8px/1.45 ui-monospace,Menlo,monospace; word-break:break-all; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+.bsp-backdrop *, .bsp-backdrop *::before, .bsp-backdrop *::after { box-sizing:border-box; }
+.bsp-panel button:focus-visible, .bsp-text-content:focus-visible { outline:2px solid #00aeec; outline-offset:3px; }
+.bsp-panel, .bsp-panel-head, .bsp-controls, .bsp-text-card { transition:color var(--bsp-motion-color) var(--bsp-ease-in-out),background-color var(--bsp-motion-color) var(--bsp-ease-in-out),border-color var(--bsp-motion-color) var(--bsp-ease-in-out); }
+.bsp-poster-updating.is-leaving { opacity:0; }
+.bsp-panel.bsp-theme-b .bsp-status { color:#a9d4b3 !important; }
+.bsp-panel.bsp-theme-b .bsp-status.is-error { color:#ffb39f !important; }
+.bsp-panel.bsp-theme-b .bsp-option-notice { color:#e6c391 !important; }
+.bsp-panel.bsp-theme-b .bsp-action-primary:hover { background:#d8dadc; color:#18191c; }
+.bsp-panel.bsp-theme-b .bsp-option-pill:hover { border-color:#92979d; }
 @keyframes bsp-backdrop-in { from { opacity:0; } }
 @keyframes bsp-panel-in { from { opacity:0; transform:translateY(10px) scale(0.985); } }
-@media (max-width:880px) { .bsp-workspace { grid-template-columns:1fr; min-height:0; } .bsp-preview-pane { border-right:0; border-bottom:1px solid var(--bsp-stage-line); } .bsp-controls { min-height:360px; padding:20px; } }
+@media (width < 880px) { .bsp-workspace { grid-template-columns:1fr; min-height:0; } .bsp-preview-pane { border-right:0; border-bottom:1px solid var(--bsp-stage-line); } .bsp-controls { min-height:0; padding:20px; overflow:visible; }
+  .bsp-backdrop { padding:8px; }
+  .bsp-panel { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
+  .bsp-actions { grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:0; }
+  .bsp-actions > :last-child { grid-column:1/-1; }
+  .bsp-preview-pane { padding:20px; }
+}
 @media (prefers-reduced-motion:reduce) {
   .bsp-spinner { animation:none; }
   .bsp-backdrop, .bsp-panel, .bsp-preview-frame, .bsp-option-pill, .bsp-action, .bsp-theme-option, .bsp-status, #bsp-entry { transition:none; animation:none; }

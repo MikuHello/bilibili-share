@@ -208,7 +208,7 @@ export function parseVideoApiResponse(
   return {
     bvid,
     aid: requiredPositiveInteger(data.aid, "AV 标识"),
-    coverUrl: requiredText(data.pic, "视频封面"),
+    coverUrl: typeof data.pic === "string" ? data.pic.trim() : "",
     title: requiredText(data.title, "视频标题"),
     uploader: requiredText(data.owner?.name, "UP 主"),
     partTitle: partInformation.partTitle,
@@ -249,6 +249,7 @@ async function blobToImageDataUrl(blob: Blob): Promise<string> {
 
 async function loadCover(coverUrl: string): Promise<{ dataUrl: string; unavailable: boolean }> {
   try {
+    if (!coverUrl) return { dataUrl: "", unavailable: true };
     const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
     return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
   } catch {

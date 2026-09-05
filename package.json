@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:dev": "node scripts/build.mjs --dev",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
