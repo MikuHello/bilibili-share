@@ -13,6 +13,7 @@ const target = 'https://www.bilibili.com/video/BV1TXoWBsEGc/';
 const cases = [
   { name: 'original' },
   { name: 'short', title: '正念冥想' },
+  { name: 'large-statistics', stats: { views: 99999999, likes: 99999999, coins: 99999999, favorites: 99999999 } },
   { name: 'long', title: '这是用于检查浏览器实际排版的长标题 Mixed English 文本 1234567890 '.repeat(8), uploader: '非常长的昵称与 Mixed English Name '.repeat(6) },
   { name: 'unbroken', title: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.repeat(12), uploader: 'LongUnbrokenUploaderName'.repeat(8) },
   { name: 'longlink', target: target + '?p=2147483647&t=9007199254740991' },
@@ -40,8 +41,9 @@ try {
       const qrImage = await createImageBitmap(qr);
       let decoded = null;
       if ('BarcodeDetector' in window) decoded = await new BarcodeDetector({formats:['qr_code']}).detect(qrImage);
-      return { poster: rect('.bsp-poster'), cover: rect('.bsp-d-cover'), footer: rect('.bsp-d-footer'), title: rect('.bsp-d-title'), titleSize: getComputedStyle(title).fontSize, titleClamp: title.style.webkitLineClamp, name: rect('.bsp-d-name'), nameSize: getComputedStyle(name).fontSize, link: link.textContent, address: rect('.bsp-d-address'), linkBox: rect('.bsp-d-link'), linkOverflow: link.scrollWidth > link.clientWidth+1, contain: getComputedStyle(document.querySelector('.bsp-d-cover')).objectFit, qr: decoded, qrAlt: qr.alt };
+      return { poster: rect('.bsp-poster'), cover: rect('.bsp-d-cover'), footer: rect('.bsp-d-footer'), title: rect('.bsp-d-title'), titleSize: getComputedStyle(title).fontSize, titleClamp: title.style.webkitLineClamp, name: rect('.bsp-d-name'), nameSize: getComputedStyle(name).fontSize, link: link.textContent, address: rect('.bsp-d-address'), linkBox: rect('.bsp-d-link'), linkOverflow: link.scrollWidth > link.clientWidth+1, contain: getComputedStyle(document.querySelector('.bsp-d-cover')).objectFit, qr: decoded, qrAlt: qr.alt, statRight: Math.max(...Array.from(document.querySelectorAll('.bsp-d-stat'), n => n.getBoundingClientRect().right)), signatureRight: document.querySelector('.bsp-d-signature').getBoundingClientRect().right };
     });
+    assert.ok(observed.statRight <= observed.signatureRight+1, 'statistics must stay inside signature, clear of QR');
     assert.equal(observed.poster.width,1080); assert.equal(observed.poster.height,1440);
     assert.equal(observed.cover.width,1080); assert.equal(observed.cover.height,608); assert.equal(observed.contain,'contain');
     assert.ok(observed.title.bottom <= observed.footer.top); assert.ok(observed.name.height <= parseFloat(observed.nameSize)*2.5+1);

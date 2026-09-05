@@ -81,6 +81,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -166,6 +168,95 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
+      "dimensions": [
+        1080,
+        1440
+      ]
+    },
+    {
+      "case": "large-statistics",
+      "poster": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1440,
+        "top": 0,
+        "right": 1080,
+        "bottom": 1440,
+        "left": 0
+      },
+      "cover": {
+        "x": 0,
+        "y": 104,
+        "width": 1080,
+        "height": 608,
+        "top": 104,
+        "right": 1080,
+        "bottom": 712,
+        "left": 0
+      },
+      "footer": {
+        "x": 0,
+        "y": 1014,
+        "width": 1080,
+        "height": 310,
+        "top": 1014,
+        "right": 1080,
+        "bottom": 1324,
+        "left": 0
+      },
+      "title": {
+        "x": 56,
+        "y": 738,
+        "width": 968,
+        "height": 245.71875,
+        "top": 738,
+        "right": 1024,
+        "bottom": 983.71875,
+        "left": 56
+      },
+      "titleSize": "64px",
+      "titleClamp": "",
+      "name": {
+        "x": 116,
+        "y": 1092.046875,
+        "width": 287.625,
+        "height": 42.5,
+        "top": 1092.046875,
+        "right": 403.625,
+        "bottom": 1134.546875,
+        "left": 116
+      },
+      "nameSize": "34px",
+      "link": "https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "address": {
+        "x": 56,
+        "y": 1346,
+        "width": 968,
+        "height": 72,
+        "top": 1346,
+        "right": 1024,
+        "bottom": 1418,
+        "left": 56
+      },
+      "linkBox": {
+        "x": 123,
+        "y": 1365.203125,
+        "width": 876,
+        "height": 33.59375,
+        "top": 1365.203125,
+        "right": 999,
+        "bottom": 1398.796875,
+        "left": 123
+      },
+      "linkOverflow": false,
+      "contain": "contain",
+      "qr": null,
+      "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 779.8302612304688,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -251,6 +342,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -336,6 +429,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -421,6 +516,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2147483647&t=9007199254740991",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -506,6 +603,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440
@@ -591,6 +690,8 @@
       "contain": "contain",
       "qr": null,
       "qrAlt": "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+      "statRight": 560.6875,
+      "signatureRight": 780,
       "dimensions": [
         1080,
         1440

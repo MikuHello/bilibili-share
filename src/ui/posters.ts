@@ -22,7 +22,7 @@ function clampText(node: HTMLElement, lines: number): void {
 }
 
 /** Measure complete strings in the actual browser, after link height is settled. */
-async function fitContent(poster: HTMLElement, title: HTMLElement, name: HTMLElement): Promise<void> {
+async function fitContent(poster: HTMLElement, title: HTMLElement, name: HTMLElement, stats: HTMLElement): Promise<void> {
   const host = element("div");
   Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
   host.append(poster);
@@ -43,6 +43,11 @@ async function fitContent(poster: HTMLElement, title: HTMLElement, name: HTMLEle
       if (name.getBoundingClientRect().height <= size * 1.25 * 2 + 1) break;
     }
     clampText(name, 2);
+    // Large compact counters still keep every value clear of the fixed QR area.
+    if (stats.scrollWidth > stats.clientWidth) {
+      stats.style.transformOrigin = "left center";
+      stats.style.transform = `scale(${stats.clientWidth / stats.scrollWidth})`;
+    }
   } finally {
     poster.remove();
     host.remove();
@@ -95,7 +100,7 @@ export async function createPoster(model: SharePoster): Promise<HTMLElement> {
   address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
   linkFooter.append(address);
   poster.append(style, mast, cover, editorial, footer, linkFooter);
-  await fitContent(poster, title, name);
+  await fitContent(poster, title, name, stats);
   return poster;
 }
 
