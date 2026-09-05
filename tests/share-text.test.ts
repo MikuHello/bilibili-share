@@ -66,7 +66,7 @@ describe("detailed and markdown share text", () => {
     );
   });
 
-  it("builds compact markdown with a clickable title and a bare link line", () => {
+  it("builds compact markdown with title, uploader and a bare link line", () => {
     expect(
       buildShareText(snapshot, target, {
         theme: "A",
@@ -75,7 +75,7 @@ describe("detailed and markdown share text", () => {
         detailedText: false,
         markdownText: true,
       }),
-    ).toBe("[【测试】详细文案标题](https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723)\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723");
+    ).toBe("[【测试】详细文案标题](https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723)（UP主：UP 主甲）\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723");
   });
 
   it("builds detailed markdown as a field list with only enabled part and timestamp fields", () => {

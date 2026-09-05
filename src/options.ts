@@ -35,7 +35,7 @@ export function resolveRememberedPreferences(stored: unknown): RememberedPanelPr
   return {
     theme: "A",
     detailedText: record.detailedText === true,
-    markdownText: record.markdownText === true,
+    markdownText: false,
   };
 }
 

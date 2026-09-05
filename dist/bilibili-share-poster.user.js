@@ -1972,10 +1972,10 @@
         opts = Utils.getOptions(opts);
         const size = Utils.getImageWidth(qrData.modules.size, opts);
         const ctx = canvasEl.getContext("2d");
-        const image = ctx.createImageData(size, size);
-        Utils.qrToImageData(image.data, qrData, opts);
+        const image2 = ctx.createImageData(size, size);
+        Utils.qrToImageData(image2.data, qrData, opts);
         clearCanvas(ctx, canvasEl, size);
-        ctx.putImageData(image, 0, 0);
+        ctx.putImageData(image2, 0, 0);
         return canvasEl;
       };
       exports.renderToDataURL = function renderToDataURL(qrData, canvas, options) {
@@ -2255,6 +2255,13 @@
       });
     });
   }
+  var CoverLoadError = class extends Error {
+    constructor(stage, facts = {}) {
+      super("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D");
+      this.stage = stage;
+      this.facts = facts;
+    }
+  };
   function gmBlobRequest(url) {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
@@ -2266,13 +2273,13 @@
         headers: { Referer: "https://www.bilibili.com/" },
         onload(response) {
           if (response.status < 200 || response.status >= 300) {
-            reject(new Error(`\u8BF7\u6C42\u5931\u8D25\uFF08HTTP ${response.status}\uFF09`));
+            reject(new CoverLoadError("http-status", { status: response.status }));
             return;
           }
           resolve(response.response);
         },
-        ontimeout: () => reject(new Error("\u8BF7\u6C42\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002")),
-        onerror: () => reject(new Error("\u7F51\u7EDC\u8BF7\u6C42\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u540E\u91CD\u8BD5\u3002"))
+        ontimeout: () => reject(new CoverLoadError("timeout")),
+        onerror: () => reject(new CoverLoadError("network-error"))
       });
     });
   }
@@ -2354,30 +2361,32 @@
   }
   async function blobToImageDataUrl(blob) {
     if (blob.size === 0 || blob.type && !blob.type.startsWith("image/")) {
-      throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6548\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+      throw new CoverLoadError("invalid-blob", { bytes: blob.size, imageType: blob.type.startsWith("image/") ? "image" : "non-image" });
     }
     const dataUrl = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("\u89C6\u9891\u5C01\u9762\u8BFB\u53D6\u5931\u8D25\u3002"));
+      reader.onerror = () => reject(new CoverLoadError("file-reader"));
       reader.readAsDataURL(blob);
     });
-    const image = new Image();
-    image.src = dataUrl;
+    const image2 = new Image();
+    image2.src = dataUrl;
     try {
-      await image.decode();
+      await image2.decode();
     } catch {
-      throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u65E0\u6CD5\u89E3\u7801\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+      throw new CoverLoadError("decode", { bytes: blob.size });
     }
-    if (!isUsableCover(image.naturalWidth, image.naturalHeight)) throw new Error("Bilibili \u8FD4\u56DE\u7684\u89C6\u9891\u5C01\u9762\u5C3A\u5BF8\u4E0D\u53EF\u7528\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+    if (!isUsableCover(image2.naturalWidth, image2.naturalHeight)) throw new CoverLoadError("dimensions", { width: image2.naturalWidth, height: image2.naturalHeight });
     return dataUrl;
   }
   async function loadCover(coverUrl) {
     try {
-      if (!coverUrl) return { dataUrl: "", unavailable: true };
+      if (!coverUrl) throw new CoverLoadError("missing-url");
       const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
       return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
-    } catch {
+    } catch (error) {
+      const failure = error instanceof CoverLoadError ? error : new CoverLoadError("unexpected");
+      console.warn("[Bilibili Share] cover", { stage: failure.stage, ...failure.facts });
       return { dataUrl: "", unavailable: true };
     }
   }
@@ -2438,16 +2447,6 @@
       return selectShareTarget(canonicalTarget, { status: "failed", reason });
     }
   }
-  async function fetchGenerationResources(capture) {
-    const snapshot = await fetchGenerationSnapshot(capture);
-    const canonicalTarget = buildCanonicalShareTarget(
-      snapshot.bvid,
-      snapshot,
-      { partShare: false, timestampShare: false }
-    );
-    const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
-    return { snapshot, targetSelection };
-  }
   function restorePlayback(capture) {
     if (!capture.wasPlaying || !capture.player.isConnected) return;
     const current = readPageIdentity();
@@ -2468,9 +2467,9 @@
   function resolveRememberedPreferences(stored) {
     const record = typeof stored === "object" && stored !== null ? stored : {};
     return {
-      theme: record.theme === "B" ? "B" : "A",
+      theme: "A",
       detailedText: record.detailedText === true,
-      markdownText: record.markdownText === true
+      markdownText: false
     };
   }
   function createPanelShareOptions(storedPreferences = null) {
@@ -2526,20 +2525,20 @@
     close: ["M6 6l12 12", "M18 6 6 18"]
   };
   function createIcon(name) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "1.8");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
+    const svg2 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg2.setAttribute("viewBox", "0 0 24 24");
+    svg2.setAttribute("aria-hidden", "true");
+    svg2.setAttribute("fill", "none");
+    svg2.setAttribute("stroke", "currentColor");
+    svg2.setAttribute("stroke-width", "1.8");
+    svg2.setAttribute("stroke-linecap", "round");
+    svg2.setAttribute("stroke-linejoin", "round");
     for (const d of ICON_PATHS[name]) {
-      const path = document.createElementNS(svg.namespaceURI, "path");
+      const path = document.createElementNS(svg2.namespaceURI, "path");
       path.setAttribute("d", d);
-      svg.append(path);
+      svg2.append(path);
     }
-    return svg;
+    return svg2;
   }
   function posterIcon() {
     return createIcon("poster");
@@ -2589,12 +2588,325 @@
     anchor.insertAdjacentElement("afterend", createSharePosterEntry(theme, onOpen));
     return true;
   }
-  function setEntryTheme(theme) {
-    const entry = document.getElementById(ENTRY_ID);
-    if (!entry) return;
-    const surface = selectThemeSurfaceClasses(theme);
-    entry.classList.toggle("bsp-entry-b", surface.entry !== null);
+
+  // src/clipboard.ts
+  function browserClipboard() {
+    const clipboard = navigator.clipboard;
+    return clipboard && typeof clipboard.write === "function" ? clipboard : null;
   }
+  function clipboardItemConstructor() {
+    const constructor = globalThis.ClipboardItem;
+    return typeof constructor === "function" ? constructor : null;
+  }
+  async function copyPng(dataUrl, writer) {
+    try {
+      await writer.write(dataUrl);
+      return { status: "copied" };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u56FE\u7247\u526A\u8D34\u677F"
+      };
+    }
+  }
+  function describePosterCopyResult(outcome) {
+    if (outcome.status === "copied") {
+      return {
+        statusMessage: "\u6D77\u62A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\u3002",
+        helpMessage: "\u4EC5\u590D\u5236\u4E86\u6D77\u62A5\u56FE\u7247\uFF0C\u4E0D\u5305\u542B\u5206\u4EAB\u6587\u6848\u3002",
+        downloadGuidance: false
+      };
+    }
+    return {
+      statusMessage: "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002",
+      helpMessage: `${outcome.reason} \u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002`,
+      downloadGuidance: true
+    };
+  }
+  async function copyText(text, writer) {
+    try {
+      await writer.write(text);
+      return { status: "copied" };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u6587\u672C\u526A\u8D34\u677F"
+      };
+    }
+  }
+  async function copyShareTextToClipboard(text) {
+    const clipboard = browserClipboard();
+    if (clipboard && typeof clipboard.writeText === "function") {
+      return copyText(text, {
+        async write(value) {
+          await clipboard.writeText(value);
+        }
+      });
+    }
+    if (typeof GM_setClipboard === "function") {
+      return copyText(text, {
+        async write(value) {
+          GM_setClipboard(value, "text");
+        }
+      });
+    }
+    return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u6587\u672C\u526A\u8D34\u677F\u5199\u5165" };
+  }
+  function escapeHtml(value) {
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  }
+  function buildCombinedHtml(posterDataUrl, shareText) {
+    return `<img src="${escapeHtml(posterDataUrl)}" alt="\u5206\u4EAB\u6D77\u62A5"><br><pre>${escapeHtml(shareText)}</pre>`;
+  }
+  async function copyCombined(posterDataUrl, shareText, ports) {
+    const html = buildCombinedHtml(posterDataUrl, shareText);
+    try {
+      await ports.writeCombined(posterDataUrl, shareText, html);
+      return { status: "copied" };
+    } catch (combinedError) {
+      const combinedReason = combinedError instanceof Error && combinedError.message ? combinedError.message : "\u7EC4\u5408\u5199\u5165\u5931\u8D25";
+      try {
+        await ports.writeText(shareText);
+        return { status: "text-fallback", reason: combinedReason };
+      } catch (textError) {
+        return {
+          status: "failed",
+          reason: textError instanceof Error && textError.message ? textError.message : "\u6587\u6848\u5199\u5165\u5931\u8D25"
+        };
+      }
+    }
+  }
+  function describeCombinedCopyResult(outcome) {
+    if (outcome.status === "copied") {
+      return {
+        statusMessage: "\u5DF2\u5199\u5165\u517C\u5BB9\u683C\u5F0F\u3002",
+        helpMessage: "\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u53D6\u5176\u4E2D\u4E00\u79CD\uFF1B\u4E0D\u4FDD\u8BC1\u7C98\u8D34\u65F6\u56FE\u4E0E\u6587\u540C\u65F6\u51FA\u73B0\u3002"
+      };
+    }
+    if (outcome.status === "text-fallback") {
+      return {
+        statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\uFF0C\u5DF2\u6539\u4E3A\u4EC5\u590D\u5236\u6587\u6848\u3002",
+        helpMessage: `${outcome.reason} \u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002`
+      };
+    }
+    return {
+      statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002",
+      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002`
+    };
+  }
+  async function copyCombinedPosterAndText(posterDataUrl, shareText) {
+    const clipboardItemCtor = clipboardItemConstructor();
+    const clipboard = browserClipboard();
+    if (clipboardItemCtor && clipboard) {
+      const textBlob = new Blob([shareText], { type: "text/plain" });
+      const htmlBlob = new Blob([buildCombinedHtml(posterDataUrl, shareText)], { type: "text/html" });
+      const ports = {
+        async writeCombined(dataUrl, _text, _html) {
+          await clipboard.write([
+            new clipboardItemCtor({
+              "image/png": pngDataUrlToBlob(dataUrl),
+              "text/plain": textBlob,
+              "text/html": htmlBlob
+            })
+          ]);
+        },
+        writeText: (text) => copyShareTextToClipboard(text).then((outcome) => {
+          if (outcome.status === "failed") throw new Error(outcome.reason);
+        })
+      };
+      return copyCombined(posterDataUrl, shareText, ports);
+    }
+    const textOutcome = await copyShareTextToClipboard(shareText);
+    return textOutcome.status === "copied" ? { status: "text-fallback", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u7EC4\u5408\u526A\u8D34\u677F\u5199\u5165" } : { status: "failed", reason: textOutcome.reason };
+  }
+  function pngDataUrlToBlob(dataUrl) {
+    const [header, base64] = dataUrl.split(",");
+    if (!header?.startsWith("data:image/png") || !base64) throw new Error("\u6D77\u62A5 PNG \u6570\u636E\u65E0\u6548");
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return new Blob([bytes], { type: "image/png" });
+  }
+  async function copyPosterPngToClipboard(dataUrl) {
+    const clipboardItemCtor = clipboardItemConstructor();
+    const clipboard = browserClipboard();
+    if (!clipboardItemCtor || !clipboard) {
+      return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u56FE\u7247\u526A\u8D34\u677F\u5199\u5165" };
+    }
+    return copyPng(dataUrl, {
+      async write(value) {
+        await clipboard.write([new clipboardItemCtor({ "image/png": pngDataUrlToBlob(value) })]);
+      }
+    });
+  }
+
+  // src/domain.ts
+  function formatCompactStat(value) {
+    if (value === null || !Number.isFinite(value)) return "--";
+    if (value >= 1e8) return `${(value / 1e8).toFixed(1)}\u4EBF`;
+    if (value >= 1e4) return `${(value / 1e4).toFixed(1)}\u4E07`;
+    return Math.max(0, Math.trunc(value)).toString();
+  }
+  function formatTimestamp(seconds) {
+    const wholeSeconds = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(wholeSeconds / 3600);
+    const minutes = Math.floor(wholeSeconds % 3600 / 60);
+    const remainder = wholeSeconds % 60;
+    const mm = minutes.toString().padStart(2, "0");
+    const ss = remainder.toString().padStart(2, "0");
+    return hours > 0 ? `${hours.toString().padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+  function buildPosterFilename(bvid, generatedAt, partNumber) {
+    const twoDigits = (value) => value.toString().padStart(2, "0");
+    const stamp = `${generatedAt.getFullYear()}${twoDigits(generatedAt.getMonth() + 1)}${twoDigits(generatedAt.getDate())}-${twoDigits(generatedAt.getHours())}${twoDigits(generatedAt.getMinutes())}${twoDigits(generatedAt.getSeconds())}`;
+    const partSegment = partNumber && partNumber > 0 ? `_P${partNumber}` : "";
+    return `bilibili_${bvid}${partSegment}_${stamp}.png`;
+  }
+  function buildPartLabel(snapshot, options) {
+    if (!options.partShare) return null;
+    const title = snapshot.partTitle?.trim() ? snapshot.partTitle.trim() : "";
+    return title ? `P${snapshot.partNumber} \xB7 ${title}` : `P${snapshot.partNumber}`;
+  }
+  function requireText(value, label) {
+    const normalized = value.trim();
+    if (!normalized) throw new Error(`\u7F3A\u5C11${label}`);
+    return normalized;
+  }
+  function validateShareTarget(shareTarget, bvid) {
+    let url;
+    try {
+      url = new URL(shareTarget);
+    } catch {
+      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
+    }
+    const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
+    const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
+    const isOpaqueShort = isOpaqueShortUrl(url);
+    if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
+      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
+    }
+    return url.toString();
+  }
+  function buildSharePoster(snapshot, shareTarget, _options) {
+    const title = requireText(snapshot.title, "\u89C6\u9891\u6807\u9898");
+    const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
+    const uploader = requireText(snapshot.uploader, "UP \u4E3B");
+    const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
+    if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
+    const validatedShareTarget = validateShareTarget(shareTarget, bvid);
+    return {
+      dimensions: { width: 1080, height: 1440 },
+      coverDataUrl,
+      coverUnavailable: snapshot.coverUnavailable,
+      title,
+      uploader,
+      bvid,
+      aid: snapshot.aid,
+      identity: `${bvid} \xB7 AV${snapshot.aid}`,
+      shareTarget: validatedShareTarget,
+      stats: [
+        { label: "\u64AD\u653E", value: formatCompactStat(snapshot.stats.views) },
+        { label: "\u70B9\u8D5E", value: formatCompactStat(snapshot.stats.likes) },
+        { label: "\u6295\u5E01", value: formatCompactStat(snapshot.stats.coins) },
+        { label: "\u6536\u85CF", value: formatCompactStat(snapshot.stats.favorites) }
+      ]
+    };
+  }
+
+  // src/share-text.ts
+  function buildCompactShareText(title, uploader, shareTarget) {
+    return `${title}\uFF08UP\u4E3B\uFF1A${uploader}\uFF09
+${shareTarget}`;
+  }
+  function formatExactStat(value) {
+    if (value === null || !Number.isFinite(value)) return "--";
+    const whole = Math.max(0, Math.trunc(value));
+    return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function plainDetailedText(snapshot, shareTarget, options) {
+    const lines = [
+      snapshot.title,
+      `UP\u4E3B\uFF1A${snapshot.uploader}`,
+      `BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
+    ];
+    const partLabel = buildPartLabel(snapshot, options);
+    if (partLabel) lines.push(`\u5206P\uFF1A${partLabel}`);
+    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
+      lines.push(`\u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
+    }
+    lines.push(shareTarget);
+    return lines.join("\n");
+  }
+  function escapeMarkdown(value) {
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replace(/([\\`*_[\]{}()#+.!|>~-])/g, "\\$1");
+  }
+  function markdownDetailedText(snapshot, shareTarget, options) {
+    const lines = [
+      `**${escapeMarkdown(snapshot.title)}**`,
+      "",
+      `- UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}`,
+      `- BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
+    ];
+    const partLabel = buildPartLabel(snapshot, options);
+    if (partLabel) lines.push(`- \u5206P\uFF1A${escapeMarkdown(partLabel)}`);
+    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
+      lines.push(`- \u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
+    }
+    lines.push(`- \u94FE\u63A5\uFF1A${shareTarget}`);
+    return lines.join("\n");
+  }
+  function buildShareText(snapshot, shareTarget, options) {
+    if (options.detailedText) {
+      return options.markdownText ? markdownDetailedText(snapshot, shareTarget, options) : plainDetailedText(snapshot, shareTarget, options);
+    }
+    if (options.markdownText) {
+      return `[${escapeMarkdown(snapshot.title)}](${shareTarget})\uFF08UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}\uFF09
+${shareTarget}`;
+    }
+    return buildCompactShareText(snapshot.title, snapshot.uploader, shareTarget);
+  }
+
+  // src/ui/dom.ts
+  function element(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== void 0) node.textContent = text;
+    return node;
+  }
+
+  // src/ui/feedback.ts
+  function statusDismissDelay(failed) {
+    return failed ? null : 3e3;
+  }
+
+  // src/ui/motion.ts
+  var MOTION = { fast: 160, backdrop: 200, open: 240, color: 180, overlay: 140 };
+  function motionDelay(duration) {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duration;
+  }
+  var MOTION_STYLES = `
+.bsp-backdrop, #bsp-entry {
+  --bsp-motion-fast:${MOTION.fast}ms;
+  --bsp-motion-backdrop:${MOTION.backdrop}ms;
+  --bsp-motion-open:${MOTION.open}ms;
+  --bsp-motion-color:${MOTION.color}ms;
+  --bsp-motion-overlay:${MOTION.overlay}ms;
+  --bsp-ease-out:cubic-bezier(.22,.61,.36,1);
+  --bsp-ease-in-out:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-reduced-motion:reduce) {
+  .bsp-backdrop *, .bsp-backdrop *::before, .bsp-backdrop *::after, .bsp-backdrop, #bsp-entry {
+    animation-duration:0ms !important;
+    transition-duration:0ms !important;
+  }
+}`;
+
+  // src/ui/posters.ts
+  var import_qrcode = __toESM(require_browser(), 1);
 
   // node_modules/html-to-image/es/util.js
   function resolveUrl(url, baseUrl) {
@@ -2718,24 +3030,24 @@
       img.src = url;
     });
   }
-  async function svgToDataURL(svg) {
-    return Promise.resolve().then(() => new XMLSerializer().serializeToString(svg)).then(encodeURIComponent).then((html) => `data:image/svg+xml;charset=utf-8,${html}`);
+  async function svgToDataURL(svg2) {
+    return Promise.resolve().then(() => new XMLSerializer().serializeToString(svg2)).then(encodeURIComponent).then((html) => `data:image/svg+xml;charset=utf-8,${html}`);
   }
   async function nodeToDataURL(node, width, height) {
     const xmlns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(xmlns, "svg");
+    const svg2 = document.createElementNS(xmlns, "svg");
     const foreignObject = document.createElementNS(xmlns, "foreignObject");
-    svg.setAttribute("width", `${width}`);
-    svg.setAttribute("height", `${height}`);
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg2.setAttribute("width", `${width}`);
+    svg2.setAttribute("height", `${height}`);
+    svg2.setAttribute("viewBox", `0 0 ${width} ${height}`);
     foreignObject.setAttribute("width", "100%");
     foreignObject.setAttribute("height", "100%");
     foreignObject.setAttribute("x", "0");
     foreignObject.setAttribute("y", "0");
     foreignObject.setAttribute("externalResourcesRequired", "true");
-    svg.appendChild(foreignObject);
+    svg2.appendChild(foreignObject);
     foreignObject.appendChild(node);
-    return svgToDataURL(svg);
+    return svgToDataURL(svg2);
   }
   var isInstanceOfElement = (node, instance) => {
     if (node instanceof instance)
@@ -3022,19 +3334,19 @@
     const nodes = Object.values(processedDefs);
     if (nodes.length) {
       const ns = "http://www.w3.org/1999/xhtml";
-      const svg = document.createElementNS(ns, "svg");
-      svg.setAttribute("xmlns", ns);
-      svg.style.position = "absolute";
-      svg.style.width = "0";
-      svg.style.height = "0";
-      svg.style.overflow = "hidden";
-      svg.style.display = "none";
+      const svg2 = document.createElementNS(ns, "svg");
+      svg2.setAttribute("xmlns", ns);
+      svg2.style.position = "absolute";
+      svg2.style.width = "0";
+      svg2.style.height = "0";
+      svg2.style.overflow = "hidden";
+      svg2.style.display = "none";
       const defs = document.createElementNS(ns, "defs");
-      svg.appendChild(defs);
+      svg2.appendChild(defs);
       for (let i = 0; i < nodes.length; i++) {
         defs.appendChild(nodes[i]);
       }
-      clone.appendChild(svg);
+      clone.appendChild(svg2);
     }
     return clone;
   }
@@ -3134,12 +3446,12 @@
           reject(error);
         }
       } : reject;
-      const image = clonedNode;
-      if (image.decode) {
-        image.decode = resolve;
+      const image2 = clonedNode;
+      if (image2.decode) {
+        image2.decode = resolve;
       }
-      if (image.loading === "lazy") {
-        image.loading = "eager";
+      if (image2.loading === "lazy") {
+        image2.loading = "eager";
       }
       if (isImageElement) {
         clonedNode.srcset = "";
@@ -3365,8 +3677,8 @@
   }
   async function toCanvas(node, options = {}) {
     const { width, height } = getImageSize(node, options);
-    const svg = await toSvg(node, options);
-    const img = await createImage(svg);
+    const svg2 = await toSvg(node, options);
+    const img = await createImage(svg2);
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     const ratio = options.pixelRatio || getPixelRatio();
@@ -3391,441 +3703,155 @@
     return canvas.toDataURL();
   }
 
-  // src/clipboard.ts
-  function browserClipboard() {
-    const clipboard = navigator.clipboard;
-    return clipboard && typeof clipboard.write === "function" ? clipboard : null;
-  }
-  function clipboardItemConstructor() {
-    const constructor = globalThis.ClipboardItem;
-    return typeof constructor === "function" ? constructor : null;
-  }
-  async function copyPng(dataUrl, writer) {
-    try {
-      await writer.write(dataUrl);
-      return { status: "copied" };
-    } catch (error) {
-      return {
-        status: "failed",
-        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u56FE\u7247\u526A\u8D34\u677F"
-      };
-    }
-  }
-  function describePosterCopyResult(outcome) {
-    if (outcome.status === "copied") {
-      return {
-        statusMessage: "\u6D77\u62A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\u3002",
-        helpMessage: "\u4EC5\u590D\u5236\u4E86\u6D77\u62A5\u56FE\u7247\uFF0C\u4E0D\u5305\u542B\u5206\u4EAB\u6587\u6848\u3002",
-        downloadGuidance: false
-      };
-    }
-    return {
-      statusMessage: "\u6D77\u62A5\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: `${outcome.reason} \u8BF7\u6539\u7528\u201C\u4E0B\u8F7D PNG\u201D\u4FDD\u5B58\u56FE\u7247\u3002`,
-      downloadGuidance: true
-    };
-  }
-  async function copyText(text, writer) {
-    try {
-      await writer.write(text);
-      return { status: "copied" };
-    } catch (error) {
-      return {
-        status: "failed",
-        reason: error instanceof Error && error.message ? error.message : "\u6D4F\u89C8\u5668\u62D2\u7EDD\u5199\u5165\u6587\u672C\u526A\u8D34\u677F"
-      };
-    }
-  }
-  function describeTextCopyResult(outcome) {
-    if (outcome.status === "copied") {
-      return {
-        statusMessage: "\u6587\u6848\u5DF2\u590D\u5236\u3002",
-        helpMessage: "\u4EC5\u590D\u5236\u4E86\u5206\u4EAB\u6587\u6848\uFF0C\u4E0D\u5305\u542B\u6D77\u62A5\u56FE\u7247\u3002",
-        manualCopy: false
-      };
-    }
-    return {
-      statusMessage: "\u6587\u6848\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002`,
-      manualCopy: true
-    };
-  }
-  async function copyShareTextToClipboard(text) {
-    const clipboard = browserClipboard();
-    if (clipboard && typeof clipboard.writeText === "function") {
-      return copyText(text, {
-        async write(value) {
-          await clipboard.writeText(value);
-        }
-      });
-    }
-    if (typeof GM_setClipboard === "function") {
-      return copyText(text, {
-        async write(value) {
-          GM_setClipboard(value, "text");
-        }
-      });
-    }
-    return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u6587\u672C\u526A\u8D34\u677F\u5199\u5165" };
-  }
-  function escapeHtml(value) {
-    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  }
-  function buildCombinedHtml(posterDataUrl, shareText) {
-    return `<img src="${escapeHtml(posterDataUrl)}" alt="\u5206\u4EAB\u6D77\u62A5"><br><pre>${escapeHtml(shareText)}</pre>`;
-  }
-  async function copyCombined(posterDataUrl, shareText, ports) {
-    const html = buildCombinedHtml(posterDataUrl, shareText);
-    try {
-      await ports.writeCombined(posterDataUrl, shareText, html);
-      return { status: "copied" };
-    } catch (combinedError) {
-      const combinedReason = combinedError instanceof Error && combinedError.message ? combinedError.message : "\u7EC4\u5408\u5199\u5165\u5931\u8D25";
-      try {
-        await ports.writeText(shareText);
-        return { status: "text-fallback", reason: combinedReason };
-      } catch (textError) {
-        return {
-          status: "failed",
-          reason: textError instanceof Error && textError.message ? textError.message : "\u6587\u6848\u5199\u5165\u5931\u8D25"
-        };
-      }
-    }
-  }
-  function describeCombinedCopyResult(outcome) {
-    if (outcome.status === "copied") {
-      return {
-        statusMessage: "\u5DF2\u5199\u5165\u517C\u5BB9\u683C\u5F0F\u3002",
-        helpMessage: "\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u53D6\u5176\u4E2D\u4E00\u79CD\uFF1B\u4E0D\u4FDD\u8BC1\u7C98\u8D34\u65F6\u56FE\u4E0E\u6587\u540C\u65F6\u51FA\u73B0\u3002"
-      };
-    }
-    if (outcome.status === "text-fallback") {
-      return {
-        statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\uFF0C\u5DF2\u6539\u4E3A\u4EC5\u590D\u5236\u6587\u6848\u3002",
-        helpMessage: `${outcome.reason} \u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002`
-      };
-    }
-    return {
-      statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: `${outcome.reason} \u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002`
-    };
-  }
-  async function copyCombinedPosterAndText(posterDataUrl, shareText) {
-    const clipboardItemCtor = clipboardItemConstructor();
-    const clipboard = browserClipboard();
-    if (clipboardItemCtor && clipboard) {
-      const textBlob = new Blob([shareText], { type: "text/plain" });
-      const htmlBlob = new Blob([buildCombinedHtml(posterDataUrl, shareText)], { type: "text/html" });
-      const ports = {
-        async writeCombined(dataUrl, _text, _html) {
-          await clipboard.write([
-            new clipboardItemCtor({
-              "image/png": pngDataUrlToBlob(dataUrl),
-              "text/plain": textBlob,
-              "text/html": htmlBlob
-            })
-          ]);
-        },
-        writeText: (text) => copyShareTextToClipboard(text).then((outcome) => {
-          if (outcome.status === "failed") throw new Error(outcome.reason);
-        })
-      };
-      return copyCombined(posterDataUrl, shareText, ports);
-    }
-    const textOutcome = await copyShareTextToClipboard(shareText);
-    return textOutcome.status === "copied" ? { status: "text-fallback", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u7EC4\u5408\u526A\u8D34\u677F\u5199\u5165" } : { status: "failed", reason: textOutcome.reason };
-  }
-  function pngDataUrlToBlob(dataUrl) {
-    const [header, base64] = dataUrl.split(",");
-    if (!header?.startsWith("data:image/png") || !base64) throw new Error("\u6D77\u62A5 PNG \u6570\u636E\u65E0\u6548");
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) {
-      bytes[index] = binary.charCodeAt(index);
-    }
-    return new Blob([bytes], { type: "image/png" });
-  }
-  async function copyPosterPngToClipboard(dataUrl) {
-    const clipboardItemCtor = clipboardItemConstructor();
-    const clipboard = browserClipboard();
-    if (!clipboardItemCtor || !clipboard) {
-      return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u56FE\u7247\u526A\u8D34\u677F\u5199\u5165" };
-    }
-    return copyPng(dataUrl, {
-      async write(value) {
-        await clipboard.write([new clipboardItemCtor({ "image/png": pngDataUrlToBlob(value) })]);
-      }
-    });
-  }
+  // src/ui/poster-assets.ts
+  var posterAssets = {
+    "brand": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%202240%201024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%2300AEEC%22%20d%3D%22M2079.810048%20913.566175c-10.01309%200-18.554608%200.799768-26.936172-0.159954-16.987063-1.951433-33.974126-1.567544-50.99318-2.079395-10.972811-0.287916-10.652904-0.287916-11.580634-10.90883-2.71921-32.406582-5.694345-64.781173-8.605499-97.155764-2.527266-28.439735-4.926568-56.91146-7.70976-85.319204-2.527266-26.040432-5.566382-52.016883-8.317583-78.025324-2.623238-24.440897-5.054531-48.913784-7.77374-73.322691a12681.114551%2012681.114551%200%200%200-10.684895-92.133223c-3.295042-27.128116-6.558094-54.320213-10.205034-81.416339a20559.272961%2020559.272961%200%200%200-17.530905-125.979387c-6.398141-44.723002-14.075909-89.22207-22.105576-133.657156-1.439582-7.965685-1.247637-8.253601%206.36615-9.533229%2031.670796-5.406429%2063.501545-10.01309%2095.716183-9.309295%203.486987%200.095972%207.005964%200.159954%2010.460959%200.607823%205.662354%200.703795%208.605499%203.454996%208.925406%2010.045081%201.119675%2022.969325%202.71921%2045.938649%204.414717%2068.875983%202.71921%2037.589076%205.662354%2075.178151%208.477537%20112.735236%201.791479%2024.184971%203.327033%2048.305961%205.150503%2072.426951%202.911154%2038.772732%205.982261%2077.513473%208.925406%20116.286205%201.791479%2023.705111%203.359024%2047.474203%205.182494%2071.179313%202.783191%2034.805885%205.822308%2069.579778%208.637489%20104.353672%201.791479%2022.137566%203.391014%2044.307123%205.278466%2066.44469%202.783191%2032.79047%205.790317%2065.580941%208.63749%2098.371411%202.143377%2025.592562%204.09481%2051.249106%206.270178%2077.673426zM853.670395%20114.918282c4.638652%200%2011.644616-0.511851%2018.554607%200.127963%208.797443%200.799768%2010.49295%203.071107%2011.036793%2011.900541%202.527266%2040.372267%204.894578%2080.776524%207.581796%20121.180782%202.943145%2043.571337%206.174206%2087.078693%209.405267%20130.586048%202.975135%2039.956388%205.950271%2079.912775%209.149341%20119.869163%203.486987%2043.891244%207.357862%2087.718507%2010.876839%20131.609751%202.655228%2033.622229%204.926568%2067.244457%207.677768%20100.898677%202.623238%2031.222926%205.694345%2062.38187%208.509527%2093.572805%202.399303%2026.8402%204.830596%2053.71239%207.165918%2080.58458%200.735786%208.509527%200.127963%209.053369-9.053369%208.829434-24.025018-0.575833-47.922073-3.391014-71.947091-2.71921-5.502401%200.159954-7.101936-2.367312-8.029666-7.581796-1.983424-11.356699-1.663517-22.905343-2.879163-34.390006-3.295042-30.359177-5.182494-60.846317-7.965685-91.269474-2.495275-27.639967-5.502401-55.215953-8.349574-82.82393-2.527266-25.240664-5.02254-50.481329-7.709759-75.753984-2.687219-24.792795-5.534392-49.61758-8.349573-74.442365-2.591247-22.841362-5.118512-45.682723-7.869713-68.524085-4.062819-33.462275-8.093648-66.92455-12.508365-100.322844-4.062819-30.647093-8.66948-61.198214-12.988225-91.813317-5.886289-41.587914-12.508365-83.079855-19.834236-124.411842a1393.96288%201393.96288%200%200%200-5.310457-28.023856c-0.959721-4.702633-0.095972-7.421843%205.278466-8.157629%2014.139891-1.887451%2028.24779-4.830596%2042.451663-6.206196%2014.203872-1.311619%2028.407744-3.966847%2045.106891-2.71921z%20m1006.075609%20403.33878c27.064134%200%2027.703949%200.191944%2032.054684%2024.536869%205.342447%2030.03927%209.08536%2060.334465%2012.636328%2090.62966%203.742912%2032.278619%207.517815%2064.557238%2010.972811%2096.867848%202.783191%2026.008441%205.118512%2052.080864%207.74175%2078.089305%202.7512%2027.256079%205.662354%2054.416185%208.509527%2081.640274%201.567544%2015.387528%203.039117%2030.775056%204.798605%2046.130593%200.511851%204.446708-0.831758%206.81402-5.214485%207.325871-9.245313%201.055693-18.426645%202.27134-27.639967%203.263052-16.891091%201.82347-33.814173%203.614949-50.737254%205.182493-8.733462%200.799768-9.309294%200.319907-10.940821-8.125638-14.843686-76.617733-29.719363-153.171485-44.435086-229.821208-9.789155-50.961189-19.322384-101.95437-28.919595-152.915559a805.525894%20805.525894%200%200%201-3.582959-21.081873c-0.639814-4.030829%200.44787-6.622075%205.022541-7.70976%2030.48714-7.133927%2061.294186-12.636328%2089.733921-14.011927z%20m-1137.077537%200c28.951586%200%2028.823623%200.095972%2033.302322%2026.360339%206.909992%2040.660183%2011.804569%2081.544301%2016.187295%20122.556382%204.286754%2039.796434%208.957397%2079.560878%2013.148179%20119.357311%202.847173%2027.224088%205.086522%2054.512157%207.74175%2081.704255%201.887451%2019.354375%204.126801%2038.644769%206.174206%2057.967153%200.255926%202.367312%200.383888%204.734624%200.543842%207.133927%200.415879%209.469248%200%2010.237025-9.117351%2011.164755-18.074747%201.887451-36.181485%203.454996-54.256232%205.246476-6.558094%200.639814-13.084197%201.599535-19.57831%202.239349-8.63749%200.799768-8.925406%200.767777-10.620913-7.965685-6.078234-30.679084-11.964523-61.422149-17.914793-92.101233-14.267853-73.898523-28.69566-147.733065-42.867542-221.631589-5.662354-29.559409-10.524941-59.246781-16.091323-88.838181-1.023702-5.406429-0.255926-7.933694%205.342447-9.245313%2030.199223-7.037955%2060.590391-12.540355%2088.006423-13.947946z%20m382.128944%20309.861946v124.027954c0%201.183656-0.127963%202.399303%200.03199%203.582959%200.607823%206.014252-1.599535%208.66948-7.805731%208.413555-8.157629-0.351898-16.251277-0.127963-24.408906%200.063981-17.019054%200.319907-34.070098-0.351898-51.057162%201.599535-9.405267%201.087684-9.213322%200.511851-10.141052-9.405266-2.783191-31.222926-5.822308-62.413861-8.669481-93.636787-2.623238-28.823623-4.99055-57.711228-7.677768-86.534851-2.71921-29.655381-5.758326-59.214791-8.509527-88.838181-1.887451-19.770254-3.550968-39.508518-5.214485-59.278772-2.175368-25.720525-4.190782-51.409059-6.462122-77.129585-0.959721-10.844848-0.159954-12.380402%2010.588923-13.500076a531.877423%20531.877423%200%200%201%2083.527724-2.591247c6.941982%200.383888%2013.851974%201.727498%2020.570022%203.359024%208.477536%202.015414%209.405267%203.263052%209.853137%2012.124476%200.92773%2017.850812%201.855461%2035.701624%202.335321%2053.584427%200.543842%2019.866226%200.095972%2039.764443%200.831758%2059.63067%201.855461%2054.800074%201.567544%20109.664129%202.207359%20164.528184z%20m1134.806197%205.630364v117.437869c0%201.983424-0.063981%203.966847%200.03199%205.982262%200.415879%205.150503-1.983424%206.973973-6.878001%206.941982-12.028504-0.095972-24.025018%200-36.021531%200.159954-13.564058%200.127963-27.096125%200.063981-40.628192%201.535553-8.925406%201.023702-8.989387%200.351898-9.789155-8.509527-3.678931-40.660183-7.549806-81.320366-11.260728-122.04453-3.391014-37.525094-6.526103-75.082179-9.981099-112.639265-3.550968-38.740741-7.421843-77.38551-10.90883-116.09426-1.727498-19.386366-3.16708-38.772732-4.606661-58.159097-0.575833-8.445546%200.351898-9.949109%209.885127-10.716886%2016.571184-1.311619%2033.078387-3.550968%2049.777534-3.263051%2016.635165%200.319907%2033.302322-0.607823%2049.841515%202.559256%2014.011928%202.687219%2014.715723%203.486987%2015.547481%2018.458635%202.399303%2044.051198%201.663517%2088.230358%203.231061%20132.281556%201.599535%2046.89837%200.479861%2093.79674%201.759489%20146.069549zM1831.498213%20305.135c9.789155%200.575833%2017.498914%200.095972%2025.176683%201.791479%204.894578%201.119675%207.357862%203.327033%207.837723%208.573509%202.303331%2025.240664%204.798605%2050.51332%207.32587%2075.785975%202.015414%2020.50604%204.158791%2041.012081%206.238188%2061.518121l0.191944%201.183656c1.663517%2012.924244%201.279628%2013.276142-11.292718%2013.979937-11.196746%200.607823-22.361501%201.599535-33.558247%202.27134-7.357862%200.44787-9.693183%201.695507-10.90883-9.021378-4.190782-37.813011-9.053369-75.530049-13.692021-113.311069a1185.0316%201185.0316%200%200%200-4.286754-31.798759c-0.92773-5.982261%201.407591-9.277304%207.005964-9.757164%207.357862-0.671805%2014.715723-0.863749%2019.962198-1.215647z%20m-1133.398606%200.159954c7.549806%200.415879%2015.323547-0.159954%2022.937334%201.599535%204.350736%200.991712%206.558094%202.815182%206.973973%207.773741%200.92773%2011.83656%202.7512%2023.641129%203.870875%2035.477689%203.550968%2036.309448%206.909992%2072.650886%2010.237025%20108.992324%200.703795%207.901704%200.543842%208.061657-6.84601%208.605499-13.116188%200.959721-26.264367%201.919442-39.412546%202.463284-7.645778%200.351898-8.605499-0.575833-9.56522-8.381564-3.327033-26.744227-6.462122-53.520446-9.661192-80.296664-2.591247-22.073585-4.766615-44.14717-7.901704-66.156773-0.863749-6.078234%201.119675-7.74175%205.982262-8.733462%207.709759-1.567544%2015.451509-1.055693%2023.385203-1.343609z%20m399.147998%20100.002936c0%2023.001315%200.063981%2045.97064-0.031991%2069.003946%200%2010.332997-0.127963%2010.396978-10.396978%2010.269016a324.289753%20324.289753%200%200%201-36.981252-1.919443c-7.933694-0.991712-8.093648-0.735786-8.317583-9.149341-0.799768-28.119828-1.631526-56.239655-2.207359-84.359483-0.415879-19.034468-0.639814-38.004955-1.791479-57.039422-0.607823-9.821146-0.063981-9.917118%209.373276-10.045081%2013.915956-0.159954%2027.799921%200.479861%2041.619904%202.591247%208.317583%201.279628%208.701471%201.279628%208.733462%2010.49295%200.063981%2023.385204%200.063981%2046.770407%200.063981%2070.187602h-0.063981z%20m1135.38203%200.607824c0%2023.033306%200.063981%2046.034621-0.031991%2069.035936%200%209.661192-0.159954%209.725174-9.853137%209.661192a505.32514%20505.32514%200%200%201-38.132917-1.791479c-6.302168-0.479861-8.157629-3.135089-7.74175-8.861425%200.063981-0.799768%200-1.599535%200-2.399302-0.959721-44.403095-1.919442-88.7742-2.815182-133.177296-0.031991-2.367312-0.159954-4.734624-0.063982-7.133926%200.127963-8.957397%200.159954-9.181332%209.149341-9.117351%2012.380402%200.063981%2024.664832%200.703795%2037.013243%201.919442%2015.067621%201.503563%2012.412393%203.359024%2012.476375%2015.259566%200.063981%2022.169557%200.031991%2044.403095%200%2066.604643z%20m-1565.593%2054.000306c0.287916%2012.636328%200.287916%2012.604337-11.804569%2015.547481-8.221611%202.015414-16.443221%204.222773-24.728813%206.046243-7.069945%201.599535-8.317583%200.703795-9.53323-6.238187-8.445546-47.090314-16.8591-94.212619-25.240664-141.334924-1.695507-9.757164-1.247637-10.364988%208.349573-12.060495%2011.804569-2.079396%2023.577148-4.126801%2035.381717-5.950271%207.517815-1.183656%208.477536-0.767777%209.9811%207.517815%202.975135%2016.731138%205.790317%2033.526256%207.997675%2050.385357%203.423005%2026.680246%206.238187%2053.456464%209.309295%2080.168701%200.255926%201.951433%200.191944%203.966847%200.287916%205.91828z%20m1064.138735-136.696273c15.451509-2.527266%2031.030982-5.086522%2046.610454-7.549806%205.598373-0.863749%207.29388%202.655228%208.029666%207.645778%202.655228%2018.426645%205.982261%2036.725327%208.157629%2055.183962%203.19907%2026.744227%207.581797%2053.360492%208.413555%2080.328655%200.063981%202.7512%200.031991%205.566382%200.095972%208.317583%200.159954%204.286754-1.983424%206.494113-5.950271%207.421843-10.556932%202.367312-21.113864%204.734624-31.638805%207.261889-5.054531%201.215647-6.750038-0.92773-7.581796-5.854298-3.16708-18.746552-6.81402-37.397131-10.045081-56.079702-5.47041-30.775056-10.780867-61.582103-16.091323-92.38915-0.127963-1.119675%200-2.303331%200-4.286754z%20m-710.64147%20108.032603c-0.44787%2016.37924%200.543842%2030.647093-1.695507%2044.914947-0.671805%204.510689-1.983424%207.421843-6.846011%207.837722-10.428969%200.863749-20.825947%201.695507-31.190935%202.7512-5.02254%200.543842-6.430131-1.631526-7.261889-6.558094-2.335321-14.55577-1.919442-29.303484-3.327033-43.923234-2.655228-27.607976-3.774903-55.407897-5.566383-83.111846-0.44787-6.750038-1.119675-13.436095-1.663516-20.186134-0.287916-3.774903%201.215647-5.886289%205.246475-6.046242%2013.500077-0.543842%2026.936172-3.007126%2040.50023-2.527266%207.933694%200.287916%208.605499%200.799768%209.181331%208.797443%200.351898%205.534392%200.255926%2011.132765%200.383889%2016.699147l2.239349%2081.352357z%20m1134.902169-15.867388c0%2019.066459%200.223935%2038.132918-0.031991%2057.199376-0.159954%209.917118-1.279628%2010.780867-10.652904%2011.644616-9.277304%200.863749-18.490626%201.567544-27.735939%202.559256-5.214485%200.543842-7.645778-0.991712-7.965685-6.973973-1.34361-25.336637-3.16708-50.673273-4.926568-75.977919-1.3756-20.985901-2.943145-41.939811-4.414717-62.893722-0.159954-2.399303-0.031991-4.798605-0.191944-7.165917-0.223935-4.190782%201.055693-6.654066%205.758326-6.81402%2013.116188-0.44787%2026.136404-2.975135%2039.348564-2.495274%208.061657%200.287916%208.18962%200.415879%208.797444%208.797443%201.951433%2027.32006%202.143377%2054.704102%202.015414%2082.120134zM628.295894%20756.171918c16.571184%2018.234701%2017.402942%2039.828425%2011.932532%2062.413861-5.502401%2022.585436-18.042756%2041.204025-33.23834%2057.903171-25.49659%2027.895893-56.303637%2048.497905-89.062116%2065.99682-56.399609%2030.135242-116.190232%2050.161422-178.572103%2061.997982-44.882956%208.477536-90.053828%2015.00364-135.704561%2017.498914-13.915956%200.767777-27.799921%201.407591-41.715876%201.311619-10.077071%200-20.186133%200.287916-30.231214-0.063981-8.541518-0.319907-9.789155-1.791479-10.49295-10.716886-2.591247-32.022693-4.798605-64.077378-7.645778-96.100071-3.327033-37.109215-7.229899-74.18644-10.812858-111.295654-2.623238-26.8402-4.894578-53.744381-7.773741-80.520599-3.327033-31.542833-7.069945-63.021684-10.716885-94.564517-3.327033-29.111539-6.526103-58.28706-10.045081-87.430591-3.934856-32.278619-7.997676-64.493257-12.31642-96.707894a8228.968456%208228.968456%200%200%200-13.212161-92.996973%205984.500754%205984.500754%200%200%200-24.312934-152.627642%203243.825263%203243.825263%200%200%200-23.67312-123.740038c-1.151665-5.502401%200.511851-7.709759%205.342448-9.725174C52.335283%2047.609843%2098.465876%2028.063524%20144.724432%208.77313c8.605499-3.582959%2017.434933-6.590085%2026.584274-8.285592%206.334159-1.183656%207.965685%200.127963%207.773741%206.494113-0.479861%2016.283268%200.191944%2032.630517-1.407591%2048.849803a161.393095%20161.393095%200%200%200-0.639814%2013.084197c-0.735786%2058.383032-1.439582%20116.798056%200.095972%20175.213079%201.34361%2051.185124%204.030829%20102.338258%207.005964%20153.491392%202.335321%2040.372267%205.694345%2080.744534%209.149341%20121.052819%203.391014%2039.508518%207.517815%2078.953054%2011.38869%20118.461572%200.735786%207.517815%201.407591%208.221611%209.949108%207.069945a381.329176%20381.329176%200%200%201%2050.833227-4.190782c52.880632-0.127963%20104.897514%207.133927%20156.338564%2019.322384%2045.010919%2010.684895%2088.806191%2024.920757%20130.777993%2044.818975%2020.793957%209.853136%2040.692174%2021.241827%2058.830902%2035.701624%206.174206%204.862587%2011.676606%2010.46096%2016.891091%2016.315259z%20m1126.840512-9.597211c20.47405%2017.946784%2027.927883%2039.924397%2022.105576%2067.116494-4.830596%2022.425483-15.771416%2041.268006-30.359177%2058.127107-23.417194%2027.096125-51.856929%2047.698138-82.631985%2064.909136-60.334465%2033.782182-124.603787%2055.727804-192.168151%2068.396122a1151.089465%201151.089465%200%200%201-111.455609%2015.547481c-21.177845%201.82347-42.451662%204.09481-66.220754%202.623238h-27.76793c-5.406429%200-8.477536-1.695507-8.925406-8.125638-2.047405-28.087837-4.414717-56.143683-6.941983-84.19953-2.687219-29.623391-5.662354-59.246781-8.477536-88.870172-2.559256-27.224088-4.926568-54.512157-7.709759-81.736245-2.559256-25.656544-5.502401-51.249106-8.285592-76.873659-2.591247-24.057008-5.086522-48.114017-7.933695-72.139035-3.423005-29.111539-7.037955-58.223079-10.652904-87.334618-3.391014-27.160107-6.750038-54.288222-10.364987-81.416338a6133.577429%206133.577429%200%200%200-12.156467-87.142675c-5.694345-37.653057-11.804569-75.178151-17.818822-112.767227a3259.14881%203259.14881%200%200%200-29.111539-158.993792c-0.44787-2.335321-0.671805-4.734624-1.3756-7.005964-1.663517-5.118512-0.063981-7.837722%204.958559-9.821146C1191.012355%2047.641834%201238.61452%2024.448575%201288.2321%206.149893c6.494113-2.431293%2013.052207-5.150503%2020.058171-5.854299%206.302168-0.639814%207.901704%200.383888%207.29388%207.101936-3.327033%2036.43741-1.407591%2073.066765-3.135089%20109.536166-1.407591%2029.751354-1.247637%2059.598679%200.255926%2089.382023%200.351898%207.549806%200.639814%2015.131602%200.575832%2022.649418-0.383888%2035.765606%201.503563%2071.499221%203.327033%20107.200845%202.335321%2047.186286%205.758326%2094.276601%209.245313%20141.398906%202.527266%2034.006117%205.822308%2067.948253%209.021379%20101.922379%201.695507%2018.586598%203.518977%2037.141206%205.822308%2055.631832%201.247637%2010.205034%201.759489%2010.301006%2011.772578%208.957396%2017.658868-2.399303%2035.349726-4.350736%2053.200539-4.09481%2062.637796%200.799768%20124.027954%2010.684895%20184.266447%2027.863902%2040.788146%2011.580634%2080.488608%2026.040432%20117.981712%2046.290547a253.55831%20253.55831%200%200%201%2047.218277%2032.438573zM308.676783%20922.811488c23.161269-11.068783%20135.608589-98.947243%20144.533995-113.279078-54.576139-23.513166-109.344222-45.362816-168.239105-63.24562l23.70511%20176.524698z%20m1277.196815-107.520752c2.879163-3.103098%202.559256-5.502401-1.343609-7.229899-7.773741-3.550968-15.4835-7.325871-23.353213-10.556932-42.003793-17.179007-84.19953-33.814173-127.482951-47.37823-3.774903-1.151665-7.645778-3.774903-12.476374-1.535554l23.321222%20173.45359c3.454996%200.767777%204.798605-0.831758%206.33416-1.919442%2039.316574-28.855614%2078.889073-57.35933%20116.638102-88.390312%206.36615-5.182494%2012.668318-10.396978%2018.362663-16.443221z%22%2F%3E%3C%2Fsvg%3E",
+    "up": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%23FB7299%22%20d%3D%22M1.33334%205.16669C1.33334%203.78597%202.45263%202.66669%203.83334%202.66669H12.1667C13.5474%202.66669%2014.6667%203.78597%2014.6667%205.16669V10.8334C14.6667%2012.2141%2013.5474%2013.3334%2012.1667%2013.3334H3.83334C2.45263%2013.3334%201.33334%2012.2141%201.33334%2010.8334V5.16669ZM3.83334%203.66669C3.00492%203.66669%202.33334%204.33826%202.33334%205.16669V10.8334C2.33334%2011.6618%203.00492%2012.3334%203.83334%2012.3334H12.1667C12.9951%2012.3334%2013.6667%2011.6618%2013.6667%2010.8334V5.16669C13.6667%204.33826%2012.9951%203.66669%2012.1667%203.66669H3.83334ZM4.33334%205.50002C4.60949%205.50002%204.83334%205.72388%204.83334%206.00002V8.50002C4.83334%209.05231%205.28106%209.50002%205.83334%209.50002C6.38563%209.50002%206.83334%209.05231%206.83334%208.50002V6.00002C6.83334%205.72388%207.0572%205.50002%207.33334%205.50002C7.60949%205.50002%207.83334%205.72388%207.83334%206.00002V8.50002C7.83334%209.60459%206.93791%2010.5%205.83334%2010.5C4.72877%2010.5%203.83334%209.60459%203.83334%208.50002V6.00002C3.83334%205.72388%204.0572%205.50002%204.33334%205.50002ZM9.00001%205.50002C8.72387%205.50002%208.50001%205.72388%208.50001%206.00002V10C8.50001%2010.2762%208.72387%2010.5%209.00001%2010.5C9.27615%2010.5%209.50001%2010.2762%209.50001%2010V9.33335H10.5833C11.6419%209.33335%2012.5%208.47523%2012.5%207.41669C12.5%206.35814%2011.6419%205.50002%2010.5833%205.50002H9.00001ZM10.5833%208.33335H9.50001V6.50002H10.5833C11.0896%206.50002%2011.5%206.91043%2011.5%207.41669C11.5%207.92295%2011.0896%208.33335%2010.5833%208.33335Z%22%2F%3E%3C%2Fsvg%3E",
+    "like": "data:image/svg+xml,%3Csvg%20width%3D%2236%22%20height%3D%2236%22%20viewBox%3D%220%200%2036%2036%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M9.77234%2030.8573V11.7471H7.54573C5.50932%2011.7471%203.85742%2013.3931%203.85742%2015.425V27.1794C3.85742%2029.2112%205.50932%2030.8573%207.54573%2030.8573H9.77234ZM11.9902%2030.8573V11.7054C14.9897%2010.627%2016.6942%207.8853%2017.1055%203.33591C17.2666%201.55463%2018.9633%200.814421%2020.5803%201.59505C22.1847%202.36964%2023.243%204.32583%2023.243%206.93947C23.243%208.50265%2023.0478%2010.1054%2022.6582%2011.7471H29.7324C31.7739%2011.7471%2033.4289%2013.402%2033.4289%2015.4435C33.4289%2015.7416%2033.3928%2016.0386%2033.3215%2016.328L30.9883%2025.7957C30.2558%2028.7683%2027.5894%2030.8573%2024.528%2030.8573H11.9911H11.9902Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "coin": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M14.045%2025.5454C7.69377%2025.5454%202.54504%2020.3967%202.54504%2014.0454C2.54504%207.69413%207.69377%202.54541%2014.045%202.54541C20.3963%202.54541%2025.545%207.69413%2025.545%2014.0454C25.545%2017.0954%2024.3334%2020.0205%2022.1768%2022.1771C20.0201%2024.3338%2017.095%2025.5454%2014.045%2025.5454ZM9.66202%206.81624H18.2761C18.825%206.81624%2019.27%207.22183%2019.27%207.72216C19.27%208.22248%2018.825%208.62807%2018.2761%208.62807H14.95V10.2903C17.989%2010.4444%2020.3766%2012.9487%2020.3855%2015.9916V17.1995C20.3854%2017.6997%2019.9799%2018.1052%2019.4796%2018.1052C18.9793%2018.1052%2018.5738%2017.6997%2018.5737%2017.1995V15.9916C18.5667%2013.9478%2016.9882%2012.2535%2014.95%2012.1022V20.5574C14.95%2021.0577%2014.5444%2021.4633%2014.0441%2021.4633C13.5437%2021.4633%2013.1382%2021.0577%2013.1382%2020.5574V12.1022C11.1%2012.2535%209.52148%2013.9478%209.51448%2015.9916V17.1995C9.5144%2017.6997%209.10883%2018.1052%208.60856%2018.1052C8.1083%2018.1052%207.70273%2017.6997%207.70265%2017.1995V15.9916C7.71158%2012.9487%2010.0992%2010.4444%2013.1382%2010.2903V8.62807H9.66202C9.11309%208.62807%208.66809%208.22248%208.66809%207.72216C8.66809%207.22183%209.11309%206.81624%209.66202%206.81624Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "favorite": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M19.8071%209.26152C18.7438%209.09915%2017.7624%208.36846%2017.3534%207.39421L15.4723%203.4972C14.8998%202.1982%2013.1004%202.1982%2012.4461%203.4972L10.6468%207.39421C10.1561%208.36846%209.25639%209.09915%208.19315%209.26152L3.94016%209.91102C2.63155%2010.0734%202.05904%2011.6972%203.04049%2012.6714L6.23023%2015.9189C6.96632%2016.6496%207.29348%2017.705%207.1299%2018.7605L6.39381%2023.307C6.14844%2024.6872%207.62063%2025.6614%208.84745%2025.0119L12.4461%2023.0634C13.4276%2022.4951%2014.6544%2022.4951%2015.6359%2023.0634L19.2345%2025.0119C20.4614%2025.6614%2021.8518%2024.6872%2021.6882%2023.307L20.8703%2018.7605C20.7051%2017.705%2021.0339%2016.6496%2021.77%2015.9189L24.9597%2012.6714C25.9412%2011.6972%2025.3687%2010.0734%2024.06%209.91102L19.8071%209.26152Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E"
+  };
 
-  // src/domain.ts
-  function posterTitleFontSize(theme, title) {
-    if (theme === "A") return 19;
-    const length = Array.from(title).length;
-    if (length <= 20) return 19;
-    if (length <= 32) return 17;
-    return 15;
-  }
-  function formatCompactStat(value) {
-    if (value === null || !Number.isFinite(value)) return "--";
-    if (value >= 1e8) return `${(value / 1e8).toFixed(1)}\u4EBF`;
-    if (value >= 1e4) return `${(value / 1e4).toFixed(1)}\u4E07`;
-    return Math.max(0, Math.trunc(value)).toString();
-  }
-  function formatTimestamp(seconds) {
-    const wholeSeconds = Math.max(0, Math.floor(seconds));
-    const hours = Math.floor(wholeSeconds / 3600);
-    const minutes = Math.floor(wholeSeconds % 3600 / 60);
-    const remainder = wholeSeconds % 60;
-    const mm = minutes.toString().padStart(2, "0");
-    const ss = remainder.toString().padStart(2, "0");
-    return hours > 0 ? `${hours.toString().padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`;
-  }
-  function buildPosterFilename(bvid, generatedAt, partNumber) {
-    const twoDigits = (value) => value.toString().padStart(2, "0");
-    const stamp = `${generatedAt.getFullYear()}${twoDigits(generatedAt.getMonth() + 1)}${twoDigits(generatedAt.getDate())}-${twoDigits(generatedAt.getHours())}${twoDigits(generatedAt.getMinutes())}${twoDigits(generatedAt.getSeconds())}`;
-    const partSegment = partNumber && partNumber > 0 ? `_P${partNumber}` : "";
-    return `bilibili_${bvid}${partSegment}_${stamp}.png`;
-  }
-  function buildPartLabel(snapshot, options) {
-    if (!options.partShare) return null;
-    const title = snapshot.partTitle?.trim() ? snapshot.partTitle.trim() : "";
-    return title ? `P${snapshot.partNumber} \xB7 ${title}` : `P${snapshot.partNumber}`;
-  }
-  function buildTimestampLabel(snapshot, options) {
-    return options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1 ? formatTimestamp(snapshot.playbackSeconds) : null;
-  }
-  function requireText(value, label) {
-    const normalized = value.trim();
-    if (!normalized) throw new Error(`\u7F3A\u5C11${label}`);
-    return normalized;
-  }
-  function validateShareTarget(shareTarget, bvid) {
-    let url;
-    try {
-      url = new URL(shareTarget);
-    } catch {
-      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
-    }
-    const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
-    const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
-    const isOpaqueShort = isOpaqueShortUrl(url);
-    if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
-      throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
-    }
-    return url.toString();
-  }
-  function buildSharePoster(snapshot, shareTarget, options) {
-    const title = requireText(snapshot.title, "\u89C6\u9891\u6807\u9898");
-    const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
-    const uploader = requireText(snapshot.uploader, "UP \u4E3B");
-    const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
-    if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
-    const validatedShareTarget = validateShareTarget(shareTarget, bvid);
-    const theme = options.theme === "B" ? "B" : "A";
-    const titleLines = theme === "A" ? 2 : 3;
-    const contentOrder = theme === "A" ? ["cover", "title", "uploader-identity", "part-timestamp", "stats", "destination"] : ["cover", "part-timestamp", "title", "uploader-identity", "stats", "destination"];
-    return {
-      theme,
-      dimensions: { width: 1080, height: 1440 },
-      coverDataUrl,
-      coverUnavailable: snapshot.coverUnavailable,
-      title,
-      uploader,
-      identity: `${bvid} \xB7 AV${snapshot.aid}`,
-      shareTarget: validatedShareTarget,
-      titleLines,
-      titleFontSize: posterTitleFontSize(theme, title),
-      linkWrap: "anywhere",
-      contentOrder,
-      partLabel: buildPartLabel(snapshot, options),
-      timestampLabel: buildTimestampLabel(snapshot, options),
-      stats: [
-        { label: "\u64AD\u653E", value: formatCompactStat(snapshot.stats.views) },
-        { label: "\u70B9\u8D5E", value: formatCompactStat(snapshot.stats.likes) },
-        { label: "\u6295\u5E01", value: formatCompactStat(snapshot.stats.coins) },
-        { label: "\u6536\u85CF", value: formatCompactStat(snapshot.stats.favorites) }
-      ]
-    };
-  }
-
-  // src/share-text.ts
-  function buildCompactShareText(title, uploader, shareTarget) {
-    return `${title}\uFF08UP\u4E3B\uFF1A${uploader}\uFF09
-${shareTarget}`;
-  }
-  function formatExactStat(value) {
-    if (value === null || !Number.isFinite(value)) return "--";
-    const whole = Math.max(0, Math.trunc(value));
-    return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
-  function plainDetailedText(snapshot, shareTarget, options) {
-    const lines = [
-      snapshot.title,
-      `UP\u4E3B\uFF1A${snapshot.uploader}`,
-      `BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
-      `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
-    ];
-    const partLabel = buildPartLabel(snapshot, options);
-    if (partLabel) lines.push(`\u5206P\uFF1A${partLabel}`);
-    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
-      lines.push(`\u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
-    }
-    lines.push(shareTarget);
-    return lines.join("\n");
-  }
-  function markdownDetailedText(snapshot, shareTarget, options) {
-    const lines = [
-      `**${snapshot.title}**`,
-      "",
-      `- UP\u4E3B\uFF1A${snapshot.uploader}`,
-      `- BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
-      `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
-    ];
-    const partLabel = buildPartLabel(snapshot, options);
-    if (partLabel) lines.push(`- \u5206P\uFF1A${partLabel}`);
-    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
-      lines.push(`- \u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
-    }
-    lines.push(`- \u94FE\u63A5\uFF1A${shareTarget}`);
-    return lines.join("\n");
-  }
-  function buildShareText(snapshot, shareTarget, options) {
-    if (options.detailedText) {
-      return options.markdownText ? markdownDetailedText(snapshot, shareTarget, options) : plainDetailedText(snapshot, shareTarget, options);
-    }
-    if (options.markdownText) {
-      return `[${snapshot.title}](${shareTarget})
-${shareTarget}`;
-    }
-    return buildCompactShareText(snapshot.title, snapshot.uploader, shareTarget);
-  }
-
-  // src/ui/dom.ts
-  function element(tag, className, text) {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== void 0) node.textContent = text;
-    return node;
-  }
-
-  // src/ui/feedback.ts
-  function statusDismissDelay(failed) {
-    return failed ? null : 3e3;
-  }
-
-  // src/ui/motion.ts
-  var MOTION = { fast: 160, backdrop: 200, open: 240, color: 180, overlay: 140 };
-  function motionDelay(duration) {
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duration;
-  }
-  var MOTION_STYLES = `
-.bsp-backdrop, #bsp-entry {
-  --bsp-motion-fast:${MOTION.fast}ms;
-  --bsp-motion-backdrop:${MOTION.backdrop}ms;
-  --bsp-motion-open:${MOTION.open}ms;
-  --bsp-motion-color:${MOTION.color}ms;
-  --bsp-motion-overlay:${MOTION.overlay}ms;
-  --bsp-ease-out:cubic-bezier(.22,.61,.36,1);
-  --bsp-ease-in-out:cubic-bezier(.4,0,.2,1);
-}
-@media (prefers-reduced-motion:reduce) {
-  .bsp-backdrop *, .bsp-backdrop *::before, .bsp-backdrop *::after, .bsp-backdrop, #bsp-entry {
-    animation-duration:0ms !important;
-    transition-duration:0ms !important;
-  }
-}`;
+  // src/ui/poster-styles.ts
+  var posterStyles = `
+.bsp-poster.bsp-default-poster{all:initial;box-sizing:border-box;position:relative;display:flex;flex-direction:column;flex:none;width:1080px;height:1440px;overflow:hidden;background:#dce8e7;color:#233b41;font-family:"PingFang SC","Microsoft YaHei",sans-serif;transform-origin:top left;-webkit-text-stroke:0;text-shadow:none}
+.bsp-default-poster::after{display:none}
+.bsp-default-poster *{box-sizing:border-box}
+.bsp-d-mast{height:104px;flex:none;padding:0 56px;display:flex;align-items:center}
+.bsp-d-brand{width:110px;height:51px;object-fit:contain}
+.bsp-d-cover{display:block;width:1080px;height:608px;flex:none;object-fit:contain;object-position:center;background:#dce8e7;border-radius:22px}
+.bsp-d-editorial{min-height:0;overflow:hidden;flex:1;padding:26px 56px 22px;display:flex;flex-direction:column}
+.bsp-d-title-space{height:100%;min-height:0}
+.bsp-d-title{margin:0;font-weight:500;letter-spacing:-1px;line-height:1.28;overflow-wrap:anywhere;word-break:normal}
+.bsp-d-footer{height:310px;flex:none;padding:32px 56px;background:#eef4f1;display:grid;grid-template-columns:minmax(0,1fr) 204px;gap:40px;align-items:center;position:relative}
+.bsp-d-footer::before,.bsp-d-link-footer::before{content:'';position:absolute;top:0;left:56px;right:56px;border-top:1px solid #a9bdbc}
+.bsp-d-signature{min-width:0;align-self:center}
+.bsp-d-author{display:flex;gap:16px;height:85px;margin:0 0 18px;align-items:center;min-width:0;line-height:1.25;font-size:34px;font-weight:500;letter-spacing:.1px}
+.bsp-d-up{width:44px;height:44px;flex:none}
+.bsp-d-name{min-width:0;overflow-wrap:anywhere}
+.bsp-d-stats{display:flex;gap:24px;align-items:center;margin-bottom:24px;color:#405e65}
+.bsp-d-stat{display:flex;gap:10px;align-items:center;font-size:30px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bsp-d-stat img,.bsp-d-stat svg{width:32px;height:32px;flex:none}
+.bsp-d-ids{display:flex;gap:24px;font-size:24px;white-space:nowrap;letter-spacing:.5px;color:#5f777b}
+.bsp-d-ids b{font-weight:550;letter-spacing:1px}
+.bsp-d-qr{width:204px;align-self:center}
+.bsp-d-qr-frame{padding:7px;border:1px solid #a9bdbc;border-radius:20px;background:#fff}
+.bsp-d-qr-image{width:188px;height:188px;display:block}
+.bsp-d-qr-caption{text-align:center;margin-top:14px;font-size:24px;line-height:1.4;letter-spacing:2px}
+.bsp-d-link-footer{position:relative;min-height:116px;padding:16px 56px;flex:none;display:flex;align-items:center;background:#eef4f1}
+.bsp-d-address{display:flex;align-items:center;gap:14px;min-width:0;width:100%;min-height:72px;padding:14px 24px;border:1px solid #adc2c2;border-radius:24px;background:#f9fbfa;box-shadow:inset 0 1px 2px #233b4108}
+.bsp-d-address-icon{width:28px;height:28px;flex:none;fill:none;stroke:#6b8589;stroke-width:1.4;stroke-linecap:round}
+.bsp-d-link{flex:1;min-width:0;font-size:24px;line-height:1.4;letter-spacing:.25px;overflow-wrap:anywhere;word-break:break-all;white-space:normal;color:#405e65}
+`;
 
   // src/ui/posters.ts
-  var import_qrcode = __toESM(require_browser(), 1);
-  function posterQrDataUrl(shareTarget) {
-    return import_qrcode.default.toDataURL(shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  function image(className, src, alt = "") {
+    return Object.assign(element("img", className), { src, alt });
+  }
+  function svg(className, markup) {
+    const parsed = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
+    parsed.setAttribute("class", className);
+    return document.importNode(parsed, true);
+  }
+  function ellipsizeToHeight(node, maxHeight) {
+    if (node.getBoundingClientRect().height <= maxHeight + 1) return;
+    const characters = Array.from(node.textContent ?? "");
+    let low = 0;
+    let high = characters.length;
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2);
+      node.textContent = characters.slice(0, middle).join("") + "\u2026";
+      if (node.getBoundingClientRect().height <= maxHeight + 1) low = middle;
+      else high = middle - 1;
+    }
+    node.textContent = characters.slice(0, low).join("") + "\u2026";
+  }
+  async function fitContent(poster, title, name, stats) {
+    const host = element("div");
+    Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
+    host.append(poster);
+    document.body.append(host);
+    try {
+      await document.fonts.ready;
+      await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
+      const available = title.parentElement.clientHeight;
+      let titleSize = 48;
+      for (const size of [64, 60, 56, 52, 48]) {
+        title.style.fontSize = `${size}px`;
+        titleSize = size;
+        if (title.scrollHeight <= available + 1) break;
+      }
+      ellipsizeToHeight(title, Math.floor(available / (titleSize * 1.28)) * titleSize * 1.28);
+      let nameSize = 30;
+      for (const size of [34, 32, 30]) {
+        name.style.fontSize = `${size}px`;
+        nameSize = size;
+        if (name.getBoundingClientRect().height <= size * 1.25 * 2 + 1) break;
+      }
+      ellipsizeToHeight(name, nameSize * 1.25 * 2);
+      if (stats.scrollWidth > stats.clientWidth) {
+        stats.style.transformOrigin = "left center";
+        stats.style.transform = `scale(${stats.clientWidth / stats.scrollWidth})`;
+      }
+    } finally {
+      poster.remove();
+      host.remove();
+    }
   }
   async function createPoster(model) {
-    if (model.theme === "B") return createPosterB(model);
-    const poster = element("article", "bsp-poster");
+    if (model.coverUnavailable) throw new Error("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D");
+    const poster = element("article", "bsp-poster bsp-default-poster");
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
-    const masthead = element("header", "bsp-masthead");
-    masthead.append(element("strong", "", "BILIBILI \u5206\u4EAB\u6D77\u62A5"), element("span", "", "SHARE CARD"));
-    const cover = model.coverUnavailable ? element("div", "bsp-cover bsp-cover-missing", "COVER UNAVAILABLE") : Object.assign(element("img", "bsp-cover"), { src: model.coverDataUrl, alt: "" });
-    const title = element("h4", "bsp-poster-title", model.title);
-    title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-    const byline = element("div", "bsp-byline");
-    byline.append(element("strong", "", `UP \u4E3B \xB7 ${model.uploader}`), element("span", "bsp-identity", model.identity));
-    const partTimestamp = element("div", "bsp-part-timestamp");
-    if (model.partLabel) partTimestamp.append(element("span", "bsp-part-chip", model.partLabel));
-    if (model.timestampLabel) partTimestamp.append(element("span", "bsp-time-chip", model.timestampLabel));
-    const stats = element("div", "bsp-stats");
-    for (const statistic2 of model.stats) {
-      const cell = element("div", "bsp-stat");
-      cell.append(element("strong", "", statistic2.value), element("span", "", statistic2.label));
+    const style = element("style", "", posterStyles);
+    const mast = element("header", "bsp-d-mast");
+    mast.append(image("bsp-d-brand", posterAssets.brand, "\u54D4\u54E9\u54D4\u54E9"));
+    const cover = image("bsp-d-cover", model.coverDataUrl, "\u539F\u89C6\u9891\u5B8C\u6574\u5C01\u9762");
+    const editorial = element("div", "bsp-d-editorial");
+    const titleSpace = element("div", "bsp-d-title-space");
+    const title = element("h4", "bsp-d-title", model.title);
+    titleSpace.append(title);
+    editorial.append(titleSpace);
+    const footer = element("footer", "bsp-d-footer");
+    const signature = element("div", "bsp-d-signature");
+    const author = element("div", "bsp-d-author");
+    const name = element("span", "bsp-d-name", model.uploader);
+    author.append(image("bsp-d-up", posterAssets.up, "UP \u4E3B"), name);
+    const stats = element("div", "bsp-d-stats");
+    const statIcons = [
+      svg("", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>'),
+      image("", posterAssets.like),
+      image("", posterAssets.coin),
+      image("", posterAssets.favorite)
+    ];
+    model.stats.forEach((statistic2, index) => {
+      const cell = element("span", "bsp-d-stat");
+      cell.setAttribute("aria-label", `${statistic2.label} ${statistic2.value}`);
+      cell.append(statIcons[index], document.createTextNode(statistic2.value));
       stats.append(cell);
-    }
-    const destination = element("div", "bsp-destination");
-    const qr = element("img", "bsp-qr");
-    qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`;
-    qr.src = await posterQrDataUrl(model.shareTarget);
-    const linkArea = element("div");
-    const visibleLink = element("span", "bsp-link", model.shareTarget);
-    visibleLink.style.overflowWrap = model.linkWrap;
-    linkArea.append(element("span", "bsp-link-label", "\u626B\u7801\u89C2\u770B \xB7 SHARE TARGET"), visibleLink);
-    destination.append(qr, linkArea);
-    poster.classList.add(`bsp-theme-${model.theme.toLowerCase()}`);
-    poster.append(masthead);
-    const content = {
-      cover,
-      title,
-      "uploader-identity": byline,
-      "part-timestamp": partTimestamp,
-      stats,
-      destination
-    };
-    for (const section of model.contentOrder) poster.append(content[section]);
-    poster.append(element("span", "bsp-archive", `ARCHIVE \xB7 ${model.identity}`));
+    });
+    const ids = element("div", "bsp-d-ids");
+    const bv = element("span");
+    bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
+    const av = element("span");
+    av.append(element("b", "", "AV"), document.createTextNode(String(model.aid)));
+    ids.append(bv, av);
+    signature.append(author, stats, ids);
+    const qr = element("div", "bsp-d-qr");
+    const frame = element("div", "bsp-d-qr-frame");
+    const qrData = await import_qrcode.default.toDataURL(model.shareTarget, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+    frame.append(image("bsp-d-qr-image", qrData, `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`));
+    qr.append(frame, element("div", "bsp-d-qr-caption", "\u626B\u7801\u89C2\u770B"));
+    footer.append(signature, qr);
+    const linkFooter = element("div", "bsp-d-link-footer");
+    const address = element("div", "bsp-d-address");
+    address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
+    linkFooter.append(address);
+    poster.append(style, mast, cover, editorial, footer, linkFooter);
+    await fitContent(poster, title, name, stats);
     return poster;
   }
-  async function createPosterB(model) {
-    const poster = element("article", "bsp-poster bsp-poster-b");
-    poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
-    if (model.coverUnavailable) {
-      poster.classList.add("bsp-cover-missing");
-      poster.append(element("div", "bsp-b-cover-missing", "COVER UNAVAILABLE"));
-    } else {
-      const cover = Object.assign(element("img", "bsp-cover-b"), { src: model.coverDataUrl, alt: "" });
-      poster.append(cover);
-    }
-    const scrim = element("div", "bsp-b-scrim");
-    const content = element("div", "bsp-b-content");
-    poster.append(scrim);
-    const topLine = element("div", "bsp-b-topline");
-    if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));
-    if (model.timestampLabel) topLine.append(element("span", "bsp-b-time-chip", model.timestampLabel));
-    content.append(topLine);
-    const bottom = element("div", "bsp-b-bottom");
-    const title = element("h4", "bsp-b-title", model.title);
-    title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-    title.style.fontSize = `${model.titleFontSize}px`;
-    bottom.append(title, element("div", "bsp-b-up", `UP \u4E3B \xB7 ${model.uploader}`));
-    const stats = element("div", "bsp-b-stats");
-    for (const statistic2 of model.stats) {
-      const cell = element("div", "bsp-b-stat");
-      cell.append(element("strong", "", statistic2.value), element("span", "", statistic2.label));
-      stats.append(cell);
-    }
-    bottom.append(stats, element("div", "bsp-b-identity", model.identity));
-    const destination = element("div", "bsp-b-destination");
-    const qr = element("img", "bsp-b-qr");
-    qr.alt = `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`;
-    qr.src = await posterQrDataUrl(model.shareTarget);
-    const linkSide = element("div", "bsp-b-link-side");
-    const visibleLink = element("span", "bsp-b-link", model.shareTarget);
-    visibleLink.style.overflowWrap = model.linkWrap;
-    linkSide.append(element("span", "bsp-b-link-label", "\u626B\u7801\u89C2\u770B \xB7 SHARE TARGET"), visibleLink);
-    destination.append(qr, linkSide);
-    bottom.append(destination);
-    content.append(bottom);
-    poster.append(content);
-    return poster;
+  function exportPosterPng(poster) {
+    return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, backgroundColor: "#dce8e7", style: { transform: "none" } });
   }
 
   // src/ui/panel.ts
@@ -3873,7 +3899,6 @@ ${shareTarget}`;
     }
     open() {
       this.options = createPanelShareOptions(loadRememberedPreferences());
-      this.applyThemeClasses(this.options.theme);
       document.body.append(this.backdrop);
       this.previewObserver.observe(this.previewPane);
       document.addEventListener("keydown", this.onKeyDown, true);
@@ -3934,35 +3959,44 @@ ${shareTarget}`;
       if (!this.capture || this.loading) return;
       this.loading = true;
       try {
-        const { snapshot, targetSelection } = await fetchGenerationResources(this.capture);
-        const model = buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
-        const poster = await createPoster(model);
+        const snapshot = await fetchGenerationSnapshot(this.capture);
+        const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
+        const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
+        const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
+        const poster = model ? await createPoster(model) : null;
         if (this.closed) return;
         this.snapshot = snapshot;
         this.model = model;
         this.poster = poster;
         this.targetSelection = targetSelection;
-        this.renderReady(model, poster, targetSelection);
+        this.renderReady(poster, targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
       } finally {
         this.loading = false;
       }
     }
-    renderReady(model, poster, targetSelection) {
-      if (!this.previewPane.contains(poster)) {
+    renderReady(poster, targetSelection) {
+      if (!poster) {
+        const retry = element("button", "bsp-button", "\u91CD\u8BD5");
+        retry.type = "button";
+        retry.addEventListener("click", () => {
+          this.renderLoading();
+          void this.loadSnapshot();
+        });
+        this.previewPane.replaceChildren(element("p", "bsp-error", "\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D"), retry);
+      } else if (!this.previewPane.contains(poster)) {
         const frame = element("div", "bsp-preview-frame");
         frame.append(poster);
         this.previewPane.replaceChildren(frame);
       }
       this.fitPoster();
-      this.applyThemeClasses(model.theme);
       this.updating = false;
       this.exportButtons = [];
       clearTimeout(this.statusTimer);
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
-      const shareText = buildShareText(snapshot, model.shareTarget, this.options);
+      const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
       const actions = element("div", "bsp-actions");
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
@@ -3971,11 +4005,14 @@ ${shareTarget}`;
       const copyTextButton = this.actionButton("copy-text", "", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyTextButton, shareText, status));
       const combinedButton = this.actionButton("combined", "\u6D77\u62A5+\u6587\u6848", "\u590D\u5236\u6D77\u62A5\u4E0E\u6587\u6848\u7684\u517C\u5BB9\u683C\u5F0F", false, () => void this.copyCombined(combinedButton, shareText, status));
       copyTextButton.classList.add("bsp-text-copy");
+      const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
+      const markdownButton = this.actionButton("markdown", "", "\u590D\u5236 Markdown", false, () => void this.copyShareText(markdownButton, markdownText, status, "Markdown"));
       const textPreview = this.renderTextPreview(shareText);
-      textPreview.append(copyTextButton);
+      textPreview.append(copyTextButton, markdownButton);
       actions.append(copy, download, combinedButton);
-      this.exportButtons.push(copy, download, copyTextButton, combinedButton);
-      const content = [this.renderThemePicker(), this.renderShareOptions()];
+      this.exportButtons.push(copy, download, copyTextButton, markdownButton, combinedButton);
+      for (const button of [copy, download, combinedButton]) button.disabled = !poster;
+      const content = [this.renderShareOptions()];
       if (targetSelection.source === "canonical-fallback") {
         const fallback = element("div", "bsp-fallback");
         fallback.setAttribute("role", "status");
@@ -4054,11 +4091,8 @@ ${shareTarget}`;
           void checked;
           this.applyOptions(toggleTimestampShare(this.options, snapshot));
         }),
-        this.optionToggle("detail", "\u8BE6\u7EC6", this.options.detailedText, this.updating, (checked) => {
+        this.optionToggle("detail", "\u8BE6\u7EC6\u4FE1\u606F", this.options.detailedText, this.updating, (checked) => {
           this.applyOptions({ ...this.options, detailedText: checked });
-        }),
-        this.optionToggle("markdown", "Markdown", this.options.markdownText, this.updating, (checked) => {
-          this.applyOptions({ ...this.options, markdownText: checked });
         })
       );
       if (!snapshot.partIdentified) {
@@ -4070,74 +4104,11 @@ ${shareTarget}`;
       }
       return container;
     }
-    renderThemePicker() {
-      const picker = element("div", "bsp-theme-segment");
-      picker.setAttribute("role", "group");
-      picker.setAttribute("aria-label", "\u6D77\u62A5\u4E3B\u9898");
-      const buttonA = element("button", "bsp-theme-option", "A \u62A5\u520A");
-      buttonA.type = "button";
-      buttonA.disabled = this.updating;
-      buttonA.setAttribute("aria-pressed", String(this.options.theme === "A"));
-      buttonA.classList.toggle("is-active", this.options.theme === "A");
-      buttonA.addEventListener("click", () => this.applyTheme("A"));
-      const buttonB = element("button", "bsp-theme-option", "B \u6C89\u6D78");
-      buttonB.type = "button";
-      buttonB.disabled = this.updating;
-      buttonB.setAttribute("aria-pressed", String(this.options.theme === "B"));
-      buttonB.classList.toggle("is-active", this.options.theme === "B");
-      buttonB.addEventListener("click", () => this.applyTheme("B"));
-      picker.append(buttonA, buttonB);
-      return picker;
-    }
-    applyTheme(theme) {
-      if (this.updating || this.options.theme === theme || !this.model || !this.poster || !this.targetSelection) return;
-      this.options = { ...this.options, theme };
-      this.persistPreferences();
-      void this.rebuildPosterForTheme();
-    }
-    async rebuildPosterForTheme() {
-      if (!this.snapshot || !this.targetSelection || this.updating) return;
-      this.updating = true;
-      this.setExportButtonsDisabled(true);
-      try {
-        const model = buildSharePoster(this.snapshot, this.targetSelection.shareTarget, this.options);
-        const poster = await createPoster(model);
-        if (this.closed) return;
-        this.model = model;
-        this.poster = poster;
-        this.applyThemeClasses(model.theme);
-        await this.crossfadePoster(poster);
-        if (!this.closed) this.renderReady(model, poster, this.targetSelection);
-      } catch (error) {
-        if (!this.closed) this.renderError(error, false);
-      }
-    }
-    async crossfadePoster(nextPoster) {
-      const oldFrame = this.previewPane.querySelector(".bsp-preview-frame");
-      const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
-      nextFrame.append(nextPoster);
-      this.previewPane.append(nextFrame);
-      this.fitPoster();
-      if (motionDelay(MOTION.fast)) {
-        nextFrame.getBoundingClientRect();
-      }
-      oldFrame?.classList.add("bsp-preview-frame-exit");
-      nextFrame.classList.add("is-visible");
-      await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.fast)));
-      oldFrame?.remove();
-      nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
-    }
     fitPoster() {
       for (const frame of this.previewPane.querySelectorAll(".bsp-preview-frame")) {
         const poster = frame.querySelector(".bsp-poster");
-        if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 360)})`;
+        if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 1080)})`;
       }
-    }
-    applyThemeClasses(theme) {
-      const surface = selectThemeSurfaceClasses(theme);
-      this.backdrop.classList.toggle("bsp-theme-b", surface.panel !== null);
-      this.panel.classList.toggle("bsp-theme-b", surface.panel !== null);
-      setEntryTheme(theme);
     }
     applyOptions(next) {
       if (!this.snapshot || this.updating) return;
@@ -4150,16 +4121,14 @@ ${shareTarget}`;
         void this.rebuildPosterForOptions();
         return;
       }
-      if (textChanged && this.model && this.poster && this.targetSelection) {
-        this.renderReady(this.model, this.poster, this.targetSelection);
+      if (textChanged && this.targetSelection) {
+        this.renderReady(this.poster, this.targetSelection);
       }
     }
     persistPreferences() {
       if (typeof GM_setValue !== "function") return;
       GM_setValue("bsp-panel-preferences", {
-        theme: this.options.theme,
-        detailedText: this.options.detailedText,
-        markdownText: this.options.markdownText
+        detailedText: this.options.detailedText
       });
     }
     async rebuildPosterForOptions() {
@@ -4170,29 +4139,29 @@ ${shareTarget}`;
       try {
         const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
         const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-        const model = buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
-        const poster = await createPoster(model);
+        const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
+        const poster = model ? await createPoster(model) : null;
         if (this.closed) return;
         this.model = model;
         this.poster = poster;
         this.targetSelection = targetSelection;
         const overlay = this.previewPane.querySelector(".bsp-poster-updating");
         const frame = this.previewPane.querySelector(".bsp-preview-frame");
-        if (frame && overlay) {
+        if (frame && overlay && poster) {
           frame.replaceChildren(poster, overlay);
           this.fitPoster();
           overlay.classList.add("is-leaving");
           await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
           overlay.remove();
         }
-        if (!this.closed) this.renderReady(model, poster, targetSelection);
+        if (!this.closed) this.renderReady(poster, targetSelection);
       } catch (error) {
         if (!this.closed) this.renderError(error, false);
       }
     }
     setExportButtonsDisabled(disabled) {
       for (const button of this.exportButtons) button.disabled = disabled;
-      for (const button of this.controls.querySelectorAll(".bsp-option-pill, .bsp-theme-option")) {
+      for (const button of this.controls.querySelectorAll(".bsp-option-pill")) {
         if (disabled) button.disabled = true;
       }
     }
@@ -4221,12 +4190,7 @@ ${shareTarget}`;
     }
     async posterPngDataUrl() {
       if (!this.poster || !this.model) throw new Error("\u6D77\u62A5\u9884\u89C8\u5C1A\u672A\u751F\u6210");
-      const sourceWidth = this.poster.offsetWidth;
-      const sourceHeight = this.poster.offsetHeight;
-      const sourcePixelRatio = this.model.dimensions.width / sourceWidth;
-      if (Math.round(sourceHeight * sourcePixelRatio) !== this.model.dimensions.height) throw new Error("\u6D77\u62A5\u753B\u5E03\u6BD4\u4F8B\u4E0D\u4E00\u81F4");
-      const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
-      return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor, style: { transform: "none" } });
+      return exportPosterPng(this.poster);
     }
     async copyPoster(button, status) {
       if (!this.poster || !this.model) return;
@@ -4246,21 +4210,33 @@ ${shareTarget}`;
         button.disabled = this.updating;
       }
     }
-    async copyShareText(button, text, status) {
+    async copyShareText(button, text, status, format = "\u666E\u901A\u6587\u6848") {
       button.disabled = true;
       this.clearStatus(status);
+      this.controls.querySelector(".bsp-manual-copy")?.remove();
       try {
         const outcome = await copyShareTextToClipboard(text);
-        const feedback = describeTextCopyResult(outcome);
-        this.showStatus(
-          outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
-          outcome.status !== "copied"
-        );
+        if (this.closed || !button.isConnected) return;
+        if (outcome.status === "copied") this.showStatus(`${format}\u5DF2\u590D\u5236\u3002`);
+        else this.offerManualCopy(text, format);
       } catch {
-        this.showStatus("\u6587\u6848\u590D\u5236\u5931\u8D25\u3002\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
+        if (!this.closed && button.isConnected) this.offerManualCopy(text, format);
       } finally {
         button.disabled = this.updating;
       }
+    }
+    offerManualCopy(text, format) {
+      console.warn("[Bilibili Share] clipboard", { stage: "text-write", format });
+      const source = element("textarea", "bsp-manual-copy");
+      source.readOnly = true;
+      source.value = text;
+      source.rows = 6;
+      source.style.width = "100%";
+      source.setAttribute("aria-label", `\u624B\u52A8\u590D\u5236 ${format}`);
+      this.controls.append(source);
+      this.showStatus(`${format}\u590D\u5236\u5931\u8D25\u3002\u8BF7\u5728\u4E0B\u65B9\u6587\u672C\u6846\u4E2D\u624B\u52A8\u590D\u5236\u3002`, true);
+      source.focus();
+      source.select();
     }
     async copyCombined(button, text, status) {
       if (!this.poster || !this.model) return;

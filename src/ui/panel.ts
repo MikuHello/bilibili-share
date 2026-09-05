@@ -1,7 +1,7 @@
 
 import {
   captureAndPausePlayback,
-  fetchGenerationResources,
+  fetchGenerationSnapshot,
   fetchValidatedShareTarget,
   readPageIdentity,
   restorePlayback,
@@ -13,7 +13,6 @@ import {
   copyShareTextToClipboard,
   describeCombinedCopyResult,
   describePosterCopyResult,
-  describeTextCopyResult,
 } from "../clipboard";
 import { buildPosterFilename, buildSharePoster, type GenerationSnapshot, type SharePoster } from "../domain";
 import {
@@ -149,15 +148,17 @@ export class SharePanel {
     if (!this.capture || this.loading) return;
     this.loading = true;
     try {
-      const { snapshot, targetSelection } = await fetchGenerationResources(this.capture);
-      const model = buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
-      const poster = await createPoster(model);
+      const snapshot = await fetchGenerationSnapshot(this.capture);
+      const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
+      const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
+      const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
+      const poster = model ? await createPoster(model) : null;
       if (this.closed) return;
       this.snapshot = snapshot;
       this.model = model;
       this.poster = poster;
       this.targetSelection = targetSelection;
-      this.renderReady(model, poster, targetSelection);
+      this.renderReady(poster, targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     } finally {
@@ -165,8 +166,13 @@ export class SharePanel {
     }
   }
 
-  private renderReady(model: SharePoster, poster: HTMLElement, targetSelection: ShareTargetSelection): void {
-    if (!this.previewPane.contains(poster)) {
+  private renderReady(poster: HTMLElement | null, targetSelection: ShareTargetSelection): void {
+    if (!poster) {
+      const retry = element("button", "bsp-button", "重试");
+      retry.type = "button";
+      retry.addEventListener("click", () => { this.renderLoading(); void this.loadSnapshot(); });
+      this.previewPane.replaceChildren(element("p", "bsp-error", "封面暂时无法加载"), retry);
+    } else if (!this.previewPane.contains(poster)) {
       const frame = element("div", "bsp-preview-frame");
       frame.append(poster);
       this.previewPane.replaceChildren(frame);
@@ -178,7 +184,7 @@ export class SharePanel {
     if (!this.snapshot) return;
     const snapshot = this.snapshot;
 
-    const shareText = buildShareText(snapshot, model.shareTarget, this.options);
+    const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
     const actions = element("div", "bsp-actions");
     const status: HTMLElement = element("p", "bsp-status");
     status.setAttribute("role", "status");
@@ -187,10 +193,13 @@ export class SharePanel {
     const copyTextButton = this.actionButton("copy-text", "", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
     const combinedButton = this.actionButton("combined", "海报+文案", "复制海报与文案的兼容格式", false, () => void this.copyCombined(combinedButton, shareText, status));
     copyTextButton.classList.add("bsp-text-copy");
+    const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
+    const markdownButton = this.actionButton("markdown", "", "复制 Markdown", false, () => void this.copyShareText(markdownButton, markdownText, status, "Markdown"));
     const textPreview = this.renderTextPreview(shareText);
-    textPreview.append(copyTextButton);
+    textPreview.append(copyTextButton, markdownButton);
     actions.append(copy, download, combinedButton);
-    this.exportButtons.push(copy, download, copyTextButton, combinedButton);
+    this.exportButtons.push(copy, download, copyTextButton, markdownButton, combinedButton);
+    for (const button of [copy, download, combinedButton]) button.disabled = !poster;
 
     const content: HTMLElement[] = [this.renderShareOptions()];
     if (targetSelection.source === "canonical-fallback") {
@@ -294,11 +303,8 @@ export class SharePanel {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
       }),
-      this.optionToggle("detail", "详细", this.options.detailedText, this.updating, (checked) => {
+      this.optionToggle("detail", "详细信息", this.options.detailedText, this.updating, (checked) => {
         this.applyOptions({ ...this.options, detailedText: checked });
-      }),
-      this.optionToggle("markdown", "Markdown", this.options.markdownText, this.updating, (checked) => {
-        this.applyOptions({ ...this.options, markdownText: checked });
       }),
     );
 
@@ -331,8 +337,8 @@ export class SharePanel {
       void this.rebuildPosterForOptions();
       return;
     }
-    if (textChanged && this.model && this.poster && this.targetSelection) {
-      this.renderReady(this.model, this.poster, this.targetSelection);
+    if (textChanged && this.targetSelection) {
+      this.renderReady(this.poster, this.targetSelection);
     }
   }
 
@@ -340,7 +346,6 @@ export class SharePanel {
     if (typeof GM_setValue !== "function") return;
     GM_setValue("bsp-panel-preferences", {
       detailedText: this.options.detailedText,
-      markdownText: this.options.markdownText,
     });
   }
 
@@ -352,22 +357,22 @@ export class SharePanel {
     try {
       const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
       const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-      const model = buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
-      const poster = await createPoster(model);
+      const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
+      const poster = model ? await createPoster(model) : null;
       if (this.closed) return;
       this.model = model;
       this.poster = poster;
       this.targetSelection = targetSelection;
       const overlay = this.previewPane.querySelector<HTMLElement>(".bsp-poster-updating");
       const frame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
-      if (frame && overlay) {
+      if (frame && overlay && poster) {
         frame.replaceChildren(poster, overlay);
         this.fitPoster();
         overlay.classList.add("is-leaving");
         await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
         overlay.remove();
       }
-      if (!this.closed) this.renderReady(model, poster, targetSelection);
+      if (!this.closed) this.renderReady(poster, targetSelection);
     } catch (error) {
       if (!this.closed) this.renderError(error, false);
     }
@@ -430,21 +435,34 @@ export class SharePanel {
     }
   }
 
-  private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
+  private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement, format = "普通文案"): Promise<void> {
     button.disabled = true;
     this.clearStatus(status);
+    this.controls.querySelector(".bsp-manual-copy")?.remove();
     try {
       const outcome = await copyShareTextToClipboard(text);
-      const feedback = describeTextCopyResult(outcome);
-      this.showStatus(
-        outcome.status === "copied" ? feedback.statusMessage : `${feedback.statusMessage} ${feedback.helpMessage}`,
-        outcome.status !== "copied",
-      );
+      if (this.closed || !button.isConnected) return;
+      if (outcome.status === "copied") this.showStatus(`${format}已复制。`);
+      else this.offerManualCopy(text, format);
     } catch {
-      this.showStatus("文案复制失败。文案仍在上方，可手动全选复制。", true);
+      if (!this.closed && button.isConnected) this.offerManualCopy(text, format);
     } finally {
       button.disabled = this.updating;
     }
+  }
+
+  private offerManualCopy(text: string, format: string): void {
+    console.warn("[Bilibili Share] clipboard", { stage: "text-write", format });
+    const source = element("textarea", "bsp-manual-copy");
+    source.readOnly = true;
+    source.value = text;
+    source.rows = 6;
+    source.style.width = "100%";
+    source.setAttribute("aria-label", `手动复制 ${format}`);
+    this.controls.append(source);
+    this.showStatus(`${format}复制失败。请在下方文本框中手动复制。`, true);
+    source.focus();
+    source.select();
   }
 
   private async copyCombined(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {

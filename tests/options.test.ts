@@ -113,7 +113,7 @@ describe("remembered preferences with retired themes", () => {
     });
   });
 
-  it("ignores the old theme while restoring text choices and resetting target markers", () => {
+  it("ignores old theme and Markdown mode while restoring detail and resetting target markers", () => {
     const options = createPanelShareOptions({ theme: "B", detailedText: true, markdownText: true });
 
     expect(options).toEqual({
@@ -121,7 +121,7 @@ describe("remembered preferences with retired themes", () => {
       partShare: false,
       timestampShare: false,
       detailedText: true,
-      markdownText: true,
+      markdownText: false,
     });
   });
 });

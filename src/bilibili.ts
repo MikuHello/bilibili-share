@@ -112,6 +112,12 @@ function gmTextRequest(
   });
 }
 
+class CoverLoadError extends Error {
+  constructor(readonly stage: string, readonly facts: Record<string, number | string> = {}) {
+    super("封面暂时无法加载");
+  }
+}
+
 function gmBlobRequest(url: string): Promise<Blob> {
   return new Promise((resolve, reject) => {
     GM_xmlhttpRequest({
@@ -123,13 +129,13 @@ function gmBlobRequest(url: string): Promise<Blob> {
       headers: { Referer: "https://www.bilibili.com/" },
       onload(response) {
         if (response.status < 200 || response.status >= 300) {
-          reject(new Error(`请求失败（HTTP ${response.status}）`));
+          reject(new CoverLoadError("http-status", { status: response.status }));
           return;
         }
         resolve(response.response as Blob);
       },
-      ontimeout: () => reject(new Error("请求超时，请稍后重试。")),
-      onerror: () => reject(new Error("网络请求失败，请检查网络后重试。")),
+      ontimeout: () => reject(new CoverLoadError("timeout")),
+      onerror: () => reject(new CoverLoadError("network-error")),
     });
   });
 }
@@ -228,12 +234,12 @@ export function isUsableCover(width: number, height: number): boolean {
 
 async function blobToImageDataUrl(blob: Blob): Promise<string> {
   if (blob.size === 0 || (blob.type && !blob.type.startsWith("image/"))) {
-    throw new Error("Bilibili 返回的视频封面无效，请重试。");
+    throw new CoverLoadError("invalid-blob", { bytes: blob.size, imageType: blob.type.startsWith("image/") ? "image" : "non-image" });
   }
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("视频封面读取失败。"));
+    reader.onerror = () => reject(new CoverLoadError("file-reader"));
     reader.readAsDataURL(blob);
   });
   const image = new Image();
@@ -241,18 +247,20 @@ async function blobToImageDataUrl(blob: Blob): Promise<string> {
   try {
     await image.decode();
   } catch {
-    throw new Error("Bilibili 返回的视频封面无法解码，请重试。");
+    throw new CoverLoadError("decode", { bytes: blob.size });
   }
-  if (!isUsableCover(image.naturalWidth, image.naturalHeight)) throw new Error("Bilibili 返回的视频封面尺寸不可用，请重试。");
+  if (!isUsableCover(image.naturalWidth, image.naturalHeight)) throw new CoverLoadError("dimensions", { width: image.naturalWidth, height: image.naturalHeight });
   return dataUrl;
 }
 
 async function loadCover(coverUrl: string): Promise<{ dataUrl: string; unavailable: boolean }> {
   try {
-    if (!coverUrl) return { dataUrl: "", unavailable: true };
+    if (!coverUrl) throw new CoverLoadError("missing-url");
     const blob = await gmBlobRequest(coverUrl.replace(/^http:/, "https:"));
     return { dataUrl: await blobToImageDataUrl(blob), unavailable: false };
-  } catch {
+  } catch (error) {
+    const failure = error instanceof CoverLoadError ? error : new CoverLoadError("unexpected");
+    console.warn("[Bilibili Share] cover", { stage: failure.stage, ...failure.facts });
     return { dataUrl: "", unavailable: true };
   }
 }
