@@ -18,8 +18,8 @@ try {
   assert.equal(await plain.isEnabled(), true, "valid text survives cover failure");
   assert.equal(await markdown.isEnabled(), true, "Markdown survives cover failure");
   assert.equal(await page.getByRole("button", { name: "复制海报", exact: true }).isEnabled(), false);
-  assert.equal(await page.getByRole("button", { name: "下载海报", exact: true }).isEnabled(), false);
-  assert.equal(await page.getByRole("button", { name: "复制海报与文案的兼容格式", exact: true }).isEnabled(), false);
+  assert.equal(await page.getByRole("button", { name: "下载海报 PNG", exact: true }).isEnabled(), false);
+  assert.equal(await page.getByRole("button", { name: "组合复制", exact: true }).isEnabled(), false);
   assert.equal(await page.getByText("COVER UNAVAILABLE", { exact: true }).count(), 0);
   await plain.click();
   assert.equal(await page.evaluate(() => window.fixture.copiedText.at(-1)),
@@ -27,7 +27,7 @@ try {
   await page.getByRole("button", { name: "标记当前时间", exact: true }).click();
   await plain.waitFor();
   await page.waitForFunction(() => !document.querySelector('[aria-label="复制文案"]').disabled);
-  await page.getByRole("button", { name: "详细信息", exact: true }).click();
+  await page.getByRole("checkbox", { name: "详细信息", exact: true }).click();
   await plain.click();
   const markedText = await page.evaluate(() => window.fixture.copiedText.at(-1));
   assert.match(markedText, /时间：01:23/);
@@ -44,8 +44,8 @@ try {
   await page.getByRole("button", { name: "关闭分享面板", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "detached" });
   await page.getByRole("button", { name: "生成海报", exact: true }).click();
-  await page.getByRole("button", { name: "详细信息", exact: true }).waitFor();
-  assert.equal(await page.getByRole("button", { name: "详细信息", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("checkbox", { name: "详细信息", exact: true }).waitFor();
+  assert.equal(await page.getByRole("checkbox", { name: "详细信息", exact: true }).isChecked(), true);
   await plain.click();
   assert.match(await page.evaluate(() => window.fixture.copiedText.at(-1)), /播放：178,000/);
   await context.close();
@@ -68,7 +68,7 @@ try {
   await specialPage.getByRole("button", { name: "复制 Markdown", exact: true }).click();
   assert.equal(await specialPage.getByRole("textbox", { name: "手动复制 Markdown", exact: true }).inputValue(), copiedMarkdown);
   await specialPage.evaluate(() => { window.fixture.clipboardFailed = false; window.fixture.combinedFailed = true; });
-  await specialPage.getByRole("button", { name: "复制海报与文案的兼容格式", exact: true }).click();
+  await specialPage.getByRole("button", { name: "组合复制", exact: true }).click();
   await specialPage.waitForFunction(expected => window.fixture.copiedText.at(-1) === expected, originalPlain);
   await special.context.close();
   console.log("PASS: independent Markdown preserves escaped information and ignores legacy mode");
@@ -76,7 +76,7 @@ try {
   await blocked.page.getByRole("button", { name: "生成海报", exact: true }).click();
   await blocked.page.getByRole("button", { name: "重试", exact: true }).waitFor();
   assert.equal(await blocked.page.getByRole("button", { name: /^复制/ }).count(), 0, "invalid identity exposes no copy action");
-  assert.equal(await blocked.page.getByRole("button", { name: "下载海报", exact: true }).count(), 0);
+  assert.equal(await blocked.page.getByRole("button", { name: "下载海报 PNG", exact: true }).count(), 0);
   await blocked.context.close();
   console.log("PASS: metadata failure blocks all exports");
 } finally {

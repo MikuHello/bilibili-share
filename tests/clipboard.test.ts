@@ -34,7 +34,7 @@ describe("poster clipboard adapter", () => {
     expect(outcome).toEqual({ status: "failed", reason: "Clipboard API 写入被拒绝" });
     expect(describePosterCopyResult(outcome)).toEqual({
       statusMessage: "海报复制失败。",
-      helpMessage: "Clipboard API 写入被拒绝 请改用“下载 PNG”保存图片。",
+      helpMessage: "请使用海报下方的下载图标保存 PNG。",
       downloadGuidance: true,
     });
   });
@@ -100,6 +100,7 @@ describe("poster clipboard adapter", () => {
 
     expect(outcome).toEqual({ status: "text-fallback", reason: "组合写入被拒绝" });
     expect(textWritten).toBe("文案");
+    expect(describeCombinedCopyResult(outcome).helpMessage).not.toContain("组合写入被拒绝");
     expect(describeCombinedCopyResult(outcome).helpMessage).toContain("海报仍需单独复制或下载 PNG");
   });
 

@@ -24,11 +24,11 @@ document.addEventListener("click", (event) => {
   if (!target?.classList.contains("bsp-option-pill")) return;
   const checked = target.getAttribute("aria-pressed") !== "true";
   const laterPart = Number(new URL(location.href).searchParams.get("p") || "1") > 1;
-  if (target.textContent === "分P") {
+  if (target.textContent === "标记当前分P") {
     selectedPart = checked;
     if (!checked) selectedTimestamp = false;
   }
-  if (target.textContent === "时间戳") {
+  if (target.textContent === "标记当前时间") {
     selectedTimestamp = checked;
     if (checked && laterPart) selectedPart = true;
   }
@@ -36,7 +36,7 @@ document.addEventListener("click", (event) => {
 for (const [key, title] of [
   ["fixture", "使用样例数据"], ["long", "长链接降级"], ["title", "长标题"],
   ["stats", "缺失统计"], ["part", "多分P"], ["cover", "封面缺失"],
-  ["narrow", "窄面板"], ["motion", "减少动效"], ["max", "B 最大化舞台"],
+  ["narrow", "窄面板"], ["motion", "减少动效"],
 ]) {
   const label = element("label");
   label.style.cssText = "display:block;margin:6px 0";
@@ -65,11 +65,7 @@ style.textContent = `
 .bsp-debug-narrow .bsp-panel {width:min(360px,calc(100vw - 16px));}
 .bsp-debug-narrow .bsp-workspace {grid-template-columns:1fr;min-height:0;}
 .bsp-debug-narrow .bsp-controls {min-height:0;overflow:visible;}
-.bsp-debug-narrow .bsp-actions {grid-template-columns:repeat(2,minmax(0,1fr));}
-.bsp-debug-narrow .bsp-actions > :last-child {grid-column:1/-1;}
 .bsp-debug-motion .bsp-backdrop, .bsp-debug-motion .bsp-backdrop *, .bsp-debug-motion #bsp-entry {transition-duration:0ms!important;animation-duration:0ms!important;}
-.bsp-debug-max .bsp-workspace {grid-template-columns:1fr;}
-.bsp-debug-max .bsp-preview-pane {padding:40px;}
 `;
 document.head.append(style);
 document.body.append(drawer);

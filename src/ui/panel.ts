@@ -1,4 +1,3 @@
-
 import {
   captureAndPausePlayback,
   fetchGenerationSnapshot,
@@ -61,13 +60,14 @@ export class SharePanel {
     this.panel.tabIndex = -1;
 
     const heading = element("header", "bsp-panel-head");
-    const eyebrow = element("span", "bsp-eyebrow", "BILIBILI SHARE");
-    eyebrow.id = "bsp-dialog-title";
-    const close = element("button", "bsp-close", "×");
+    const title = element("h2", "", "分享海报");
+    title.id = "bsp-dialog-title";
+    const close = element("button", "bsp-close");
+    close.append(createIcon("close"));
     close.type = "button";
     close.setAttribute("aria-label", "关闭分享面板");
     close.addEventListener("click", () => this.close(true));
-    heading.append(eyebrow, close);
+    heading.append(title, close);
 
     const workspace = element("div", "bsp-workspace");
     workspace.append(this.previewPane, this.controls);
@@ -77,6 +77,8 @@ export class SharePanel {
       if (event.target === this.backdrop) this.close(true);
     });
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onFocusIn = this.onFocusIn.bind(this);
+    this.previewPane.setAttribute("aria-label", "海报预览");
   }
 
   open(): void {
@@ -84,6 +86,7 @@ export class SharePanel {
     document.body.append(this.backdrop);
     this.previewObserver.observe(this.previewPane);
     document.addEventListener("keydown", this.onKeyDown, true);
+    document.addEventListener("focusin", this.onFocusIn, true);
     this.renderLoading();
     this.panel.focus();
     void this.captureThenLoad();
@@ -105,34 +108,51 @@ export class SharePanel {
     clearTimeout(this.statusTimer);
     this.previewObserver.disconnect();
     document.removeEventListener("keydown", this.onKeyDown, true);
+    document.removeEventListener("focusin", this.onFocusIn, true);
     this.backdrop.classList.add("bsp-backdrop-closing");
     this.panel.classList.add("bsp-panel-closing");
     window.setTimeout(() => {
       this.backdrop.remove();
       if (restore && this.capture) restorePlayback(this.capture);
       this.onClosed();
+      if (restore) document.getElementById("bsp-entry")?.focus({ preventScroll: true });
     }, motionDelay(MOTION.fast));
+  }
+
+  private onFocusIn(event: FocusEvent): void {
+    if (!this.closed && event.target instanceof Node && !this.panel.contains(event.target)) this.panel.focus();
   }
 
   private onKeyDown(event: KeyboardEvent): void {
     if (event.key === "Escape") {
       event.preventDefault();
       this.close(true);
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(this.panel.querySelectorAll<HTMLElement>("button,input,textarea,a[href],[tabindex]"))
+      .filter(node => node.tabIndex >= 0 && !node.matches(":disabled") && node.getClientRects().length > 0);
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first || !last) { event.preventDefault(); this.panel.focus(); return; }
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === this.panel)) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
     }
   }
 
-  private renderLoading(): void {
-    this.previewPane.replaceChildren();
-    const loading = element("div", "bsp-loading-card");
-    const message = element("div");
-    message.append(element("div", "bsp-spinner"), element("div", "", "正在捕获视频信息…"));
-    loading.append(message);
-    this.previewPane.append(loading);
+  private previewState(message: string, retry?: HTMLButtonElement): HTMLElement {
+    const state = element("div", "bsp-loading-card");
+    if (!retry) state.append(element("div", "bsp-spinner"));
+    state.append(element("p", "", message));
+    if (retry) state.append(retry);
+    return state;
+  }
 
-    this.controls.replaceChildren(
-      element("h3", "", "正在生成海报"),
-      element("p", "", "正在读取封面与视频信息…"),
-    );
+  private renderLoading(): void {
+    this.previewPane.replaceChildren(this.previewState("正在生成海报"));
+    this.controls.replaceChildren();
   }
 
   private async captureThenLoad(): Promise<void> {
@@ -168,11 +188,14 @@ export class SharePanel {
   }
 
   private renderReady(poster: HTMLElement | null, targetSelection: ShareTargetSelection): void {
+    const active = document.activeElement;
+    const focusName = active instanceof HTMLElement && this.panel.contains(active)
+      ? active.getAttribute("aria-label") ?? active.textContent : null;
     if (!poster) {
       const retry = element("button", "bsp-button", "重试");
       retry.type = "button";
       retry.addEventListener("click", () => { this.renderLoading(); void this.loadSnapshot(); });
-      this.previewPane.replaceChildren(element("p", "bsp-error", "封面暂时无法加载"), retry);
+      this.previewPane.replaceChildren(this.previewState("封面暂时无法加载", retry));
     } else if (!this.previewPane.contains(poster)) {
       const frame = element("div", "bsp-preview-frame");
       frame.append(poster);
@@ -184,39 +207,54 @@ export class SharePanel {
     clearTimeout(this.statusTimer);
     if (!this.snapshot) return;
     const snapshot = this.snapshot;
-
     const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
-    const actions = element("div", "bsp-actions");
-    const status: HTMLElement = element("p", "bsp-status");
-    status.setAttribute("role", "status");
-    const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(status));
-    const download = this.actionButton("download", "", "下载海报", false, () => void this.download(status));
-    const copyTextButton = this.actionButton("copy-text", "", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
-    const combinedButton = this.actionButton("combined", "海报+文案", "复制海报与文案的兼容格式", false, () => void this.copyCombined(shareText, status));
-    copyTextButton.classList.add("bsp-text-copy");
     const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
-    const markdownButton = this.actionButton("markdown", "", "复制 Markdown", false, () => void this.copyShareText(markdownButton, markdownText, status, "Markdown"));
-    const textPreview = this.renderTextPreview(shareText);
-    textPreview.append(copyTextButton, markdownButton);
-    actions.append(copy, download, combinedButton);
-    this.exportButtons.push(copy, download, copyTextButton, markdownButton, combinedButton);
-    for (const button of [copy, download, combinedButton]) button.disabled = !poster;
+    const status = element("p", "bsp-status");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(status));
+    const download = this.actionButton("download", "", "下载海报 PNG", false, () => void this.download(status));
+    download.classList.add("bsp-download");
+    const combined = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(shareText, status));
+    combined.title = "同时提供海报与文案，接收方可能只粘贴其中一种";
+    const copyText = this.actionButton(null, "复制文案", "复制文案", false, () => void this.copyShareText(copyText, shareText, status));
+    const copyMarkdown = this.actionButton(null, "复制 Markdown", "复制 Markdown", false, () => void this.copyShareText(copyMarkdown, markdownText, status, "Markdown"));
+    this.exportButtons.push(copy, download, copyText, copyMarkdown, combined);
+    for (const button of [copy, download, combined]) button.disabled = !poster;
 
-    const content: HTMLElement[] = [this.renderShareOptions()];
+    const textSection = this.renderTextPreview(shareText);
+    const textHeading = element("div", "bsp-section-heading");
+    const textActions = element("div", "bsp-text-copy-actions");
+    textActions.append(copyText, copyMarkdown);
+    textHeading.append(element("h3", "", "分享文案"), textActions);
+    textSection.prepend(textHeading);
+    const detail = element("input");
+    detail.type = "checkbox";
+    detail.checked = this.options.detailedText;
+    detail.setAttribute("aria-label", "详细信息");
+    detail.addEventListener("change", () => this.applyOptions({ ...this.options, detailedText: detail.checked }));
+    const detailLabel = element("label");
+    detailLabel.append(detail, document.createTextNode("详细信息"));
+    const textOptions = element("div", "bsp-text-options");
+    textOptions.append(detailLabel);
+    textSection.append(textOptions);
     if (targetSelection.source === "canonical-fallback") {
-      const fallback = element("div", "bsp-fallback");
+      const fallback = element("p", "bsp-fallback", "已使用完整链接");
       fallback.setAttribute("role", "status");
-      fallback.textContent = "已使用完整链接";
-      content.push(fallback);
+      textSection.append(fallback);
     }
-    content.push(textPreview, actions, status);
-    const focused = document.activeElement instanceof HTMLButtonElement && this.controls.contains(document.activeElement)
-      ? document.activeElement.getAttribute("aria-label") ?? document.activeElement.textContent
-      : null;
-    this.controls.replaceChildren(...content);
-    if (focused) {
-      Array.from(this.controls.querySelectorAll("button"))
-        .find((button) => (button.getAttribute("aria-label") ?? button.textContent) === focused)
+    const actions = element("div", "bsp-actions");
+    actions.append(copy, combined);
+    const actionGroup = element("div", "bsp-action-group");
+    actionGroup.append(actions, status);
+    const downloadArea = element("div", "bsp-preview-download");
+    downloadArea.append(download);
+    this.previewPane.querySelector(".bsp-preview-download")?.remove();
+    this.previewPane.append(downloadArea);
+    this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
+    if (focusName) {
+      Array.from(this.panel.querySelectorAll<HTMLElement>("button,input,textarea,[tabindex]"))
+        .find(node => (node.getAttribute("aria-label") ?? node.textContent) === focusName)
         ?.focus({ preventScroll: true });
     }
   }
@@ -238,7 +276,7 @@ export class SharePanel {
   }
 
   private actionButton(
-    iconName: IconName,
+    iconName: IconName | null,
     label: string,
     tip: string,
     primary: boolean,
@@ -246,9 +284,9 @@ export class SharePanel {
   ): HTMLButtonElement {
     const button = element("button", primary ? "bsp-action bsp-action-primary" : "bsp-action", label);
     button.type = "button";
-    button.dataset.tip = tip;
+    button.title = tip;
     button.setAttribute("aria-label", tip);
-    button.prepend(createIcon(iconName));
+    if (iconName) button.prepend(createIcon(iconName));
     button.addEventListener("click", onClick);
     return button;
   }
@@ -300,9 +338,6 @@ export class SharePanel {
       this.optionToggle("clock", "标记当前时间", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
-      }),
-      this.optionToggle("detail", "详细信息", this.options.detailedText, this.updating, (checked) => {
-        this.applyOptions({ ...this.options, detailedText: checked });
       }),
     );
 
@@ -380,7 +415,7 @@ export class SharePanel {
     for (const button of this.exportButtons) button.disabled = disabled;
     // A cover retry refreshes resources and must not compete with target validation.
     for (const button of this.previewPane.querySelectorAll<HTMLButtonElement>("button")) button.disabled = disabled;
-    for (const button of this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill")) {
+    for (const button of this.controls.querySelectorAll<HTMLButtonElement | HTMLInputElement>(".bsp-option-pill,input")) {
       if (disabled) button.disabled = true;
     }
   }
@@ -388,13 +423,12 @@ export class SharePanel {
   private showUpdatingOverlay(): void {
     const frame = this.previewPane.querySelector(".bsp-preview-frame");
     if (!frame || frame.querySelector(".bsp-poster-updating")) return;
-    frame.append(element("div", "bsp-poster-updating", "正在更新…"));
+    frame.append(element("div", "bsp-poster-updating", "正在更新标记"));
   }
 
 
   private renderError(error: unknown, retryCapture: boolean): void {
     const message = error instanceof Error ? error.message : "生成海报时发生未知错误。";
-    this.previewPane.replaceChildren(element("div", "bsp-loading-card", "暂时无法生成预览"));
     const retry = element("button", "bsp-button", "重试");
     retry.type = "button";
     retry.addEventListener("click", () => {
@@ -402,13 +436,9 @@ export class SharePanel {
       if (retryCapture) void this.captureThenLoad();
       else void this.loadSnapshot();
     });
-    this.controls.replaceChildren(
-      element("p", "bsp-step", "GENERATION BLOCKED"),
-      element("h3", "", "海报尚未生成"),
-      element("p", "bsp-error", message),
-      retry,
-      element("p", "bsp-help", retryCapture ? "请确认主播放器已经加载，再重试。" : "重试会保留最初捕获的视频、分P和播放位置，只重新获取生成所需资源。"),
-    );
+    this.previewPane.replaceChildren(this.previewState("暂时无法生成海报", retry));
+    this.controls.replaceChildren(element("p", "bsp-error", message));
+    if (retryCapture) this.controls.append(element("p", "bsp-help", "请确认主播放器已经加载，再重试。"));
   }
 
   private async posterPngDataUrl(): Promise<string> {
@@ -449,7 +479,7 @@ export class SharePanel {
         outcome.status !== "copied",
       );
     } catch {
-      this.showStatus("海报复制失败。请改用“下载”保存图片。", true);
+      this.showStatus("海报复制失败。请使用海报下方的下载图标保存 PNG。", true);
     } finally {
       finish();
     }
@@ -478,7 +508,6 @@ export class SharePanel {
     source.readOnly = true;
     source.value = text;
     source.rows = 6;
-    source.style.width = "100%";
     source.setAttribute("aria-label", `手动复制 ${format}`);
     this.controls.append(source);
     this.showStatus(`${format}复制失败。请在下方文本框中手动复制。`, true);

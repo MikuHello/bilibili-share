@@ -42,7 +42,7 @@ export function describePosterCopyResult(outcome: PosterCopyOutcome): PosterCopy
   }
   return {
     statusMessage: "海报复制失败。",
-    helpMessage: `${outcome.reason} 请改用“下载 PNG”保存图片。`,
+    helpMessage: "请使用海报下方的下载图标保存 PNG。",
     downloadGuidance: true,
   };
 }
@@ -164,12 +164,12 @@ export function describeCombinedCopyResult(outcome: CombinedCopyOutcome): Combin
   if (outcome.status === "text-fallback") {
     return {
       statusMessage: "组合复制失败，已改为仅复制文案。",
-      helpMessage: `${outcome.reason} 海报仍需单独复制或下载 PNG。`,
+      helpMessage: "海报仍需单独复制或下载 PNG。",
     };
   }
   return {
     statusMessage: "组合复制失败。",
-    helpMessage: `${outcome.reason} 文案仍在上方，可手动全选复制；海报请使用“复制海报”或“下载 PNG”。`,
+    helpMessage: "文案仍在上方，可手动全选复制；海报请使用“复制海报”或“下载 PNG”。",
   };
 }
 
