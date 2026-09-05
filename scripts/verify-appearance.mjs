@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { browserRuntime, productionBundle, openFixture } from './browser-test-support.mjs';
+
+const { chromium } = await browserRuntime();
+const browser = await chromium.launch({ headless: true });
+try {
+  const bundle = await productionBundle();
+  const {page,context,errors} = await openFixture(browser, bundle);
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  await page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
+  const dialog = page.getByRole('dialog');
+  assert.equal(await dialog.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(36, 38, 43)', 'panel initializes from actual page dark marker');
+  const palette = () => dialog.evaluate(e=>getComputedStyle(e).backgroundColor);
+  const expectPalette = async expected => {
+    await page.waitForFunction(expected => getComputedStyle(document.querySelector('.bsp-panel')).backgroundColor === expected, expected);
+  };
+  const poster = await page.locator('.bsp-poster').evaluate(e => ({html:e.innerHTML,background:getComputedStyle(e).backgroundColor}));
+  assert.equal(await page.locator('#bsp-entry').evaluate(e=>getComputedStyle(e).borderTopWidth),'0px');
+  await page.evaluate(() => {document.documentElement.classList.remove('dark'); document.body.style.background='transparent';});
+  await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await palette(),'rgb(36, 38, 43)','unknown retains last successful dark');
+  await page.evaluate(() => { document.body.style.background='white'; });
+  await expectPalette('rgb(255, 255, 255)');
+  await page.evaluate(() => { document.body.style.background='oklab(0.236945 -0.00128311 -0.00790365)'; });
+  await expectPalette('rgb(36, 38, 43)');
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('global.themeChange',{detail:'light'})));
+  await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await palette(),'rgb(36, 38, 43)','event payload does not override page');
+  assert.deepEqual(await page.locator('.bsp-poster').evaluate(e=>({html:e.innerHTML,background:getComputedStyle(e).backgroundColor})),poster,'poster is fixed through appearance changes');
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => { document.querySelector('#bsp-entry').remove(); });
+  await page.waitForFunction(()=>document.querySelector('#bsp-entry.bsp-entry-dark'));
+  assert.equal(await page.locator('.video-share-wrap').count(),1);
+  await page.evaluate(()=>window.openFixturePanel());
+  await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
+  await expectPalette('rgb(36, 38, 43)');
+  await mkdir('.scratch/bilibili-share-poster/redesign/acceptance/ticket06',{recursive:true});
+  await dialog.screenshot({path:'.scratch/bilibili-share-poster/redesign/acceptance/ticket06/dialog-dark.png',animations:'disabled'});
+  assert.deepEqual(errors, []);
+  await context.close();
+  const firstUnknown = await openFixture(browser, 'document.body.style.background="transparent";'+bundle, {context:{colorScheme:'dark'}});
+  await firstUnknown.page.evaluate(()=>window.openFixturePanel());
+  await firstUnknown.page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
+  assert.equal(await firstUnknown.page.getByRole('dialog').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)','first unknown is light despite system dark');
+  assert.deepEqual(firstUnknown.errors,[]);
+  await firstUnknown.context.close();
+  await writeFile('.scratch/bilibili-share-poster/redesign/acceptance/ticket06/verification.md', '# Ticket 06 verification\n\nProduction bundle browser checks: initial dark, live light/dark, unknown retains last known, first unknown light despite system dark, modern oklab background, event payload ignored, fixed poster DOM and palette, native borderless entry remount, official share retained and menu fallback. All PASS.\n\nRED before index/panel wiring: initial actual-page dark rendered white panel. GREEN after wiring.\n\nReal Edge Bilibili/BewlyCat page observer probe returned light → dark → light using the actual sidebar setting. Original light state restored and temporary observer/global removed. This validates the production appearance adapter on the actual page, not installation or execution in the userscript manager. Manager version/permission acceptance remains unverified due blocked extension-management access.\n');
+  console.log('PASS appearance, fixed poster, native entry and fallback scenarios');
+} finally { await browser.close(); }

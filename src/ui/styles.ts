@@ -2,10 +2,11 @@ import { MOTION_STYLES } from "./motion";
 
 export const STYLES = String.raw`
 ${MOTION_STYLES}
-#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:7px; height:34px; margin-left:0; padding:0 14px; border:1px solid #aaa9a4; border-radius:3px; background:#fff; color:#242424; font:500 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:background-color var(--bsp-motion-color) var(--bsp-ease-out),border-color var(--bsp-motion-color) var(--bsp-ease-out); }
-#bsp-entry:hover { background:#f7f5f0; border-color:#77756f; }
-#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:2px; }
-#bsp-entry svg { width:18px; height:18px; }
+#bsp-entry { appearance:none; display:inline-flex; align-items:center; gap:8px; height:36px; margin-left:0; padding:0; border:0; border-radius:4px; background:transparent; color:#61666d; font:400 14px/1 "PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; vertical-align:middle; transition:color var(--bsp-motion-color) var(--bsp-ease-out); }
+#bsp-entry.bsp-entry-dark { color:#b7bcc4; }
+#bsp-entry:hover { color:#00aeec; }
+#bsp-entry:focus-visible,.bsp-button:focus-visible,.bsp-close:focus-visible { outline:3px solid #00aeec; outline-offset:3px; }
+#bsp-entry svg { width:24px; height:24px; }
 .bsp-backdrop{--bsp-surface:#fff;--bsp-soft:#f6f7f8;--bsp-text:#18191c;--bsp-muted:#61666d;--bsp-line:#e3e5e7;--bsp-blue:#00aeec;--bsp-blue-bg:#e5f5fc;--bsp-error:#c95042;position:fixed;z-index:2147483646;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:24px;overflow:auto;font:14px/1.5 "PingFang SC","Microsoft YaHei",sans-serif;color:var(--bsp-text);animation:bsp-backdrop-in var(--bsp-motion-backdrop) var(--bsp-ease-out)}
 .bsp-backdrop.bsp-appearance-dark{--bsp-surface:#24262b;--bsp-soft:#1d1f23;--bsp-text:#edf0f3;--bsp-muted:#a2a9b3;--bsp-line:#3a3e46;--bsp-blue:#62c9ef;--bsp-blue-bg:#203d48;--bsp-error:#ffab9d}
 .bsp-backdrop *,.bsp-backdrop *::before,.bsp-backdrop *::after{box-sizing:border-box}

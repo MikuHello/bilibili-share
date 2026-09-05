@@ -1,3 +1,4 @@
+import type { PageAppearance } from "./appearance";
 import {
   captureAndPausePlayback,
   fetchGenerationSnapshot,
@@ -52,6 +53,10 @@ export class SharePanel {
   private readonly previewObserver = new ResizeObserver(() => this.fitPoster());
   private readonly onClosed: () => void;
 
+  setAppearance(appearance: PageAppearance): void {
+    this.backdrop.classList.toggle("bsp-appearance-dark", appearance === "dark");
+  }
+
   constructor(onClosed: () => void) {
     this.onClosed = onClosed;
     this.backdrop.setAttribute("role", "presentation");
@@ -103,7 +108,7 @@ export class SharePanel {
     return Boolean(current && identity && current.bvid.toUpperCase() === identity.bvid.toUpperCase() && current.partNumber === identity.partNumber);
   }
 
-  private hasCurrentContext(): boolean {
+  private ensureCurrentContext(): boolean {
     if (this.closed) return false;
     if (this.matchesCurrentPage()) return true;
     this.close(false);
@@ -117,6 +122,8 @@ export class SharePanel {
     this.previewObserver.disconnect();
     document.removeEventListener("keydown", this.onKeyDown, true);
     document.removeEventListener("focusin", this.onFocusIn, true);
+    this.backdrop.inert = true;
+    this.backdrop.setAttribute("aria-hidden", "true");
     this.backdrop.classList.add("bsp-backdrop-closing");
     this.panel.classList.add("bsp-panel-closing");
     if (restore && this.capture) restorePlayback(this.capture);
@@ -162,7 +169,7 @@ export class SharePanel {
   }
 
   private async captureThenLoad(): Promise<void> {
-    if (!this.hasCurrentContext()) return;
+    if (!this.ensureCurrentContext()) return;
     try {
       this.capture = captureAndPausePlayback();
     } catch (error) {
@@ -173,7 +180,7 @@ export class SharePanel {
   }
 
   private async loadSnapshot(): Promise<void> {
-    if (!this.hasCurrentContext() || !this.capture || this.loading) return;
+    if (!this.ensureCurrentContext() || !this.capture || this.loading) return;
     this.loading = true;
     try {
       const snapshot = await fetchGenerationSnapshot(this.capture);
@@ -181,14 +188,14 @@ export class SharePanel {
       const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
       const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget, this.options);
       const poster = model ? await createPoster(model) : null;
-      if (this.closed) return;
+      if (!this.ensureCurrentContext()) return;
       this.snapshot = snapshot;
       this.model = model;
       this.poster = poster;
       this.targetSelection = targetSelection;
       this.renderReady(poster, targetSelection);
     } catch (error) {
-      if (!this.closed) this.renderError(error, false);
+      if (this.ensureCurrentContext()) this.renderError(error, false);
     } finally {
       this.loading = false;
     }
@@ -367,7 +374,7 @@ export class SharePanel {
   }
 
   private applyOptions(next: ShareOptions): void {
-    if (!this.hasCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
+    if (!this.ensureCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
     const previous = this.options;
     const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
     const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
@@ -399,7 +406,7 @@ export class SharePanel {
       const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
       const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget, this.options);
       const poster = model ? await createPoster(model) : null;
-      if (this.closed) return;
+      if (!this.ensureCurrentContext()) return;
       this.model = model;
       this.poster = poster;
       this.targetSelection = targetSelection;
@@ -412,9 +419,9 @@ export class SharePanel {
         await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
         overlay.remove();
       }
-      if (!this.closed) this.renderReady(poster, targetSelection);
+      if (this.ensureCurrentContext()) this.renderReady(poster, targetSelection);
     } catch (error) {
-      if (!this.closed) this.renderError(error, false);
+      if (this.ensureCurrentContext()) this.renderError(error, false);
     }
   }
 
@@ -455,7 +462,7 @@ export class SharePanel {
 
   /** Keep the chosen output stable through asynchronous encoding and clipboard writes. */
   private beginExport(): (() => void) | null {
-    if (!this.hasCurrentContext() || this.loading || this.updating || this.exporting) return null;
+    if (!this.ensureCurrentContext() || this.loading || this.updating || this.exporting) return null;
     this.exporting = true;
     const controls = new Set<HTMLButtonElement | HTMLInputElement>([
       ...this.exportButtons,
@@ -478,7 +485,7 @@ export class SharePanel {
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
-      if (this.closed) return;
+      if (!this.ensureCurrentContext()) return;
       const outcome = await copyPosterPngToClipboard(dataUrl);
       const feedback = describePosterCopyResult(outcome);
       this.showStatus(
@@ -499,11 +506,11 @@ export class SharePanel {
     this.controls.querySelector(".bsp-manual-copy")?.remove();
     try {
       const outcome = await copyShareTextToClipboard(text);
-      if (this.closed || !button.isConnected) return;
+      if (!this.ensureCurrentContext() || !button.isConnected) return;
       if (outcome.status === "copied") this.showStatus(`${format}已复制。`);
       else this.offerManualCopy(text, format);
     } catch {
-      if (!this.closed && button.isConnected) this.offerManualCopy(text, format);
+      if (this.ensureCurrentContext() && button.isConnected) this.offerManualCopy(text, format);
     } finally {
       finish();
     }
@@ -529,7 +536,7 @@ export class SharePanel {
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
-      if (this.closed) return;
+      if (!this.ensureCurrentContext()) return;
       const outcome = await copyCombinedPosterAndText(dataUrl, text);
       const feedback = describeCombinedCopyResult(outcome);
       this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
@@ -550,7 +557,7 @@ export class SharePanel {
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
-      if (this.closed) return;
+      if (!this.ensureCurrentContext()) return;
       const link = document.createElement("a");
       link.download = buildPosterFilename(this.snapshot.bvid, new Date(), this.options.partShare ? this.snapshot.partNumber : null);
       link.href = dataUrl;

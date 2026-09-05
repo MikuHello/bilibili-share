@@ -1,6 +1,5 @@
-import type { PosterTheme } from "../options";
+import type { PageAppearance } from "./appearance";
 import { posterIcon } from "./icons";
-import { selectThemeSurfaceClasses } from "./tokens";
 
 export const ENTRY_ID = "bsp-entry";
 
@@ -35,15 +34,14 @@ function findToolbarAnchor(): HTMLElement | null {
   return legacyShareWrap?.parentElement ?? null;
 }
 
-export function createSharePosterEntry(theme: PosterTheme, onOpen: () => void): HTMLButtonElement {
+export function createSharePosterEntry(appearance: PageAppearance, onOpen: () => void): HTMLButtonElement {
   const button = document.createElement("button");
   button.id = ENTRY_ID;
   button.type = "button";
   button.title = "生成分享海报";
   button.append(posterIcon(), document.createTextNode("生成海报"));
   button.addEventListener("click", onOpen);
-  const surface = selectThemeSurfaceClasses(theme);
-  if (surface.entry) button.classList.add(surface.entry);
+  button.classList.toggle("bsp-entry-dark", appearance === "dark");
   return button;
 }
 
@@ -60,22 +58,15 @@ export function removeSharePosterEntry(): void {
  * repeat call while the entry is present is a no-op. Returns whether a mount
  * actually happened.
  */
-export function mountSharePosterEntry(theme: PosterTheme, onOpen: () => void): boolean {
+export function mountSharePosterEntry(appearance: PageAppearance, onOpen: () => void): boolean {
   if (document.getElementById(ENTRY_ID)) return false;
   const anchor = findToolbarAnchor();
   if (!anchor?.parentElement) return false;
-  anchor.insertAdjacentElement("afterend", createSharePosterEntry(theme, onOpen));
+  anchor.insertAdjacentElement("afterend", createSharePosterEntry(appearance, onOpen));
   return true;
 }
 
-/**
- * Updates the mounted entry's theme surface class. No-op when the panel is open
- * on a page without the entry (e.g. SPA navigation). The entry owns its own
- * class so callers don't reach into its DOM.
- */
-export function setEntryTheme(theme: PosterTheme): void {
-  const entry = document.getElementById(ENTRY_ID);
-  if (!entry) return;
-  const surface = selectThemeSurfaceClasses(theme);
-  entry.classList.toggle("bsp-entry-b", surface.entry !== null);
+/** Page mode affects only the toolbar surface, never the poster. */
+export function setEntryAppearance(appearance: PageAppearance): void {
+  document.getElementById(ENTRY_ID)?.classList.toggle("bsp-entry-dark", appearance === "dark");
 }

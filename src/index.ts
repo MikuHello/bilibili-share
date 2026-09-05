@@ -1,11 +1,12 @@
 import { readPageIdentity } from "./bilibili";
-import { loadRememberedPreferences, type PosterTheme } from "./options";
-import { mountSharePosterEntry, removeSharePosterEntry } from "./ui/entry";
+import { observePageAppearance, type PageAppearance } from "./ui/appearance";
+import { mountSharePosterEntry, removeSharePosterEntry, setEntryAppearance } from "./ui/entry";
 import { SharePanel } from "./ui/panel";
 import { STYLES } from "./ui/styles";
 
 let activePanel: SharePanel | null = null;
 let mountQueued = false;
+let pageAppearance: PageAppearance = "light";
 
 function installStyles(): void {
   if (document.getElementById("bsp-styles")) return;
@@ -24,18 +25,15 @@ function openPanel(): void {
   activePanel = new SharePanel(() => {
     activePanel = null;
   });
+  activePanel.setAppearance(pageAppearance);
   activePanel.open();
-}
-
-function rememberedTheme(): PosterTheme {
-  return loadRememberedPreferences().theme;
 }
 
 function mountEntry(): void {
   mountQueued = false;
   if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
   if (!readPageIdentity()) return;
-  mountSharePosterEntry(rememberedTheme(), openPanel);
+  mountSharePosterEntry(pageAppearance, openPanel);
 }
 
 function queueMount(): void {
@@ -51,6 +49,11 @@ function handleLocationChange(): void {
 }
 
 installStyles();
+observePageAppearance((appearance) => {
+  pageAppearance = appearance;
+  setEntryAppearance(appearance);
+  activePanel?.setAppearance(appearance);
+});
 queueMount();
 new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener("urlchange", handleLocationChange);
