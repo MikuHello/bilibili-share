@@ -46,6 +46,7 @@ export class SharePanel {
   private closed = false;
   private loading = false;
   private updating = false;
+  private exporting = false;
   private exportButtons: HTMLButtonElement[] = [];
   private statusTimer = 0;
   private readonly previewObserver = new ResizeObserver(() => this.fitPoster());
@@ -188,10 +189,10 @@ export class SharePanel {
     const actions = element("div", "bsp-actions");
     const status: HTMLElement = element("p", "bsp-status");
     status.setAttribute("role", "status");
-    const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(copy, status));
-    const download = this.actionButton("download", "", "下载海报", false, () => void this.download(download, status));
+    const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(status));
+    const download = this.actionButton("download", "", "下载海报", false, () => void this.download(status));
     const copyTextButton = this.actionButton("copy-text", "", "复制文案", false, () => void this.copyShareText(copyTextButton, shareText, status));
-    const combinedButton = this.actionButton("combined", "海报+文案", "复制海报与文案的兼容格式", false, () => void this.copyCombined(combinedButton, shareText, status));
+    const combinedButton = this.actionButton("combined", "海报+文案", "复制海报与文案的兼容格式", false, () => void this.copyCombined(shareText, status));
     copyTextButton.classList.add("bsp-text-copy");
     const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
     const markdownButton = this.actionButton("markdown", "", "复制 Markdown", false, () => void this.copyShareText(markdownButton, markdownText, status, "Markdown"));
@@ -205,10 +206,7 @@ export class SharePanel {
     if (targetSelection.source === "canonical-fallback") {
       const fallback = element("div", "bsp-fallback");
       fallback.setAttribute("role", "status");
-      fallback.append(
-        element("strong", "", "短链不可用，已使用规范长链接"),
-        element("span", "", `原因：${targetSelection.fallbackReason ?? "短链未通过校验"}。不会影响预览或下载。`),
-      );
+      fallback.textContent = "已使用完整链接";
       content.push(fallback);
     }
     content.push(textPreview, actions, status);
@@ -295,11 +293,11 @@ export class SharePanel {
     if (!snapshot) return container;
 
     container.append(
-      this.optionToggle("list", "分P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("list", "标记当前分P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
         void checked;
         this.applyOptions(togglePartShare(this.options, snapshot));
       }),
-      this.optionToggle("clock", "时间戳", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("clock", "标记当前时间", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
       }),
@@ -327,7 +325,7 @@ export class SharePanel {
   }
 
   private applyOptions(next: ShareOptions): void {
-    if (!this.snapshot || this.updating) return;
+    if (!this.snapshot || this.updating || this.exporting) return;
     const previous = this.options;
     const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
     const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
@@ -380,6 +378,8 @@ export class SharePanel {
 
   private setExportButtonsDisabled(disabled: boolean): void {
     for (const button of this.exportButtons) button.disabled = disabled;
+    // A cover retry refreshes resources and must not compete with target validation.
+    for (const button of this.previewPane.querySelectorAll<HTMLButtonElement>("button")) button.disabled = disabled;
     for (const button of this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill")) {
       if (disabled) button.disabled = true;
     }
@@ -416,12 +416,32 @@ export class SharePanel {
     return exportPosterPng(this.poster);
   }
 
-  private async copyPoster(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+  /** Keep the chosen output stable through asynchronous encoding and clipboard writes. */
+  private beginExport(): (() => void) | null {
+    if (this.closed || this.loading || this.updating || this.exporting) return null;
+    this.exporting = true;
+    const controls = new Set<HTMLButtonElement | HTMLInputElement>([
+      ...this.exportButtons,
+      ...this.controls.querySelectorAll<HTMLButtonElement | HTMLInputElement>("button,input"),
+      ...this.previewPane.querySelectorAll<HTMLButtonElement>("button"),
+    ]);
+    const states = Array.from(controls, control => ({ control, disabled: control.disabled }));
+    for (const { control } of states) control.disabled = true;
+    return () => {
+      this.exporting = false;
+      if (this.closed || this.loading || this.updating) return;
+      for (const { control, disabled } of states) if (control.isConnected) control.disabled = disabled;
+    };
+  }
+
+  private async copyPoster(status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
-    button.disabled = true;
+    const finish = this.beginExport();
+    if (!finish) return;
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
+      if (this.closed) return;
       const outcome = await copyPosterPngToClipboard(dataUrl);
       const feedback = describePosterCopyResult(outcome);
       this.showStatus(
@@ -431,12 +451,13 @@ export class SharePanel {
     } catch {
       this.showStatus("海报复制失败。请改用“下载”保存图片。", true);
     } finally {
-      button.disabled = this.updating;
+      finish();
     }
   }
 
   private async copyShareText(button: HTMLButtonElement, text: string, status: HTMLElement, format = "普通文案"): Promise<void> {
-    button.disabled = true;
+    const finish = this.beginExport();
+    if (!finish) return;
     this.clearStatus(status);
     this.controls.querySelector(".bsp-manual-copy")?.remove();
     try {
@@ -447,7 +468,7 @@ export class SharePanel {
     } catch {
       if (!this.closed && button.isConnected) this.offerManualCopy(text, format);
     } finally {
-      button.disabled = this.updating;
+      finish();
     }
   }
 
@@ -465,31 +486,35 @@ export class SharePanel {
     source.select();
   }
 
-  private async copyCombined(button: HTMLButtonElement, text: string, status: HTMLElement): Promise<void> {
+  private async copyCombined(text: string, status: HTMLElement): Promise<void> {
     if (!this.poster || !this.model) return;
-    button.disabled = true;
+    const finish = this.beginExport();
+    if (!finish) return;
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
+      if (this.closed) return;
       const outcome = await copyCombinedPosterAndText(dataUrl, text);
       const feedback = describeCombinedCopyResult(outcome);
       this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
     } catch {
       this.showStatus("组合复制失败。海报请使用“复制海报”或“下载”；文案仍在上方，可手动全选复制。", true);
     } finally {
-      button.disabled = this.updating;
+      finish();
     }
   }
 
 
 
 
-  private async download(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+  private async download(status: HTMLElement): Promise<void> {
     if (!this.poster || !this.snapshot || !this.model) return;
-    button.disabled = true;
+    const finish = this.beginExport();
+    if (!finish) return;
     this.clearStatus(status);
     try {
       const dataUrl = await this.posterPngDataUrl();
+      if (this.closed) return;
       const link = document.createElement("a");
       link.download = buildPosterFilename(this.snapshot.bvid, new Date(), this.options.partShare ? this.snapshot.partNumber : null);
       link.href = dataUrl;
@@ -498,7 +523,7 @@ export class SharePanel {
     } catch {
       this.showStatus("PNG 生成失败，预览仍保留；请重试下载。", true);
     } finally {
-      button.disabled = this.updating;
+      finish();
     }
   }
 }

@@ -24,7 +24,7 @@ try {
   await plain.click();
   assert.equal(await page.evaluate(() => window.fixture.copiedText.at(-1)),
     "35min 正念冥想｜把身体作为方法｜从内耗到感受｜此时此地此身｜聆听身体｜回归当下（UP主：妮卡的房间NiCalm）\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/");
-  await page.getByRole("button", { name: "时间戳", exact: true }).click();
+  await page.getByRole("button", { name: "标记当前时间", exact: true }).click();
   await plain.waitFor();
   await page.waitForFunction(() => !document.querySelector('[aria-label="复制文案"]').disabled);
   await page.getByRole("button", { name: "详细信息", exact: true }).click();
