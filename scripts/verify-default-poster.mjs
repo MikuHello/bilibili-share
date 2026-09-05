@@ -41,13 +41,17 @@ try {
       const qrImage = await createImageBitmap(qr);
       let decoded = null;
       if ('BarcodeDetector' in window) decoded = await new BarcodeDetector({formats:['qr_code']}).detect(qrImage);
-      return { poster: rect('.bsp-poster'), cover: rect('.bsp-d-cover'), footer: rect('.bsp-d-footer'), title: rect('.bsp-d-title'), titleSize: getComputedStyle(title).fontSize, titleClamp: title.style.webkitLineClamp, name: rect('.bsp-d-name'), nameSize: getComputedStyle(name).fontSize, link: link.textContent, address: rect('.bsp-d-address'), linkBox: rect('.bsp-d-link'), linkOverflow: link.scrollWidth > link.clientWidth+1, contain: getComputedStyle(document.querySelector('.bsp-d-cover')).objectFit, qr: decoded, qrAlt: qr.alt, statRight: Math.max(...Array.from(document.querySelectorAll('.bsp-d-stat'), n => n.getBoundingClientRect().right)), signatureRight: document.querySelector('.bsp-d-signature').getBoundingClientRect().right };
+      return { poster: rect('.bsp-poster'), cover: rect('.bsp-d-cover'), footer: rect('.bsp-d-footer'), title: rect('.bsp-d-title'), titleText: title.textContent, nameText: name.textContent, titleSize: getComputedStyle(title).fontSize, titleClamp: title.style.webkitLineClamp, name: rect('.bsp-d-name'), nameSize: getComputedStyle(name).fontSize, link: link.textContent, address: rect('.bsp-d-address'), linkBox: rect('.bsp-d-link'), linkOverflow: link.scrollWidth > link.clientWidth+1, contain: getComputedStyle(document.querySelector('.bsp-d-cover')).objectFit, qr: decoded, qrAlt: qr.alt, statRight: Math.max(...Array.from(document.querySelectorAll('.bsp-d-stat'), n => n.getBoundingClientRect().right)), signatureRight: document.querySelector('.bsp-d-signature').getBoundingClientRect().right };
     });
     assert.ok(observed.statRight <= observed.signatureRight+1, 'statistics must stay inside signature, clear of QR');
     assert.equal(observed.poster.width,1080); assert.equal(observed.poster.height,1440);
     assert.equal(observed.cover.width,1080); assert.equal(observed.cover.height,608); assert.equal(observed.contain,'contain');
     assert.ok(observed.title.bottom <= observed.footer.top); assert.ok(observed.name.height <= parseFloat(observed.nameSize)*2.5+1);
     assert.equal(observed.link,item.target ?? target); assert.equal(observed.linkOverflow,false); assert.ok(observed.linkBox.bottom <= observed.address.bottom); assert.ok(observed.address.bottom <= 1440);
+    if (['long','unbroken'].includes(item.name)) {
+      assert.ok(observed.titleText.endsWith('…'), 'truncated title must export an actual ellipsis');
+      assert.ok(observed.nameText.endsWith('…'), 'truncated nickname must export an actual ellipsis');
+    }
     const dimensions = await page.evaluate(async dataUrl => { const img = new Image(); img.src=dataUrl;await img.decode(); return [img.naturalWidth,img.naturalHeight]; }, dataUrl);
     assert.deepEqual(dimensions,[1080,1440]);
     if (observed.qr) assert.equal(observed.qr[0].rawValue,item.target ?? target);

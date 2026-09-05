@@ -13,3 +13,5 @@
 - Two-axis code review is coordinated by the primary agent after this implementation commit; findings will be addressed before whole-batch delivery.
 
 - Follow-up browser regression: four 99,999,999 counters originally overlapped the QR. Added a failing bounded-statistics test, then proportionally fitted the measured row to its signature width. Eight layouts/PNGs now pass; the large-statistics PNG also decodes to the expected target. No counters are truncated.
+
+- Spec review found CSS `line-clamp` preview behavior did not preserve the ellipsis in exported PNGs. Added a failing literal-ellipsis regression; replaced CSS clamp with a binary search over original text using actual browser line-box height. The full title/uploader remain in the domain and share text. Regenerated and visually inspected `long.png` and `unbroken.png`: both show four title lines and two nickname lines ending with a visible ellipsis. Eight PNG dimensions/layouts/QR targets still pass, and typecheck passes.

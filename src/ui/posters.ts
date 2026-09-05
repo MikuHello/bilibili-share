@@ -17,8 +17,19 @@ function svg(className: string, markup: string): SVGElement {
   return document.importNode(parsed, true) as unknown as SVGElement;
 }
 
-function clampText(node: HTMLElement, lines: number): void {
-  Object.assign(node.style, { display: "-webkit-box", webkitBoxOrient: "vertical", webkitLineClamp: String(lines), overflow: "hidden" });
+function ellipsizeToHeight(node: HTMLElement, maxHeight: number): void {
+  if (node.getBoundingClientRect().height <= maxHeight + 1) return;
+  const characters = Array.from(node.textContent ?? "");
+  let low = 0;
+  let high = characters.length;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    node.textContent = characters.slice(0, middle).join("") + "…";
+    if (node.getBoundingClientRect().height <= maxHeight + 1) low = middle;
+    else high = middle - 1;
+  }
+  // A literal glyph survives PNG foreignObject export, unlike CSS line-clamp.
+  node.textContent = characters.slice(0, low).join("") + "…";
 }
 
 /** Measure complete strings in the actual browser, after link height is settled. */
@@ -37,12 +48,14 @@ async function fitContent(poster: HTMLElement, title: HTMLElement, name: HTMLEle
       titleSize = size;
       if (title.scrollHeight <= available + 1) break;
     }
-    if (title.scrollHeight > available + 1) clampText(title, Math.max(1, Math.floor(available / (titleSize * 1.28))));
+    ellipsizeToHeight(title, Math.floor(available / (titleSize * 1.28)) * titleSize * 1.28);
+    let nameSize = 30;
     for (const size of [34, 32, 30]) {
       name.style.fontSize = `${size}px`;
+      nameSize = size;
       if (name.getBoundingClientRect().height <= size * 1.25 * 2 + 1) break;
     }
-    clampText(name, 2);
+    ellipsizeToHeight(name, nameSize * 1.25 * 2);
     // Large compact counters still keep every value clear of the fixed QR area.
     if (stats.scrollWidth > stats.clientWidth) {
       stats.style.transformOrigin = "left center";
