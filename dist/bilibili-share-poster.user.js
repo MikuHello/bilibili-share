@@ -12,7 +12,7 @@
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
 // @connect      b23.tv
-// @connect      *.hdslb.com
+// @connect      hdslb.com
 // @run-at       document-idle
 // ==/UserScript==
 "use strict";
