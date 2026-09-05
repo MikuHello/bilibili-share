@@ -33,7 +33,7 @@ export interface RememberedPanelPreferences {
 export function resolveRememberedPreferences(stored: unknown): RememberedPanelPreferences {
   const record = typeof stored === "object" && stored !== null ? (stored as Record<string, unknown>) : {};
   return {
-    theme: record.theme === "B" ? "B" : "A",
+    theme: "A",
     detailedText: record.detailedText === true,
     markdownText: record.markdownText === true,
   };

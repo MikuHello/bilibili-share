@@ -6,8 +6,6 @@ import {
   buildSharePoster,
   formatCompactStat,
   formatTimestamp,
-  getDefaultTheme,
-  posterTitleFontSize,
   type GenerationSnapshot,
 } from "../src/domain";
 
@@ -31,11 +29,7 @@ const completeSnapshot: GenerationSnapshot = {
   },
 };
 
-describe("default A poster domain", () => {
-  it("uses theme A on first use", () => {
-    expect(getDefaultTheme()).toEqual({ id: "A", titleLines: 2 });
-  });
-
+describe("default poster domain", () => {
   it.each([
     [0, "0"],
     [9_999, "9999"],
@@ -60,18 +54,11 @@ describe("default A poster domain", () => {
     const poster = buildDefaultPoster(completeSnapshot, shareTarget);
 
     expect(poster).toMatchObject({
-      theme: "A",
       dimensions: { width: 1080, height: 1440 },
       title: completeSnapshot.title,
       uploader: completeSnapshot.uploader,
       identity: "BV1xx411c7mD · AV170001",
       shareTarget,
-      titleLines: 2,
-        titleFontSize: 19,
-      linkWrap: "anywhere",
-      contentOrder: ["cover", "title", "uploader-identity", "part-timestamp", "stats", "destination"],
-        partLabel: null,
-        timestampLabel: null,
       stats: [
         { label: "播放", value: "1234.6万" },
         { label: "点赞", value: "9.9万" },
@@ -115,55 +102,13 @@ describe("default A poster domain", () => {
     );
   });
 
-  it("assembles part and timestamp labels from one snapshot", () => {
-    const poster = buildSharePoster(
-      { ...completeSnapshot, partNumber: 2, partTitle: "第二集", playbackSeconds: 3723 },
-      "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
-      { theme: "A", partShare: true, timestampShare: true, detailedText: false, markdownText: false },
-    );
-
-    expect(poster).toMatchObject({
-      partLabel: "P2 · 第二集",
-      timestampLabel: "01:02:03",
-      shareTarget: "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
+  it("keeps body content unchanged when target markers and legacy theme change", () => {
+    const normal = buildDefaultPoster(completeSnapshot, "https://www.bilibili.com/video/BV1xx411c7mD/");
+    const marked = buildSharePoster(completeSnapshot, "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=62", {
+      theme: "B", partShare: true, timestampShare: true, detailedText: false, markdownText: false,
     });
+    expect(marked).toEqual({ ...normal, shareTarget: "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=62" });
+    expect(marked).not.toHaveProperty("partLabel");
+    expect(marked).not.toHaveProperty("timestampLabel");
   });
-
-  it("shows only the part number when the part title is unavailable", () => {
-    const poster = buildSharePoster(
-      { ...completeSnapshot, partNumber: 2, partTitle: null },
-      "https://www.bilibili.com/video/BV1xx411c7mD/?p=2",
-      { theme: "A", partShare: true, timestampShare: false, detailedText: false, markdownText: false },
-    );
-
-    expect(poster.partLabel).toBe("P2");
-    expect(poster.timestampLabel).toBeNull();
-  });
-
-  it("builds a B poster with three title lines, 3:4 canvas, and cover-first content order", () => {
-    const poster = buildSharePoster(
-      completeSnapshot,
-      "https://www.bilibili.com/video/BV1xx411c7mD/",
-      { theme: "B", partShare: true, timestampShare: false, detailedText: false, markdownText: false },
-    );
-
-    expect(poster).toMatchObject({
-      theme: "B",
-      dimensions: { width: 1080, height: 1440 },
-      titleLines: 3,
-      contentOrder: ["cover", "part-timestamp", "title", "uploader-identity", "stats", "destination"],
-      partLabel: "P1 · 正片",
-    });
-  });
-
-  it.each([
-    ["A", 12, 19],
-    ["B", 8, 19],
-    ["B", 24, 17],
-    ["B", 40, 15],
-  ] as const)("picks title size for theme %s with title length %i as %ipx", (theme, length, expected) => {
-    expect(posterTitleFontSize(theme, "字".repeat(length))).toBe(expected);
-  });
-
-
 });

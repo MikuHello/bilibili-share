@@ -103,7 +103,7 @@ describe("canonical share target with part and timestamp", () => {
   });
 });
 
-describe("remembered text and theme preferences", () => {
+describe("remembered preferences with retired themes", () => {
   it("falls back to safe defaults for missing or malformed storage", () => {
     expect(resolveRememberedPreferences(null)).toEqual({ theme: "A", detailedText: false, markdownText: false });
     expect(resolveRememberedPreferences({ theme: "C", detailedText: "yes", markdownText: 1 })).toEqual({
@@ -113,11 +113,11 @@ describe("remembered text and theme preferences", () => {
     });
   });
 
-  it("restores valid remembered choices while resetting part and timestamp options", () => {
+  it("ignores the old theme while restoring text choices and resetting target markers", () => {
     const options = createPanelShareOptions({ theme: "B", detailedText: true, markdownText: true });
 
     expect(options).toEqual({
-      theme: "B",
+      theme: "A",
       partShare: false,
       timestampShare: false,
       detailedText: true,

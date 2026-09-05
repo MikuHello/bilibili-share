@@ -1,107 +1,105 @@
 import QRCode from "qrcode";
+import { toPng } from "html-to-image";
 
 import type { SharePoster } from "../domain";
 import { element } from "./dom";
+import { posterAssets } from "./poster-assets";
+import { posterStyles } from "./poster-styles";
 
-function posterQrDataUrl(shareTarget: string): Promise<string> {
-  return QRCode.toDataURL(shareTarget, { width: 234, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+function image(className: string, src: string, alt = ""): HTMLImageElement {
+  return Object.assign(element("img", className), { src, alt });
+}
+
+function svg(className: string, markup: string): SVGElement {
+  // Only fixed, local artwork reaches this parser; video text is always textContent.
+  const parsed = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
+  parsed.setAttribute("class", className);
+  return document.importNode(parsed, true) as unknown as SVGElement;
+}
+
+function clampText(node: HTMLElement, lines: number): void {
+  Object.assign(node.style, { display: "-webkit-box", webkitBoxOrient: "vertical", webkitLineClamp: String(lines), overflow: "hidden" });
+}
+
+/** Measure complete strings in the actual browser, after link height is settled. */
+async function fitContent(poster: HTMLElement, title: HTMLElement, name: HTMLElement): Promise<void> {
+  const host = element("div");
+  Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
+  host.append(poster);
+  document.body.append(host);
+  try {
+    await document.fonts.ready;
+    await Promise.all(Array.from(poster.querySelectorAll("img"), img => img.decode()));
+    const available = title.parentElement!.clientHeight;
+    let titleSize = 48;
+    for (const size of [64, 60, 56, 52, 48]) {
+      title.style.fontSize = `${size}px`;
+      titleSize = size;
+      if (title.scrollHeight <= available + 1) break;
+    }
+    if (title.scrollHeight > available + 1) clampText(title, Math.max(1, Math.floor(available / (titleSize * 1.28))));
+    for (const size of [34, 32, 30]) {
+      name.style.fontSize = `${size}px`;
+      if (name.getBoundingClientRect().height <= size * 1.25 * 2 + 1) break;
+    }
+    clampText(name, 2);
+  } finally {
+    poster.remove();
+    host.remove();
+  }
 }
 
 export async function createPoster(model: SharePoster): Promise<HTMLElement> {
-  if (model.theme === "B") return createPosterB(model);
-  const poster = element("article", "bsp-poster");
+  if (model.coverUnavailable) throw new Error("封面暂时无法加载");
+  const poster = element("article", "bsp-poster bsp-default-poster");
   poster.setAttribute("aria-label", `${model.title} 分享海报`);
+  const style = element("style", "", posterStyles);
+  const mast = element("header", "bsp-d-mast");
+  mast.append(image("bsp-d-brand", posterAssets.brand, "哔哩哔哩"));
+  const cover = image("bsp-d-cover", model.coverDataUrl, "原视频完整封面");
+  const editorial = element("div", "bsp-d-editorial");
+  const titleSpace = element("div", "bsp-d-title-space");
+  const title = element("h4", "bsp-d-title", model.title);
+  titleSpace.append(title);
+  editorial.append(titleSpace);
 
-  const masthead = element("header", "bsp-masthead");
-  masthead.append(element("strong", "", "BILIBILI 分享海报"), element("span", "", "SHARE CARD"));
-  const cover = model.coverUnavailable
-      ? element("div", "bsp-cover bsp-cover-missing", "COVER UNAVAILABLE")
-      : Object.assign(element("img", "bsp-cover"), { src: model.coverDataUrl, alt: "" });
-  const title = element("h4", "bsp-poster-title", model.title);
-  title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-  const byline = element("div", "bsp-byline");
-  byline.append(element("strong", "", `UP 主 · ${model.uploader}`), element("span", "bsp-identity", model.identity)); const partTimestamp = element("div", "bsp-part-timestamp"); if (model.partLabel) partTimestamp.append(element("span", "bsp-part-chip", model.partLabel)); if (model.timestampLabel) partTimestamp.append(element("span", "bsp-time-chip", model.timestampLabel));
-
-  const stats = element("div", "bsp-stats");
-  for (const statistic of model.stats) {
-    const cell = element("div", "bsp-stat");
-    cell.append(element("strong", "", statistic.value), element("span", "", statistic.label));
+  const footer = element("footer", "bsp-d-footer");
+  const signature = element("div", "bsp-d-signature");
+  const author = element("div", "bsp-d-author");
+  const name = element("span", "bsp-d-name", model.uploader);
+  author.append(image("bsp-d-up", posterAssets.up, "UP 主"), name);
+  const stats = element("div", "bsp-d-stats");
+  const statIcons = [
+    svg("", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>'),
+    image("", posterAssets.like), image("", posterAssets.coin), image("", posterAssets.favorite),
+  ];
+  model.stats.forEach((statistic, index) => {
+    const cell = element("span", "bsp-d-stat");
+    cell.setAttribute("aria-label", `${statistic.label} ${statistic.value}`);
+    cell.append(statIcons[index], document.createTextNode(statistic.value));
     stats.append(cell);
-  }
-
-  const destination = element("div", "bsp-destination");
-  const qr = element("img", "bsp-qr");
-  qr.alt = `二维码：${model.shareTarget}`;
-  qr.src = await posterQrDataUrl(model.shareTarget);
-  const linkArea = element("div");
-  const visibleLink = element("span", "bsp-link", model.shareTarget);
-  visibleLink.style.overflowWrap = model.linkWrap;
-  linkArea.append(element("span", "bsp-link-label", "扫码观看 · SHARE TARGET"), visibleLink);
-  destination.append(qr, linkArea);
-
-  poster.classList.add(`bsp-theme-${model.theme.toLowerCase()}`);
-  poster.append(masthead);
-  const content = {
-    cover,
-    title,
-    "uploader-identity": byline,
-      "part-timestamp": partTimestamp,
-    stats,
-    destination,
-  } satisfies Record<SharePoster["contentOrder"][number], HTMLElement>;
-  for (const section of model.contentOrder) poster.append(content[section]);
-  poster.append(element("span", "bsp-archive", `ARCHIVE · ${model.identity}`));
+  });
+  const ids = element("div", "bsp-d-ids");
+  const bv = element("span"); bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
+  const av = element("span"); av.append(element("b", "", "AV"), document.createTextNode(String(model.aid)));
+  ids.append(bv, av);
+  signature.append(author, stats, ids);
+  const qr = element("div", "bsp-d-qr");
+  const frame = element("div", "bsp-d-qr-frame");
+  const qrData = await QRCode.toDataURL(model.shareTarget, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  frame.append(image("bsp-d-qr-image", qrData, `二维码：${model.shareTarget}`));
+  qr.append(frame, element("div", "bsp-d-qr-caption", "扫码观看"));
+  footer.append(signature, qr);
+  const linkFooter = element("div", "bsp-d-link-footer");
+  const address = element("div", "bsp-d-address");
+  address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
+  linkFooter.append(address);
+  poster.append(style, mast, cover, editorial, footer, linkFooter);
+  await fitContent(poster, title, name);
   return poster;
 }
 
-async function createPosterB(model: SharePoster): Promise<HTMLElement> {
-  const poster = element("article", "bsp-poster bsp-poster-b");
-  poster.setAttribute("aria-label", `${model.title} 分享海报`);
-
-  if (model.coverUnavailable) {
-    poster.classList.add("bsp-cover-missing");
-    poster.append(element("div", "bsp-b-cover-missing", "COVER UNAVAILABLE"));
-  } else {
-    const cover = Object.assign(element("img", "bsp-cover-b"), { src: model.coverDataUrl, alt: "" });
-    poster.append(cover);
-  }
-
-  const scrim = element("div", "bsp-b-scrim");
-  const content = element("div", "bsp-b-content");
-  poster.append(scrim);
-
-  const topLine = element("div", "bsp-b-topline");
-  if (model.partLabel) topLine.append(element("span", "bsp-b-part-chip", model.partLabel));
-  if (model.timestampLabel) topLine.append(element("span", "bsp-b-time-chip", model.timestampLabel));
-  content.append(topLine);
-
-  const bottom = element("div", "bsp-b-bottom");
-  const title = element("h4", "bsp-b-title", model.title);
-  title.style.setProperty("-webkit-line-clamp", model.titleLines.toString());
-  title.style.fontSize = `${model.titleFontSize}px`;
-  bottom.append(title, element("div", "bsp-b-up", `UP 主 · ${model.uploader}`));
-
-  const stats = element("div", "bsp-b-stats");
-  for (const statistic of model.stats) {
-    const cell = element("div", "bsp-b-stat");
-    cell.append(element("strong", "", statistic.value), element("span", "", statistic.label));
-    stats.append(cell);
-  }
-  bottom.append(stats, element("div", "bsp-b-identity", model.identity));
-
-  const destination = element("div", "bsp-b-destination");
-  const qr = element("img", "bsp-b-qr");
-  qr.alt = `二维码：${model.shareTarget}`;
-  qr.src = await posterQrDataUrl(model.shareTarget);
-  const linkSide = element("div", "bsp-b-link-side");
-  const visibleLink = element("span", "bsp-b-link", model.shareTarget);
-  visibleLink.style.overflowWrap = model.linkWrap;
-  linkSide.append(element("span", "bsp-b-link-label", "扫码观看 · SHARE TARGET"), visibleLink);
-  destination.append(qr, linkSide);
-  bottom.append(destination);
-  content.append(bottom);
-  poster.append(content);
-  return poster;
+/** Export the exact measured preview layout without its display transform. */
+export function exportPosterPng(poster: HTMLElement): Promise<string> {
+  return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, backgroundColor: "#dce8e7", style: { transform: "none" } });
 }
-
-

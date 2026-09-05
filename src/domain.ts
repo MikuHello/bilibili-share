@@ -1,4 +1,4 @@
-import type { PosterTheme, ShareOptions } from "./options";
+import type { ShareOptions } from "./options";
 import { isOpaqueShortUrl, parseCanonicalVideoIdentity } from "./share-target";
 
 export type StatisticValue = number | null;
@@ -23,10 +23,7 @@ export interface GenerationSnapshot {
   };
 }
 
-export type PosterSection = "cover" | "title" | "uploader-identity" | "part-timestamp" | "stats" | "destination";
-
 export interface SharePoster {
-  theme: PosterTheme;
   dimensions: { width: 1080; height: 1440 };
   coverDataUrl: string;
   coverUnavailable: boolean;
@@ -34,28 +31,12 @@ export interface SharePoster {
   uploader: string;
   identity: string;
   shareTarget: string;
-  titleLines: 2 | 3;
-  titleFontSize: 19 | 17 | 15;
-  linkWrap: "anywhere";
-  contentOrder: readonly PosterSection[];
-  partLabel: string | null;
-  timestampLabel: string | null;
+  bvid: string;
+  aid: number;
   stats: Array<{ label: string; value: string }>;
 }
 
 export type DefaultPoster = SharePoster;
-
-export function getDefaultTheme(): { id: "A"; titleLines: 2 } {
-  return { id: "A", titleLines: 2 };
-}
-
-export function posterTitleFontSize(theme: PosterTheme, title: string): 19 | 17 | 15 {
-  if (theme === "A") return 19;
-  const length = Array.from(title).length;
-  if (length <= 20) return 19;
-  if (length <= 32) return 17;
-  return 15;
-}
 
 export function formatCompactStat(value: StatisticValue): string {
   if (value === null || !Number.isFinite(value)) return "--";
@@ -116,35 +97,23 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
   return url.toString();
 }
 
-export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: string, options: ShareOptions): SharePoster {
+export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: string, _options: ShareOptions): SharePoster {
   const title = requireText(snapshot.title, "视频标题");
   const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "视频封面");
   const uploader = requireText(snapshot.uploader, "UP 主");
   const bvid = requireText(snapshot.bvid, "BV 标识");
   if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少AV 标识");
   const validatedShareTarget = validateShareTarget(shareTarget, bvid);
-  const theme: PosterTheme = options.theme === "B" ? "B" : "A";
-  const titleLines = theme === "A" ? (2 as const) : (3 as const);
-  const contentOrder =
-    theme === "A"
-      ? (["cover", "title", "uploader-identity", "part-timestamp", "stats", "destination"] as const)
-      : (["cover", "part-timestamp", "title", "uploader-identity", "stats", "destination"] as const);
-
   return {
-    theme,
     dimensions: { width: 1080, height: 1440 },
     coverDataUrl,
     coverUnavailable: snapshot.coverUnavailable,
     title,
     uploader,
+    bvid,
+    aid: snapshot.aid,
     identity: `${bvid} · AV${snapshot.aid}`,
     shareTarget: validatedShareTarget,
-    titleLines,
-    titleFontSize: posterTitleFontSize(theme, title),
-    linkWrap: "anywhere",
-    contentOrder,
-    partLabel: buildPartLabel(snapshot, options),
-    timestampLabel: buildTimestampLabel(snapshot, options),
     stats: [
       { label: "播放", value: formatCompactStat(snapshot.stats.views) },
       { label: "点赞", value: formatCompactStat(snapshot.stats.likes) },

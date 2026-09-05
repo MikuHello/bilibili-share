@@ -1,4 +1,3 @@
-import { toPng } from "html-to-image";
 
 import {
   captureAndPausePlayback,
@@ -25,7 +24,6 @@ import {
   loadRememberedPreferences,
   togglePartShare,
   toggleTimestampShare,
-  type PosterTheme,
   type ShareOptions,
 } from "../options";
 import { buildShareText } from "../share-text";
@@ -33,10 +31,8 @@ import { buildCanonicalShareTarget, type ShareTargetSelection } from "../share-t
 import { element } from "./dom";
 import { statusDismissDelay } from "./feedback";
 import { MOTION, motionDelay } from "./motion";
-import { setEntryTheme } from "./entry";
 import { createIcon, type IconName } from "./icons";
-import { createPoster } from "./posters";
-import { selectThemeSurfaceClasses } from "./tokens";
+import { createPoster, exportPosterPng } from "./posters";
 export class SharePanel {
   private readonly backdrop = element("div", "bsp-backdrop");
   private readonly panel = element("section", "bsp-panel");
@@ -85,7 +81,6 @@ export class SharePanel {
 
   open(): void {
     this.options = createPanelShareOptions(loadRememberedPreferences());
-    this.applyThemeClasses(this.options.theme);
     document.body.append(this.backdrop);
     this.previewObserver.observe(this.previewPane);
     document.addEventListener("keydown", this.onKeyDown, true);
@@ -177,7 +172,6 @@ export class SharePanel {
       this.previewPane.replaceChildren(frame);
     }
     this.fitPoster();
-    this.applyThemeClasses(model.theme);
     this.updating = false;
     this.exportButtons = [];
     clearTimeout(this.statusTimer);
@@ -198,7 +192,7 @@ export class SharePanel {
     actions.append(copy, download, combinedButton);
     this.exportButtons.push(copy, download, copyTextButton, combinedButton);
 
-    const content: HTMLElement[] = [this.renderThemePicker(), this.renderShareOptions()];
+    const content: HTMLElement[] = [this.renderShareOptions()];
     if (targetSelection.source === "canonical-fallback") {
       const fallback = element("div", "bsp-fallback");
       fallback.setAttribute("role", "status");
@@ -319,82 +313,12 @@ export class SharePanel {
     return container;
   }
 
-  private renderThemePicker(): HTMLElement {
-    const picker = element("div", "bsp-theme-segment");
-    picker.setAttribute("role", "group");
-    picker.setAttribute("aria-label", "海报主题");
-    const buttonA = element("button", "bsp-theme-option", "A 报刊");
-    buttonA.type = "button";
-    buttonA.disabled = this.updating;
-    buttonA.setAttribute("aria-pressed", String(this.options.theme === "A"));
-    buttonA.classList.toggle("is-active", this.options.theme === "A");
-    buttonA.addEventListener("click", () => this.applyTheme("A"));
-    const buttonB = element("button", "bsp-theme-option", "B 沉浸");
-    buttonB.type = "button";
-    buttonB.disabled = this.updating;
-    buttonB.setAttribute("aria-pressed", String(this.options.theme === "B"));
-    buttonB.classList.toggle("is-active", this.options.theme === "B");
-    buttonB.addEventListener("click", () => this.applyTheme("B"));
-    picker.append(buttonA, buttonB);
-    return picker;
-  }
-
-  private applyTheme(theme: PosterTheme): void {
-    if (this.updating || this.options.theme === theme || !this.model || !this.poster || !this.targetSelection) return;
-    this.options = { ...this.options, theme };
-    this.persistPreferences();
-    void this.rebuildPosterForTheme();
-  }
-
-  private async rebuildPosterForTheme(): Promise<void> {
-    if (!this.snapshot || !this.targetSelection || this.updating) return;
-    this.updating = true;
-    this.setExportButtonsDisabled(true);
-    try {
-      const model = buildSharePoster(this.snapshot, this.targetSelection.shareTarget, this.options);
-      const poster = await createPoster(model);
-      if (this.closed) return;
-      this.model = model;
-      this.poster = poster;
-      this.applyThemeClasses(model.theme);
-      await this.crossfadePoster(poster);
-      if (!this.closed) this.renderReady(model, poster, this.targetSelection);
-    } catch (error) {
-      if (!this.closed) this.renderError(error, false);
-    }
-  }
-
-  private async crossfadePoster(nextPoster: HTMLElement): Promise<void> {
-    const oldFrame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
-    const nextFrame = element("div", "bsp-preview-frame bsp-preview-frame-incoming");
-    nextFrame.append(nextPoster);
-    this.previewPane.append(nextFrame);
-    this.fitPoster();
-    if (motionDelay(MOTION.fast)) {
-      // Establish the transparent layer before starting its CSS transition.
-      nextFrame.getBoundingClientRect();
-    }
-    oldFrame?.classList.add("bsp-preview-frame-exit");
-    nextFrame.classList.add("is-visible");
-    await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.fast)));
-    oldFrame?.remove();
-    nextFrame.classList.remove("bsp-preview-frame-incoming", "is-visible");
-  }
-
   private fitPoster(): void {
     for (const frame of this.previewPane.querySelectorAll<HTMLElement>(".bsp-preview-frame")) {
       const poster = frame.querySelector<HTMLElement>(".bsp-poster");
-      if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 360)})`;
+      if (poster) poster.style.transform = `scale(${Math.min(1, frame.clientWidth / 1080)})`;
     }
   }
-
-  private applyThemeClasses(theme: PosterTheme): void {
-    const surface = selectThemeSurfaceClasses(theme);
-    this.backdrop.classList.toggle("bsp-theme-b", surface.panel !== null);
-    this.panel.classList.toggle("bsp-theme-b", surface.panel !== null);
-    setEntryTheme(theme);
-  }
-
 
   private applyOptions(next: ShareOptions): void {
     if (!this.snapshot || this.updating) return;
@@ -415,7 +339,6 @@ export class SharePanel {
   private persistPreferences(): void {
     if (typeof GM_setValue !== "function") return;
     GM_setValue("bsp-panel-preferences", {
-      theme: this.options.theme,
       detailedText: this.options.detailedText,
       markdownText: this.options.markdownText,
     });
@@ -452,7 +375,7 @@ export class SharePanel {
 
   private setExportButtonsDisabled(disabled: boolean): void {
     for (const button of this.exportButtons) button.disabled = disabled;
-    for (const button of this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill, .bsp-theme-option")) {
+    for (const button of this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill")) {
       if (disabled) button.disabled = true;
     }
   }
@@ -485,12 +408,7 @@ export class SharePanel {
 
   private async posterPngDataUrl(): Promise<string> {
     if (!this.poster || !this.model) throw new Error("海报预览尚未生成");
-    const sourceWidth = this.poster.offsetWidth;
-    const sourceHeight = this.poster.offsetHeight;
-    const sourcePixelRatio = this.model.dimensions.width / sourceWidth;
-    if (Math.round(sourceHeight * sourcePixelRatio) !== this.model.dimensions.height) throw new Error("海报画布比例不一致");
-    const backgroundColor = this.model.theme === "B" ? "#000000" : "#f7f5f0";
-    return toPng(this.poster, { width: sourceWidth, height: sourceHeight, pixelRatio: sourcePixelRatio, cacheBust: false, backgroundColor, style: { transform: "none" } });
+    return exportPosterPng(this.poster);
   }
 
   private async copyPoster(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
