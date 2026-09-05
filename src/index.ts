@@ -16,6 +16,7 @@ function installStyles(): void {
 }
 
 function openPanel(): void {
+  if (activePanel && !activePanel.matchesCurrentPage()) activePanel.close(false);
   if (activePanel) {
     activePanel.focus();
     return;

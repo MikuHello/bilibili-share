@@ -36,6 +36,7 @@ export class SharePanel {
   private readonly panel = element("section", "bsp-panel");
   private readonly previewPane = element("div", "bsp-preview-pane");
   private readonly controls = element("div", "bsp-controls");
+  private readonly openedIdentity = readPageIdentity();
   private capture: PlaybackCapture | null = null;
   private snapshot: GenerationSnapshot | null = null;
   private model: SharePoster | null = null;
@@ -97,9 +98,16 @@ export class SharePanel {
   }
 
   matchesCurrentPage(): boolean {
-    if (!this.capture) return true;
+    const identity = this.capture ?? this.openedIdentity;
     const current = readPageIdentity();
-    return Boolean(current && current.bvid.toUpperCase() === this.capture.bvid.toUpperCase() && current.partNumber === this.capture.partNumber);
+    return Boolean(current && identity && current.bvid.toUpperCase() === identity.bvid.toUpperCase() && current.partNumber === identity.partNumber);
+  }
+
+  private hasCurrentContext(): boolean {
+    if (this.closed) return false;
+    if (this.matchesCurrentPage()) return true;
+    this.close(false);
+    return false;
   }
 
   close(restore: boolean): void {
@@ -111,12 +119,10 @@ export class SharePanel {
     document.removeEventListener("focusin", this.onFocusIn, true);
     this.backdrop.classList.add("bsp-backdrop-closing");
     this.panel.classList.add("bsp-panel-closing");
-    window.setTimeout(() => {
-      this.backdrop.remove();
-      if (restore && this.capture) restorePlayback(this.capture);
-      this.onClosed();
-      if (restore) document.getElementById("bsp-entry")?.focus({ preventScroll: true });
-    }, motionDelay(MOTION.fast));
+    if (restore && this.capture) restorePlayback(this.capture);
+    this.onClosed();
+    if (restore) document.getElementById("bsp-entry")?.focus({ preventScroll: true });
+    window.setTimeout(() => this.backdrop.remove(), motionDelay(MOTION.fast));
   }
 
   private onFocusIn(event: FocusEvent): void {
@@ -156,6 +162,7 @@ export class SharePanel {
   }
 
   private async captureThenLoad(): Promise<void> {
+    if (!this.hasCurrentContext()) return;
     try {
       this.capture = captureAndPausePlayback();
     } catch (error) {
@@ -166,7 +173,7 @@ export class SharePanel {
   }
 
   private async loadSnapshot(): Promise<void> {
-    if (!this.capture || this.loading) return;
+    if (!this.hasCurrentContext() || !this.capture || this.loading) return;
     this.loading = true;
     try {
       const snapshot = await fetchGenerationSnapshot(this.capture);
@@ -360,7 +367,7 @@ export class SharePanel {
   }
 
   private applyOptions(next: ShareOptions): void {
-    if (!this.snapshot || this.updating || this.exporting) return;
+    if (!this.hasCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
     const previous = this.options;
     const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
     const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
@@ -448,7 +455,7 @@ export class SharePanel {
 
   /** Keep the chosen output stable through asynchronous encoding and clipboard writes. */
   private beginExport(): (() => void) | null {
-    if (this.closed || this.loading || this.updating || this.exporting) return null;
+    if (!this.hasCurrentContext() || this.loading || this.updating || this.exporting) return null;
     this.exporting = true;
     const controls = new Set<HTMLButtonElement | HTMLInputElement>([
       ...this.exportButtons,
