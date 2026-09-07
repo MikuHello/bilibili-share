@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { browserRuntime, productionBundle, openFixture } from './browser-test-support.mjs';
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
-const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket05/panel';
+const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket06/panel';
 await mkdir(out,{recursive:true});
 const browser = await chromium.launch({headless:true});
 const results = [];
@@ -29,8 +29,8 @@ try {
   });
   assert.equal(layout.headingSize,'16px');
   assert.ok(Math.abs(layout.heading.x+layout.heading.width/2-(layout.panel.x+layout.panel.width/2))<1);
-  assert.ok(layout.download.top>layout.preview.bottom);
-  assert.ok(Math.abs(layout.download.x+layout.download.width/2-(layout.preview.x+layout.preview.width/2))<1);
+  assert.ok(layout.download.right < layout.copy.left);
+  assert.ok(Math.abs(layout.download.top-layout.copy.top)<1);
   await page.screenshot({animations:'disabled',path:`${out}/desktop-light.png`});
   await dialog.screenshot({animations:'disabled',path:`${out}/dialog-light.png`});
   results.push({case:'desktop-layout',layout});
@@ -57,12 +57,33 @@ try {
   }
   results.push({case:'keyboard-and-three-close-paths',passed:true});
 
+  // Results float without moving the panel or any export control.
+  const boxes = () => page.evaluate(() => [...document.querySelectorAll('.bsp-panel,.bsp-actions button,.bsp-text-copy-actions button')].map(n=>n.getBoundingClientRect().toJSON()));
+  await page.waitForTimeout(300);
+  const beforeFeedback = await boxes();
+  await plain.click();
+  await page.getByRole('status').filter({hasText:'普通文案已复制'}).waitFor();
+  assert.deepEqual(await boxes(), beforeFeedback);
+  const feedbackStyle = await page.locator('.bsp-status').evaluate(n=>({position:getComputedStyle(n).position,transition:getComputedStyle(n).transitionDuration}));
+  assert.equal(feedbackStyle.position,'absolute');
+  assert.ok(feedbackStyle.transition.split(',').every(v=>parseFloat(v)<=0.12));
+  await markdown.click();
+  await page.getByRole('status').filter({hasText:'Markdown已复制'}).waitFor();
+  await page.locator('.bsp-status.is-show').waitFor({state:'hidden',timeout:4500});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.ok((await page.locator('.bsp-status').evaluate(n=>getComputedStyle(n).transitionDuration)).split(',').every(v=>parseFloat(v)===0));
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  results.push({case:'floating-feedback-stable-layout-replacement-dismiss-reduced-motion',passed:true});
+
   // Failure feedback keeps the preview usable and exposes the appropriate fallback.
   await page.evaluate(()=>{window.fixture.clipboardFailed=true});
   await page.getByRole('button',{name:'复制海报',exact:true}).click();
   await page.getByRole('status').filter({hasText:'海报复制失败'}).waitFor();
   assert.match(await page.getByRole('status').filter({hasText:'海报复制失败'}).textContent(),/下载/);
   assert.equal(await page.locator('.bsp-poster').count(),1);
+  await page.waitForTimeout(3100);
+  assert.equal(await page.getByRole('status').filter({hasText:'海报复制失败'}).isVisible(),true);
+  assert.deepEqual(await boxes(), beforeFeedback);
   await page.evaluate(()=>{window.fixture.clipboardFailed=false});
   results.push({case:'image-failure-download-recovery',passed:true});
 

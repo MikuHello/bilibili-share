@@ -255,13 +255,9 @@ export class SharePanel {
     textSection.append(textOptions);
 
     const actions = element("div", "bsp-actions");
-    actions.append(copy);
+    actions.append(download, copy);
     const actionGroup = element("div", "bsp-action-group");
     actionGroup.append(actions, status);
-    const downloadArea = element("div", "bsp-preview-download");
-    downloadArea.append(download);
-    this.previewPane.querySelector(".bsp-preview-download")?.remove();
-    this.previewPane.append(downloadArea);
     this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
   }
 
