@@ -5,7 +5,7 @@ import { browserRuntime, productionBundle, openFixture } from './browser-test-su
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 try {
-  const output = '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04';
+  const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04';
   await mkdir(output, {recursive:true});
   const bundle = await productionBundle();
   const {page,context,errors} = await openFixture(browser, bundle);
@@ -63,8 +63,7 @@ try {
   await page.evaluate(()=>window.openFixturePanel());
   await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   await expectPalette('rgb(36, 38, 43)');
-  await mkdir('.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04',{recursive:true});
-  await dialog.screenshot({path:'.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04/dialog-dark.png',animations:'disabled'});
+  await dialog.screenshot({path:`${output}/dialog-dark.png`,animations:'disabled'});
   assert.deepEqual(errors, []);
   await context.close();
   const firstUnknown = await openFixture(browser, 'document.body.style.background="transparent";'+bundle, {context:{colorScheme:'dark'}});
@@ -73,6 +72,6 @@ try {
   assert.equal(await firstUnknown.page.getByRole('dialog').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)','first unknown is light despite system dark');
   assert.deepEqual(firstUnknown.errors,[]);
   await firstUnknown.context.close();
-  await writeFile('.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04/verification.md', `# Ticket 04 controlled browser verification\n\nBrowser: ${browser.version()}. Production bundle with controlled page/GM ports.\n\nPASS: initial dark, live light/dark, unknown retains last known, first unknown light despite system dark, modern oklab background, event payload ignored, poster DOM/palette and PNG cache unchanged, host h2/h3 interference corrected, 320/390px no dialog horizontal overflow, keyboard focus outline and Escape return, 28px entry/icon with 13px/28px text, native borderless entry remount, official share retained and menu fallback.\n\nThis script does not operate actual BewlyCat settings or validate userscript-manager installation. Live dark-page before/after candidate CSS observations are recorded separately in live-observations.md.\n`);
+  await writeFile(`${output}/browser-verification.md`, `# Ticket 04 controlled browser verification\n\nBrowser: ${browser.version()}. Production bundle with controlled page/GM ports.\n\nPASS: initial dark, live light/dark, unknown retains last known, first unknown light despite system dark, modern oklab background, event payload ignored, poster DOM/palette and PNG cache unchanged, host h2/h3 interference corrected, 320/390px no dialog horizontal overflow, keyboard focus outline and Escape return, 28px entry/icon with 13px/28px text, native borderless entry remount, official share retained and menu fallback.\n\nThis script does not operate actual BewlyCat settings or validate userscript-manager installation. Live dark-page before/after candidate CSS observations are recorded separately in live-observations.md.\n`);
   console.log('PASS appearance, fixed poster, native entry and fallback scenarios');
 } finally { await browser.close(); }

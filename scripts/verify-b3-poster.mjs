@@ -6,7 +6,8 @@ const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
 const backgrounds = [];
-const output = '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02';
+const covers = '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02/covers';
+const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02';
 await mkdir(output, { recursive:true });
 const results = [];
 async function verifyPoster(name, overrides) {
@@ -86,10 +87,10 @@ try {
   await verifyPoster('unit-boundaries',{title:titles.long,stats:{view:99999999,like:999999999999,coin:Number.MAX_VALUE,favorite:99999999999}});
   await verifyPoster('missing-and-zero',{stats:{view:0,like:null,coin:null,favorite:9999}});
   await verifyPoster('long-target',{markers:true,time:123456789,title:titles.extreme});
-  for(const source of JSON.parse(await readFile(`${output}/covers/sources.json`,'utf8'))) {
+  for(const source of JSON.parse(await readFile(`${covers}/sources.json`,'utf8'))) {
     if(source.error) throw Error(source.error);
     if(source.excluded) continue;
-    await verifyPoster(`real-${source.bvid}`,{title:source.title,coverBase64:(await readFile(`${output}/covers/${source.bvid}.jpg`)).toString('base64')});
+    await verifyPoster(`real-${source.bvid}`,{title:source.title,coverBase64:(await readFile(`${covers}/${source.bvid}.jpg`)).toString('base64')});
   }
   await captureBackground('#ac3220');
   await captureBackground('#2045ac');

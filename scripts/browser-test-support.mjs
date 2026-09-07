@@ -16,6 +16,7 @@ export async function browserRuntime() {
 }
 
 export async function productionBundle() {
+  if (process.env.BSP_TEST_BUNDLE) return readFile(process.env.BSP_TEST_BUNDLE, "utf8");
   const result = await build({ entryPoints: ["src/index.ts"], bundle: true, write: false, format: "iife", target: "es2022" });
   return result.outputFiles[0].text;
 }

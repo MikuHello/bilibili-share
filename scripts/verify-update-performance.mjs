@@ -5,7 +5,7 @@ const baseline = process.argv.includes('--baseline');
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
-const output = '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket03';
+const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket03';
 await mkdir(output, { recursive: true });
 const samples = [];
 async function ready(page) {
@@ -65,6 +65,6 @@ try {
     await context.close();
   }
 } finally {
-  await writeFile(`${output}/${baseline ? 'before' : 'after'}.json`, JSON.stringify({ browser: browser.version(), environment: 'Headless Chromium; production source bundle; GM fixtures with 40ms per metadata/cover request; clipboard recorder; Playwright action/wait overhead included; not installed-script or live-network latency.', samples }, null, 2));
+  await writeFile(`${output}/${baseline ? 'before' : 'after'}.json`, JSON.stringify({ browser: browser.version(), environment: 'Headless Chromium; production bundle; GM fixtures with 40ms per metadata/cover request; clipboard recorder; Playwright action/wait overhead included; not installed-script or live-network latency.', samples }, null, 2));
   await browser.close();
 }

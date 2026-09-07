@@ -29,10 +29,10 @@ npm run build
 - Maintained TypeScript source: [`src/`](src/)
 - Node behavior tests: [`tests/`](tests/)
 - Directly installable build: [`dist/bilibili-share-poster.user.js`](dist/bilibili-share-poster.user.js)
-- Product source: [approved redesign idea](.scratch/bilibili-share-poster/redesign/idea.md)
-- Approved implementation spec: [redesign spec](.scratch/bilibili-share-poster/redesign/spec.md)
+- Product source: [refinement idea](.scratch/bilibili-share-poster/usage-refinement/idea.md)
+- Approved implementation spec: [refinement spec](.scratch/bilibili-share-poster/usage-refinement/spec.md)
 - Matt workflow: [`docs/agents/skills.md`](docs/agents/skills.md)
 
 ## Browser verification
 
-Install Playwright separately in the test environment, or set `BSP_PLAYWRIGHT_MODULE` to an existing Playwright module entry point, then run `npm run test:browser`. The suites exercise the production bundle with controlled GM/network and player boundaries; clipboard success checks additionally use the actual Chromium clipboard. They do not substitute for Tampermonkey installation verification. On macOS, the QR checks use the native Vision decoder.
+Install Playwright separately in the test environment, or set `BSP_PLAYWRIGHT_MODULE` to an existing Playwright module entry point, then run `npm run test:browser`. The runner builds and exercises the exact distributable bundle with controlled GM/network and player boundaries; clipboard success checks additionally use the actual Chromium clipboard. They do not substitute for Tampermonkey installation verification. On macOS, the QR checks use the native Vision decoder.
