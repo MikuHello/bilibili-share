@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** complete
+**Status:** reopened
 
 - [x] 明确面板标题/正文/图标/背景/控件语义颜色，验证宿主标题覆盖情形，不再出现深底黑字。
 - [x] 遵循既有有效页面模式初始化与切换，未知信号保持已知模式；支持既有标准页/BewlyCat边界。
@@ -30,3 +30,7 @@ Verification: [controlled browser + live CSS observations](../evidence/ticket04/
 事实源spec.md末尾确认与entry-icon-polish/idea.md；原型codex/entry-icon-prototype。
 
 0.3.3完成证据：[统一验收](../entry-icon-polish/evidence/final/verification.md)。实际安装后的GM通道验证仍待主人升级；不以受控验证替代。
+
+## 0.3.4 follow-up
+
+- [ ] Apply approved local correction from spec.md final appendix; verify and review before unified delivery.

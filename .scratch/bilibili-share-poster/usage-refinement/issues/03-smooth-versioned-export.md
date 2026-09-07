@@ -4,7 +4,7 @@
 
 **Blocked by:** 01、02
 
-**Status:** done
+**Status:** reopened
 
 - [x] 稳定保留面板控件，详情仅更新文案；目标变化缩小更新范围，封面/静态排版在允许时复用。
 - [x] 删除人为140ms串行等待，不以动画完成作为恢复动作前置；选项即时反馈，未完成期间不开放混合状态导出。
@@ -22,3 +22,7 @@
 - 遇到已授权的常规实现选择继续推进；新的产品取舍或不能自行解决的外部阻塞明确记录，不擅自扩展范围。
 
 Evidence: [ticket03 verification](../evidence/ticket03/verification.md).
+
+## 0.3.4 follow-up
+
+- [ ] Apply approved local correction from spec.md final appendix; verify and review before unified delivery.

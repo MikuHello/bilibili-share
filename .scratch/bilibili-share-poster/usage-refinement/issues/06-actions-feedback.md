@@ -4,7 +4,7 @@
 
 **Blocked by:** 04、05
 
-**Status:** done — 0.3.2 B局部收尾已验证交付
+**Status:** reopened — 0.3.2 B局部收尾已验证交付
 
 - [x] 下载PNG图标在蓝色复制海报左侧；根据05实际组合动作去留自然布局，不保留空槽或原型演示说明。
 - [x] 操作反馈使用不占布局浮层，约120ms短过渡且不阻塞动作；支持减少动态效果，不遮挡关键控件。
@@ -32,3 +32,7 @@
 设计档案`codex/text-panel-prototype`，B已确认；事实源为spec.md本轮补充及text-panel-polish/idea.md中的主人直接指示。沿用当前已批准工单的fresh implement流程，不再询问已确认布局，也不恢复主人暂停的复制故障排查。
 
 0.3.2实现38ced25，构建f895e7c；[本轮验证与双轴审阅](../text-panel-polish/evidence/verification.md)，64单元测试、9浏览器套件和28PNG扫码通过。
+
+## 0.3.4 follow-up
+
+- [ ] Apply approved local correction from spec.md final appendix; verify and review before unified delivery.
