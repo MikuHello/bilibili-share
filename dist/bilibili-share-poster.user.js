@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.3.3
+// @version      0.3.4
 // @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -2478,7 +2478,7 @@
     button.id = ENTRY_ID;
     button.type = "button";
     button.title = "\u751F\u6210\u5206\u4EAB\u6D77\u62A5";
-    button.append(posterIcon(), document.createTextNode("\u751F\u6210\u6D77\u62A5"));
+    button.append(posterIcon(), document.createTextNode("\u5206\u4EAB\u6D77\u62A5"));
     button.addEventListener("click", onOpen);
     button.classList.toggle("bsp-entry-dark", appearance === "dark");
     return button;
@@ -2786,7 +2786,7 @@ ${shareTarget}`;
   }
 
   // src/ui/motion.ts
-  var MOTION = { fast: 160, backdrop: 200, open: 240, color: 180, overlay: 140 };
+  var MOTION = { fast: 160, backdrop: 200, open: 240, color: 180 };
   function motionDelay(duration) {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duration;
   }
@@ -2796,7 +2796,6 @@ ${shareTarget}`;
   --bsp-motion-backdrop:${MOTION.backdrop}ms;
   --bsp-motion-open:${MOTION.open}ms;
   --bsp-motion-color:${MOTION.color}ms;
-  --bsp-motion-overlay:${MOTION.overlay}ms;
   --bsp-ease-out:cubic-bezier(.22,.61,.36,1);
   --bsp-ease-in-out:cubic-bezier(.4,0,.2,1);
 }
@@ -3802,8 +3801,8 @@ ${shareTarget}`;
     return poster;
   }
   async function createPosterQr(target) {
-    const data = await import_qrcode.default.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
-    return image("bsp-d-qr-image", data, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
+    const markup = await import_qrcode.default.toString(target, { type: "svg", width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
+    return image("bsp-d-qr-image", `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
   }
   async function updatePosterTarget(poster, target, isCurrent) {
     const qr = await createPosterQr(target);
@@ -4048,7 +4047,7 @@ ${shareTarget}`;
       const textSection = this.renderTextPreview(shareText);
       const textHeading = element("div", "bsp-section-heading");
       const textActions = element("div", "bsp-text-copy-actions");
-      textActions.append(copyText2, copyMarkdown);
+      textActions.append(copyMarkdown);
       textHeading.append(element("h3", "", "\u5206\u4EAB\u6587\u6848"), textActions);
       textSection.prepend(textHeading);
       const detail = element("input");
@@ -4062,7 +4061,7 @@ ${shareTarget}`;
       textOptions.append(detailLabel);
       textSection.append(textOptions);
       const actions = element("div", "bsp-actions");
-      actions.append(download, copy);
+      actions.append(download, copy, copyText2);
       const actionGroup = element("div", "bsp-action-group");
       actionGroup.append(actions, status);
       this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
@@ -4212,7 +4211,6 @@ ${shareTarget}`;
       const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;
       this.updating = true;
       this.setExportButtonsDisabled(true);
-      this.showUpdatingOverlay();
       try {
         const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
         const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
@@ -4226,7 +4224,6 @@ ${shareTarget}`;
       } finally {
         if (isCurrent()) {
           this.updating = false;
-          this.previewPane.querySelector(".bsp-poster-updating")?.remove();
           this.setExportButtonsDisabled(false);
         }
       }
@@ -4236,11 +4233,6 @@ ${shareTarget}`;
         button.disabled = disabled || requiresPoster && !this.poster;
       }
       for (const button of this.previewPane.querySelectorAll("button:not(.bsp-download)")) button.disabled = disabled;
-    }
-    showUpdatingOverlay() {
-      const frame = this.previewPane.querySelector(".bsp-preview-frame");
-      if (!frame || frame.querySelector(".bsp-poster-updating")) return;
-      frame.append(element("div", "bsp-poster-updating", "\u6B63\u5728\u66F4\u65B0\u6807\u8BB0"));
     }
     renderError(error, retryCapture) {
       const message = error instanceof Error ? error.message : "\u751F\u6210\u6D77\u62A5\u65F6\u53D1\u751F\u672A\u77E5\u9519\u8BEF\u3002";
@@ -4394,8 +4386,6 @@ ${MOTION_STYLES}
 .bsp-status{position:fixed;z-index:3;bottom:24px;left:50%;width:min(420px,calc(100vw - 40px));margin:0;padding:9px 12px;border:1px solid var(--bsp-line);border-radius:6px;background:var(--bsp-surface);box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;color:var(--bsp-text);overflow-wrap:anywhere;pointer-events:none;opacity:0;visibility:hidden;transform:translate(-50%,4px);transition:opacity 120ms,transform 120ms,visibility 120ms}.bsp-status.is-show{opacity:1;visibility:visible;transform:translate(-50%,0)}.bsp-status.is-error{color:var(--bsp-error)}
 .bsp-loading-card{width:100%;max-width:380px;aspect-ratio:3/4;position:relative;margin:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#eef4f1;color:#405e65;font-size:14px;text-align:center}
 .bsp-loading-card p{margin:0}.bsp-panel .bsp-loading-card button{font-size:13px;background:#f9fbfa;border-color:#adc2c2;color:#405e65}
-.bsp-poster-updating{position:absolute;inset:0;z-index:2;background:#eef4f1b8;display:grid;place-items:center;color:#405e65;font-size:14px;transition:opacity var(--bsp-motion-overlay)}
-.bsp-poster-updating.is-leaving{opacity:0}
 .bsp-spinner{width:22px;height:22px;border:2px solid #b8c9ca;border-top-color:#405e65;border-radius:50%;animation:bsp-spin 1s linear infinite}
 .bsp-error{font-size:13px;color:var(--bsp-error);line-height:1.7;margin:0}.bsp-help{font-size:12px;color:var(--bsp-muted);line-height:1.7;margin:0}
 .bsp-manual-copy{width:100%;padding:12px;background:var(--bsp-soft);color:var(--bsp-text);border:1px solid var(--bsp-line);border-radius:6px;resize:vertical;font-size:13px!important}
