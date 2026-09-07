@@ -50,7 +50,7 @@ export class SharePanel {
   private markdownText = "";
   private exportButtons: { button: HTMLButtonElement; requiresPoster: boolean }[] = [];
   private statusTimer = 0;
-  private readonly previewObserver = new ResizeObserver(() => this.fitPoster());
+  private readonly previewObserver = new ResizeObserver(() => { this.fitPoster(); this.positionStatus(); });
   private readonly onClosed: () => void;
 
   setAppearance(appearance: PageAppearance): void {
@@ -91,6 +91,9 @@ export class SharePanel {
     this.options = createPanelShareOptions(loadRememberedPreferences());
     document.body.append(this.backdrop);
     this.previewObserver.observe(this.previewPane);
+    this.previewObserver.observe(this.controls);
+    this.backdrop.addEventListener("scroll", this.positionStatus, true);
+    window.addEventListener("resize", this.positionStatus);
     document.addEventListener("keydown", this.onKeyDown, true);
     document.addEventListener("focusin", this.onFocusIn, true);
     this.renderLoading();
@@ -124,6 +127,8 @@ export class SharePanel {
     this.poster = null;
     clearTimeout(this.statusTimer);
     this.previewObserver.disconnect();
+    this.backdrop.removeEventListener("scroll", this.positionStatus, true);
+    window.removeEventListener("resize", this.positionStatus);
     document.removeEventListener("keydown", this.onKeyDown, true);
     document.removeEventListener("focusin", this.onFocusIn, true);
     this.backdrop.inert = true;
@@ -324,6 +329,24 @@ export class SharePanel {
     status.classList.remove("is-show", "is-error");
   }
 
+  // Prefer the viewport bottom, moving upward only to clear visible controls.
+  private readonly positionStatus = (): void => {
+    const status = this.controls.querySelector<HTMLElement>(".bsp-status.is-show");
+    if (!status) return;
+    const height = status.offsetHeight;
+    const left = (window.innerWidth - status.offsetWidth) / 2;
+    const right = left + status.offsetWidth;
+    let bottom = window.innerHeight - 24;
+    const controls = [...this.panel.querySelectorAll("button,label,a,textarea")]
+      .map(node => node.getBoundingClientRect())
+      .filter(rect => rect.width > 0 && rect.height > 0 && rect.right > left && rect.left < right)
+      .sort((a, b) => b.bottom - a.bottom);
+    for (const rect of controls) {
+      if (bottom > rect.top - 8 && bottom - height < rect.bottom + 8) bottom = rect.top - 8;
+    }
+    status.style.bottom = `${window.innerHeight - Math.max(height + 8, bottom)}px`;
+  };
+
   private showStatus(message: string, error = false): void {
     if (!this.ensureCurrentContext()) return;
     const status = this.controls.querySelector<HTMLElement>(".bsp-status");
@@ -332,6 +355,7 @@ export class SharePanel {
     status.textContent = message.replace(/。$/u, "");
     status.classList.toggle("is-error", error);
     status.classList.add("is-show");
+    this.positionStatus();
     const delay = statusDismissDelay(error);
     if (delay !== null) this.statusTimer = window.setTimeout(() => status.classList.remove("is-show"), delay);
   }

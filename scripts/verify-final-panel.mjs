@@ -31,6 +31,18 @@ try {
   assert.ok(Math.abs(layout.heading.x+layout.heading.width/2-(layout.panel.x+layout.panel.width/2))<1);
   assert.ok(layout.download.right < layout.copy.left);
   assert.ok(Math.abs(layout.download.top-layout.copy.top)<1);
+  await page.waitForTimeout(300);
+  const compact = await page.evaluate(() => {
+    const box = s => document.querySelector(s).getBoundingClientRect().toJSON();
+    return {text:box('.bsp-text-content'),options:box('.bsp-options'),detail:box('.bsp-text-options'),actions:box('.bsp-actions'),preview:box('.bsp-preview-frame')};
+  });
+  assert.ok(compact.text.height < 170, 'short share text uses its natural height');
+  assert.ok(Math.abs(compact.actions.top-compact.detail.bottom-20)<1, 'actions directly follow the text group');
+  assert.ok(Math.abs((compact.options.top+compact.actions.bottom)/2-(compact.preview.top+compact.preview.bottom)/2)<1, 'right-side content is centered beside the poster');
+  await detail.check();
+  const expandedHeight = await page.getByLabel('分享文案预览',{exact:true}).evaluate(n=>n.getBoundingClientRect().height);
+  assert.ok(expandedHeight > compact.text.height && expandedHeight <= 310);
+  await detail.uncheck();
   await page.screenshot({animations:'disabled',path:`${out}/desktop-light.png`});
   await dialog.screenshot({animations:'disabled',path:`${out}/dialog-light.png`});
   results.push({case:'desktop-layout',layout});
@@ -65,7 +77,7 @@ try {
   await page.getByRole('status').filter({hasText:'普通文案已复制'}).waitFor();
   assert.deepEqual(await boxes(), beforeFeedback);
   const feedbackStyle = await page.locator('.bsp-status').evaluate(n=>({position:getComputedStyle(n).position,transition:getComputedStyle(n).transitionDuration}));
-  assert.equal(feedbackStyle.position,'absolute');
+  assert.equal(feedbackStyle.position,'fixed');
   assert.ok(feedbackStyle.transition.split(',').every(v=>parseFloat(v)<=0.12));
   await markdown.click();
   await page.getByRole('status').filter({hasText:'Markdown已复制'}).waitFor();
@@ -91,6 +103,15 @@ try {
     await page.setViewportSize({width,height:740});
     for(const control of [download,plain,markdown,detail,copy]) { await control.scrollIntoViewIfNeeded(); assert.equal(await control.isVisible(),true); }
     await copy.click();
+    await page.getByRole('status').filter({hasText:'海报已复制'}).waitFor();
+    await page.waitForTimeout(150);
+    const overlaps = await page.locator('.bsp-status').evaluate(n=> {
+      const a=n.getBoundingClientRect();
+      return [...document.querySelectorAll('.bsp-panel button,.bsp-panel input,.bsp-panel a')].filter(c=> {
+        const b=c.getBoundingClientRect();return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+      }).map(c=>c.getAttribute('aria-label')||c.textContent);
+    });
+    assert.deepEqual(overlaps,[], 'floating feedback leaves key controls unobscured');
     assert.equal(await page.evaluate(()=>document.querySelector('.bsp-panel').scrollWidth<=document.querySelector('.bsp-panel').clientWidth+1),true);
     await page.screenshot({animations:'disabled',path:`${out}/narrow-${width}-actions.png`});
     await download.scrollIntoViewIfNeeded();
