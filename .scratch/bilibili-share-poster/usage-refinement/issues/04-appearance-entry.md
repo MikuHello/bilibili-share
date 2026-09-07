@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** done
+**Status:** reopened — 已确认B实心入口局部收尾
 
 - [x] 明确面板标题/正文/图标/背景/控件语义颜色，验证宿主标题覆盖情形，不再出现深底黑字。
 - [x] 遵循既有有效页面模式初始化与切换，未知信号保持已知模式；支持既有标准页/BewlyCat边界。
@@ -21,3 +21,10 @@
 - 遇到已授权的常规实现选择继续推进；新的产品取舍或不能自行解决的外部阻塞明确记录，不擅自扩展范围。
 
 Verification: [controlled browser + live CSS observations](../evidence/ticket04/verification.md). Code commit `86f2d2e`; full installed-candidate verification remains ticket07.
+
+## 实心入口B收尾
+
+- [ ] 按主人已选择B替换入口图形，保留原生工具栏位置/尺寸/颜色与交互。
+- [ ] 浏览器核对浅深与原生行对齐、键盘及SPA重挂载；代码审阅后与复制修复统一交付0.3.3。
+
+事实源spec.md末尾确认与entry-icon-polish/idea.md；原型codex/entry-icon-prototype。
