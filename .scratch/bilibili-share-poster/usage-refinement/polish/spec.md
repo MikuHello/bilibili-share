@@ -1,6 +1,6 @@
 # B3局部收尾 · 实现规格
 
-Status: awaiting-approval — 视觉已批准，实现规格待审阅
+Status: approved — 主人批准实现规格及单票安排，工单已发布
 
 Triage: ready-for-agent；仅表示规格可供实施评议，不越过批准门禁。
 
@@ -58,3 +58,5 @@ Triage: ready-for-agent；仅表示规格可供实施评议，不越过批准门
 设计和诊断见[需求记录](idea.md)；原型档案在`codex/b3-detail-prototype`，预览地址为`http://127.0.0.1:8777/?variant=B&revision=2`。
 
 建议以一张“B3局部收尾与0.3.1交付”工单实施。这些变化共用信息区布局及同一套导出验证，拆成多票不会形成有意义的独立交付。规格批准后发布单票，fresh implement、TDD和双轴审阅后统一交付。
+
+主人回复“批准”，确认上述实现规格和单票安排。正式工单：[01 — B3局部收尾与0.3.1交付](issues/01-b3-polish-delivery.md)。
