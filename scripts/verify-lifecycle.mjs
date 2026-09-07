@@ -54,7 +54,13 @@ try {
       await p.getByRole("button", { name: "重试", exact: true }).click();
     } else if (phase === "target") {
       await p.getByRole("button", { name: "复制文案", exact: true }).waitFor();
-      await p.evaluate(() => { window.fixture.targetDelay = 500; });
+      await p.evaluate(() => {
+        const decode = HTMLImageElement.prototype.decode;
+        HTMLImageElement.prototype.decode = async function () {
+          await decode.call(this);
+          if (this.alt.startsWith("二维码：")) await new Promise(resolve => setTimeout(resolve, 500));
+        };
+      });
       await p.getByRole("button", { name: "标记当前时间", exact: true }).click();
     }
     await p.evaluate(() => {

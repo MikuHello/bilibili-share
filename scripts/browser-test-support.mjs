@@ -31,7 +31,7 @@ export async function openFixture(browser, bundle, overrides = {}) {
   await page.evaluate(({ coverBase64, overrides }) => {
     window.fixture = {
       coverFailed: false, metadataFailed: false, clipboardFailed: false,
-      combinedFailed: false, delay: 0, targetDelay: 0, shortLink: false,
+      combinedFailed: false, delay: 0,
       requests: [], copiedText: [], copiedTypes: [], preferences: {},
       paused: true, time: 83.9, playCount: 0, pauseCount: 0,
       title: "35min 正念冥想｜把身体作为方法｜从内耗到感受｜此时此地此身｜聆听身体｜回归当下",
@@ -63,12 +63,8 @@ export async function openFixture(browser, bundle, overrides = {}) {
           if (f.coverFailed) { details.onerror({ error: "Controlled cover failure" }); return; }
           const bytes = Uint8Array.from(atob(f.coverBase64 ?? coverBase64), c => c.charCodeAt(0));
           details.onload({ status: 200, response: new Blob([bytes], { type: f.coverMime ?? "image/jpeg" }) });
-        } else if (url.pathname === "/x/share/click") {
-          details.onload({ status: 200, responseText: JSON.stringify(f.shortLink ? { code: 0, data: { content: "https://b23.tv/BspDemo" } } : { code: -1 }) });
-        } else if (url.hostname === "b23.tv") {
-          details.onload({ status: 200, finalUrl: f.resolvedUrl ?? "https://www.bilibili.com/video/BV1TXoWBsEGc/" });
         } else { details.onerror({ error: "Unexpected fixture request" }); }
-      }, url.pathname === "/x/share/click" ? f.targetDelay : f.delay);
+      }, f.delay);
       return { abort: () => clearTimeout(timer) };
     };
     if (!f.realClipboard) Object.defineProperty(navigator, "clipboard", { value: {

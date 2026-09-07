@@ -151,8 +151,7 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
   signature.append(author, stats);
   const qr = element("div", "bsp-d-qr");
   const frame = element("div", "bsp-d-qr-frame");
-  const qrData = await QRCode.toDataURL(model.shareTarget, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
-  frame.append(image("bsp-d-qr-image", qrData, `二维码：${model.shareTarget}`));
+  frame.append(await createPosterQr(model.shareTarget));
   qr.append(frame, element("div", "bsp-d-qr-caption", "扫码观看"));
   footer.append(signature, qr);
   const linkFooter = element("div", "bsp-d-link-footer");
@@ -164,7 +163,38 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
   return poster;
 }
 
-/** Export the exact measured preview layout without its display transform. */
-export function exportPosterPng(poster: HTMLElement): Promise<string> {
-  return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, style: { transform: "none" } });
+async function createPosterQr(target: string): Promise<HTMLImageElement> {
+  const data = await QRCode.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  return image("bsp-d-qr-image", data, `二维码：${target}`);
+}
+
+/** Prepare offscreen, then atomically replace only the target-dependent content. */
+export async function updatePosterTarget(poster: HTMLElement, target: string, isCurrent: () => boolean): Promise<void> {
+  const qr = await createPosterQr(target);
+  await qr.decode();
+  if (!isCurrent()) return;
+  poster.querySelector(".bsp-d-qr-frame")!.replaceChildren(qr);
+  poster.querySelector(".bsp-d-link")!.textContent = target;
+  exports.delete(poster);
+}
+
+// Poster identity owns cover/layout; target changes invalidate this entry explicitly.
+// Font availability may change without changing either the snapshot or its DOM.
+let fontVersion = 0;
+document.fonts.addEventListener("loadingdone", () => { fontVersion++; });
+document.fonts.addEventListener("loadingerror", () => { fontVersion++; });
+const exports = new WeakMap<HTMLElement, { fontVersion: number; png: Promise<string> }>();
+
+/** Export the exact measured preview, reusing encoding work for its current version. */
+export async function exportPosterPng(poster: HTMLElement): Promise<string> {
+  await document.fonts.ready;
+  let cached = exports.get(poster);
+  if (!cached || cached.fontVersion !== fontVersion) {
+    const png = toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, style: { transform: "none" } });
+    cached = { fontVersion, png };
+    exports.set(poster, cached);
+    const entry = cached;
+    void png.catch(() => { if (exports.get(poster) === entry) exports.delete(poster); });
+  }
+  return cached.png;
 }

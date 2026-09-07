@@ -30,7 +30,7 @@ import { element } from "./dom";
 import { statusDismissDelay } from "./feedback";
 import { MOTION, motionDelay } from "./motion";
 import { createIcon, type IconName } from "./icons";
-import { createPoster, exportPosterPng } from "./posters";
+import { createPoster, exportPosterPng, updatePosterTarget } from "./posters";
 export class SharePanel {
   private readonly backdrop = element("div", "bsp-backdrop");
   private readonly panel = element("section", "bsp-panel");
@@ -47,7 +47,10 @@ export class SharePanel {
   private loading = false;
   private updating = false;
   private exporting = false;
-  private exportButtons: HTMLButtonElement[] = [];
+  private targetVersion = 0;
+  private shareText = "";
+  private markdownText = "";
+  private exportButtons: { button: HTMLButtonElement; requiresPoster: boolean }[] = [];
   private statusTimer = 0;
   private readonly previewObserver = new ResizeObserver(() => this.fitPoster());
   private readonly onClosed: () => void;
@@ -117,6 +120,10 @@ export class SharePanel {
   close(restore: boolean): void {
     if (this.closed) return;
     this.closed = true;
+    this.targetVersion++;
+    this.snapshot = null;
+    this.model = null;
+    this.poster = null;
     clearTimeout(this.statusTimer);
     this.previewObserver.disconnect();
     document.removeEventListener("keydown", this.onKeyDown, true);
@@ -200,9 +207,6 @@ export class SharePanel {
   }
 
   private renderReady(poster: HTMLElement | null, shareTarget: string): void {
-    const active = document.activeElement;
-    const focusName = active instanceof HTMLElement && this.panel.contains(active)
-      ? active.getAttribute("aria-label") ?? active.textContent : null;
     if (!poster) {
       const retry = element("button", "bsp-button", "重试");
       retry.type = "button";
@@ -220,18 +224,21 @@ export class SharePanel {
     if (!this.snapshot) return;
     const snapshot = this.snapshot;
     const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
-    const markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
+    this.shareText = shareText;
+    this.markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
     const status = element("p", "bsp-status");
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
     const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(status));
     const download = this.actionButton("download", "", "下载海报 PNG", false, () => void this.download(status));
     download.classList.add("bsp-download");
-    const combined = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(shareText, status));
+    const combined = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(this.shareText, status));
     combined.title = "同时提供海报与文案，接收方可能只粘贴其中一种";
-    const copyText = this.actionButton(null, "复制文案", "复制文案", false, () => void this.copyShareText(copyText, shareText, status));
-    const copyMarkdown = this.actionButton(null, "复制 Markdown", "复制 Markdown", false, () => void this.copyShareText(copyMarkdown, markdownText, status, "Markdown"));
-    this.exportButtons.push(copy, download, copyText, copyMarkdown, combined);
+    const copyText = this.actionButton(null, "复制文案", "复制文案", false, () => void this.copyShareText(copyText, this.shareText, status));
+    const copyMarkdown = this.actionButton(null, "复制 Markdown", "复制 Markdown", false, () => void this.copyShareText(copyMarkdown, this.markdownText, status, "Markdown"));
+    this.exportButtons = [copy, download, copyText, copyMarkdown, combined].map(button => ({
+      button, requiresPoster: [copy, download, combined].includes(button),
+    }));
     for (const button of [copy, download, combined]) button.disabled = !poster;
 
     const textSection = this.renderTextPreview(shareText);
@@ -260,11 +267,31 @@ export class SharePanel {
     this.previewPane.querySelector(".bsp-preview-download")?.remove();
     this.previewPane.append(downloadArea);
     this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
-    if (focusName) {
-      Array.from(this.panel.querySelectorAll<HTMLElement>("button,input,textarea,[tabindex]"))
-        .find(node => (node.getAttribute("aria-label") ?? node.textContent) === focusName)
-        ?.focus({ preventScroll: true });
-    }
+  }
+
+  private refreshText(): void {
+    if (!this.snapshot || !this.shareTarget) return;
+    this.shareText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: false });
+    this.markdownText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: true });
+    const lines = this.shareText.split("\n");
+    const link = lines.pop() ?? "";
+    const body = this.controls.querySelector(".bsp-text-card-body");
+    const address = this.controls.querySelector(".bsp-text-card-link");
+    if (body) body.textContent = lines.join("\n") + (lines.length ? "\n" : "");
+    if (address) address.textContent = link;
+    this.controls.querySelector(".bsp-manual-copy")?.remove();
+  }
+
+  private refreshOptionControls(): void {
+    if (!this.snapshot) return;
+    const pills = this.controls.querySelectorAll<HTMLButtonElement>(".bsp-option-pill");
+    const values = [this.options.partShare, this.options.timestampShare];
+    const allowed = [canEnablePartShare(this.snapshot), canEnableTimestampShare(this.snapshot)];
+    pills.forEach((button, index) => {
+      button.setAttribute("aria-pressed", String(values[index]));
+      button.classList.toggle("is-on", values[index]);
+      button.disabled = this.exporting || !allowed[index];
+    });
   }
 
   private renderTextPreview(shareText: string): HTMLElement {
@@ -306,6 +333,7 @@ export class SharePanel {
   }
 
   private showStatus(message: string, error = false): void {
+    if (!this.ensureCurrentContext()) return;
     const status = this.controls.querySelector<HTMLElement>(".bsp-status");
     if (!status) return;
     clearTimeout(this.statusTimer);
@@ -339,11 +367,11 @@ export class SharePanel {
     if (!snapshot) return container;
 
     container.append(
-      this.optionToggle("list", "标记当前分P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("list", "标记当前分P", this.options.partShare, !canEnablePartShare(snapshot), (checked) => {
         void checked;
         this.applyOptions(togglePartShare(this.options, snapshot));
       }),
-      this.optionToggle("clock", "标记当前时间", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+      this.optionToggle("clock", "标记当前时间", this.options.timestampShare, !canEnableTimestampShare(snapshot), (checked) => {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
       }),
@@ -368,18 +396,19 @@ export class SharePanel {
   }
 
   private applyOptions(next: ShareOptions): void {
-    if (!this.ensureCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
+    if (!this.ensureCurrentContext() || !this.snapshot || this.exporting) return;
     const previous = this.options;
     const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
     const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
     this.options = next;
+    this.refreshOptionControls();
     if (textChanged) this.persistPreferences();
     if (targetChanged) {
       void this.rebuildPosterForOptions();
       return;
     }
     if (textChanged && this.shareTarget) {
-      this.renderReady(this.poster, this.shareTarget);
+      this.refreshText();
     }
   }
 
@@ -391,40 +420,37 @@ export class SharePanel {
   }
 
   private async rebuildPosterForOptions(): Promise<void> {
-    if (!this.snapshot || this.updating) return;
+    if (!this.snapshot) return;
+    const version = ++this.targetVersion;
+    const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;
     this.updating = true;
     this.setExportButtonsDisabled(true);
     this.showUpdatingOverlay();
     try {
       const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
       const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
-      const poster = model ? await createPoster(model, this.snapshot) : null;
-      if (!this.ensureCurrentContext()) return;
+      if (this.poster) await updatePosterTarget(this.poster, shareTarget, isCurrent);
+      if (!isCurrent()) return;
       this.model = model;
-      this.poster = poster;
       this.shareTarget = shareTarget;
-      const overlay = this.previewPane.querySelector<HTMLElement>(".bsp-poster-updating");
-      const frame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
-      if (frame && overlay && poster) {
-        frame.replaceChildren(poster, overlay);
-        this.fitPoster();
-        overlay.classList.add("is-leaving");
-        await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
-        overlay.remove();
-      }
-      if (this.ensureCurrentContext()) this.renderReady(poster, shareTarget);
+      this.refreshText();
     } catch (error) {
-      if (this.ensureCurrentContext()) this.renderError(error, false);
+      if (isCurrent()) this.renderError(error, false);
+    } finally {
+      if (isCurrent()) {
+        this.updating = false;
+        this.previewPane.querySelector(".bsp-poster-updating")?.remove();
+        this.setExportButtonsDisabled(false);
+      }
     }
   }
 
   private setExportButtonsDisabled(disabled: boolean): void {
-    for (const button of this.exportButtons) button.disabled = disabled;
-    // A cover retry refreshes resources and must not compete with target validation.
-    for (const button of this.previewPane.querySelectorAll<HTMLButtonElement>("button")) button.disabled = disabled;
-    for (const button of this.controls.querySelectorAll<HTMLButtonElement | HTMLInputElement>(".bsp-option-pill,input")) {
-      if (disabled) button.disabled = true;
+    for (const { button, requiresPoster } of this.exportButtons) {
+      button.disabled = disabled || (requiresPoster && !this.poster);
     }
+    // Resource retry must not race a pending target update.
+    for (const button of this.previewPane.querySelectorAll<HTMLButtonElement>("button:not(.bsp-download)")) button.disabled = disabled;
   }
 
   private showUpdatingOverlay(): void {
@@ -458,7 +484,7 @@ export class SharePanel {
     if (!this.ensureCurrentContext() || this.loading || this.updating || this.exporting) return null;
     this.exporting = true;
     const controls = new Set<HTMLButtonElement | HTMLInputElement>([
-      ...this.exportButtons,
+      ...this.exportButtons.map(({ button }) => button),
       ...this.controls.querySelectorAll<HTMLButtonElement | HTMLInputElement>("button,input"),
       ...this.previewPane.querySelectorAll<HTMLButtonElement>("button"),
     ]);

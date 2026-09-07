@@ -44,7 +44,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/can-promise.js
   var require_can_promise = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/can-promise.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/can-promise.js"(exports2, module) {
       module.exports = function() {
         return typeof Promise === "function" && Promise.prototype && Promise.prototype.then;
       };
@@ -53,7 +53,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/utils.js
   var require_utils = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/utils.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/utils.js"(exports2) {
       var toSJISFunction;
       var CODEWORDS_COUNT = [
         0,
@@ -99,15 +99,15 @@
         3532,
         3706
       ];
-      exports.getSymbolSize = function getSymbolSize(version) {
+      exports2.getSymbolSize = function getSymbolSize(version) {
         if (!version) throw new Error('"version" cannot be null or undefined');
         if (version < 1 || version > 40) throw new Error('"version" should be in range from 1 to 40');
         return version * 4 + 17;
       };
-      exports.getSymbolTotalCodewords = function getSymbolTotalCodewords(version) {
+      exports2.getSymbolTotalCodewords = function getSymbolTotalCodewords(version) {
         return CODEWORDS_COUNT[version];
       };
-      exports.getBCHDigit = function(data) {
+      exports2.getBCHDigit = function(data) {
         let digit = 0;
         while (data !== 0) {
           digit++;
@@ -115,16 +115,16 @@
         }
         return digit;
       };
-      exports.setToSJISFunction = function setToSJISFunction(f) {
+      exports2.setToSJISFunction = function setToSJISFunction(f) {
         if (typeof f !== "function") {
           throw new Error('"toSJISFunc" is not a valid function.');
         }
         toSJISFunction = f;
       };
-      exports.isKanjiModeEnabled = function() {
+      exports2.isKanjiModeEnabled = function() {
         return typeof toSJISFunction !== "undefined";
       };
-      exports.toSJIS = function toSJIS(kanji) {
+      exports2.toSJIS = function toSJIS(kanji) {
         return toSJISFunction(kanji);
       };
     }
@@ -132,11 +132,11 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js
   var require_error_correction_level = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js"(exports) {
-      exports.L = { bit: 1 };
-      exports.M = { bit: 0 };
-      exports.Q = { bit: 3 };
-      exports.H = { bit: 2 };
+    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js"(exports2) {
+      exports2.L = { bit: 1 };
+      exports2.M = { bit: 0 };
+      exports2.Q = { bit: 3 };
+      exports2.H = { bit: 2 };
       function fromString(string) {
         if (typeof string !== "string") {
           throw new Error("Param is not a string");
@@ -145,25 +145,25 @@
         switch (lcStr) {
           case "l":
           case "low":
-            return exports.L;
+            return exports2.L;
           case "m":
           case "medium":
-            return exports.M;
+            return exports2.M;
           case "q":
           case "quartile":
-            return exports.Q;
+            return exports2.Q;
           case "h":
           case "high":
-            return exports.H;
+            return exports2.H;
           default:
             throw new Error("Unknown EC Level: " + string);
         }
       }
-      exports.isValid = function isValid(level) {
+      exports2.isValid = function isValid(level) {
         return level && typeof level.bit !== "undefined" && level.bit >= 0 && level.bit < 4;
       };
-      exports.from = function from(value, defaultValue) {
-        if (exports.isValid(value)) {
+      exports2.from = function from(value, defaultValue) {
+        if (exports2.isValid(value)) {
           return value;
         }
         try {
@@ -177,7 +177,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js
   var require_bit_buffer = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js"(exports2, module) {
       function BitBuffer() {
         this.buffer = [];
         this.length = 0;
@@ -212,7 +212,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js
   var require_bit_matrix = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js"(exports2, module) {
       function BitMatrix(size) {
         if (!size || size < 1) {
           throw new Error("BitMatrix size must be defined and greater than 0");
@@ -241,9 +241,9 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js
   var require_alignment_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js"(exports2) {
       var getSymbolSize = require_utils().getSymbolSize;
-      exports.getRowColCoords = function getRowColCoords(version) {
+      exports2.getRowColCoords = function getRowColCoords(version) {
         if (version === 1) return [];
         const posCount = Math.floor(version / 7) + 2;
         const size = getSymbolSize(version);
@@ -255,9 +255,9 @@
         positions.push(6);
         return positions.reverse();
       };
-      exports.getPositions = function getPositions(version) {
+      exports2.getPositions = function getPositions(version) {
         const coords = [];
-        const pos = exports.getRowColCoords(version);
+        const pos = exports2.getRowColCoords(version);
         const posLength = pos.length;
         for (let i = 0; i < posLength; i++) {
           for (let j = 0; j < posLength; j++) {
@@ -276,10 +276,10 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js
   var require_finder_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js"(exports2) {
       var getSymbolSize = require_utils().getSymbolSize;
       var FINDER_PATTERN_SIZE = 7;
-      exports.getPositions = function getPositions(version) {
+      exports2.getPositions = function getPositions(version) {
         const size = getSymbolSize(version);
         return [
           // top-left
@@ -295,8 +295,8 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js
   var require_mask_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js"(exports) {
-      exports.Patterns = {
+    "../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js"(exports2) {
+      exports2.Patterns = {
         PATTERN000: 0,
         PATTERN001: 1,
         PATTERN010: 2,
@@ -312,13 +312,13 @@
         N3: 40,
         N4: 10
       };
-      exports.isValid = function isValid(mask) {
+      exports2.isValid = function isValid(mask) {
         return mask != null && mask !== "" && !isNaN(mask) && mask >= 0 && mask <= 7;
       };
-      exports.from = function from(value) {
-        return exports.isValid(value) ? parseInt(value, 10) : void 0;
+      exports2.from = function from(value) {
+        return exports2.isValid(value) ? parseInt(value, 10) : void 0;
       };
-      exports.getPenaltyN1 = function getPenaltyN1(data) {
+      exports2.getPenaltyN1 = function getPenaltyN1(data) {
         const size = data.size;
         let points = 0;
         let sameCountCol = 0;
@@ -351,7 +351,7 @@
         }
         return points;
       };
-      exports.getPenaltyN2 = function getPenaltyN2(data) {
+      exports2.getPenaltyN2 = function getPenaltyN2(data) {
         const size = data.size;
         let points = 0;
         for (let row = 0; row < size - 1; row++) {
@@ -362,7 +362,7 @@
         }
         return points * PenaltyScores.N2;
       };
-      exports.getPenaltyN3 = function getPenaltyN3(data) {
+      exports2.getPenaltyN3 = function getPenaltyN3(data) {
         const size = data.size;
         let points = 0;
         let bitsCol = 0;
@@ -378,7 +378,7 @@
         }
         return points * PenaltyScores.N3;
       };
-      exports.getPenaltyN4 = function getPenaltyN4(data) {
+      exports2.getPenaltyN4 = function getPenaltyN4(data) {
         let darkCount = 0;
         const modulesCount = data.data.length;
         for (let i = 0; i < modulesCount; i++) darkCount += data.data[i];
@@ -387,27 +387,27 @@
       };
       function getMaskAt(maskPattern, i, j) {
         switch (maskPattern) {
-          case exports.Patterns.PATTERN000:
+          case exports2.Patterns.PATTERN000:
             return (i + j) % 2 === 0;
-          case exports.Patterns.PATTERN001:
+          case exports2.Patterns.PATTERN001:
             return i % 2 === 0;
-          case exports.Patterns.PATTERN010:
+          case exports2.Patterns.PATTERN010:
             return j % 3 === 0;
-          case exports.Patterns.PATTERN011:
+          case exports2.Patterns.PATTERN011:
             return (i + j) % 3 === 0;
-          case exports.Patterns.PATTERN100:
+          case exports2.Patterns.PATTERN100:
             return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
-          case exports.Patterns.PATTERN101:
+          case exports2.Patterns.PATTERN101:
             return i * j % 2 + i * j % 3 === 0;
-          case exports.Patterns.PATTERN110:
+          case exports2.Patterns.PATTERN110:
             return (i * j % 2 + i * j % 3) % 2 === 0;
-          case exports.Patterns.PATTERN111:
+          case exports2.Patterns.PATTERN111:
             return (i * j % 3 + (i + j) % 2) % 2 === 0;
           default:
             throw new Error("bad maskPattern:" + maskPattern);
         }
       }
-      exports.applyMask = function applyMask(pattern, data) {
+      exports2.applyMask = function applyMask(pattern, data) {
         const size = data.size;
         for (let col = 0; col < size; col++) {
           for (let row = 0; row < size; row++) {
@@ -416,15 +416,15 @@
           }
         }
       };
-      exports.getBestMask = function getBestMask(data, setupFormatFunc) {
-        const numPatterns = Object.keys(exports.Patterns).length;
+      exports2.getBestMask = function getBestMask(data, setupFormatFunc) {
+        const numPatterns = Object.keys(exports2.Patterns).length;
         let bestPattern = 0;
         let lowerPenalty = Infinity;
         for (let p = 0; p < numPatterns; p++) {
           setupFormatFunc(p);
-          exports.applyMask(p, data);
-          const penalty = exports.getPenaltyN1(data) + exports.getPenaltyN2(data) + exports.getPenaltyN3(data) + exports.getPenaltyN4(data);
-          exports.applyMask(p, data);
+          exports2.applyMask(p, data);
+          const penalty = exports2.getPenaltyN1(data) + exports2.getPenaltyN2(data) + exports2.getPenaltyN3(data) + exports2.getPenaltyN4(data);
+          exports2.applyMask(p, data);
           if (penalty < lowerPenalty) {
             lowerPenalty = penalty;
             bestPattern = p;
@@ -437,7 +437,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js
   var require_error_correction_code = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js"(exports2) {
       var ECLevel = require_error_correction_level();
       var EC_BLOCKS_TABLE = [
         // L  M  Q  H
@@ -765,7 +765,7 @@
         2040,
         2430
       ];
-      exports.getBlocksCount = function getBlocksCount(version, errorCorrectionLevel) {
+      exports2.getBlocksCount = function getBlocksCount(version, errorCorrectionLevel) {
         switch (errorCorrectionLevel) {
           case ECLevel.L:
             return EC_BLOCKS_TABLE[(version - 1) * 4 + 0];
@@ -779,7 +779,7 @@
             return void 0;
         }
       };
-      exports.getTotalCodewordsCount = function getTotalCodewordsCount(version, errorCorrectionLevel) {
+      exports2.getTotalCodewordsCount = function getTotalCodewordsCount(version, errorCorrectionLevel) {
         switch (errorCorrectionLevel) {
           case ECLevel.L:
             return EC_CODEWORDS_TABLE[(version - 1) * 4 + 0];
@@ -798,7 +798,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/galois-field.js
   var require_galois_field = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/galois-field.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/galois-field.js"(exports2) {
       var EXP_TABLE = new Uint8Array(512);
       var LOG_TABLE = new Uint8Array(256);
       (function initTables() {
@@ -815,14 +815,14 @@
           EXP_TABLE[i] = EXP_TABLE[i - 255];
         }
       })();
-      exports.log = function log(n) {
+      exports2.log = function log(n) {
         if (n < 1) throw new Error("log(" + n + ")");
         return LOG_TABLE[n];
       };
-      exports.exp = function exp(n) {
+      exports2.exp = function exp(n) {
         return EXP_TABLE[n];
       };
-      exports.mul = function mul(x, y) {
+      exports2.mul = function mul(x, y) {
         if (x === 0 || y === 0) return 0;
         return EXP_TABLE[LOG_TABLE[x] + LOG_TABLE[y]];
       };
@@ -831,9 +831,9 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/polynomial.js
   var require_polynomial = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/polynomial.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/polynomial.js"(exports2) {
       var GF = require_galois_field();
-      exports.mul = function mul(p1, p2) {
+      exports2.mul = function mul(p1, p2) {
         const coeff = new Uint8Array(p1.length + p2.length - 1);
         for (let i = 0; i < p1.length; i++) {
           for (let j = 0; j < p2.length; j++) {
@@ -842,7 +842,7 @@
         }
         return coeff;
       };
-      exports.mod = function mod(divident, divisor) {
+      exports2.mod = function mod(divident, divisor) {
         let result = new Uint8Array(divident);
         while (result.length - divisor.length >= 0) {
           const coeff = result[0];
@@ -855,10 +855,10 @@
         }
         return result;
       };
-      exports.generateECPolynomial = function generateECPolynomial(degree) {
+      exports2.generateECPolynomial = function generateECPolynomial(degree) {
         let poly = new Uint8Array([1]);
         for (let i = 0; i < degree; i++) {
-          poly = exports.mul(poly, new Uint8Array([1, GF.exp(i)]));
+          poly = exports2.mul(poly, new Uint8Array([1, GF.exp(i)]));
         }
         return poly;
       };
@@ -867,7 +867,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js
   var require_reed_solomon_encoder = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports2, module) {
       var Polynomial = require_polynomial();
       function ReedSolomonEncoder(degree) {
         this.genPoly = void 0;
@@ -899,8 +899,8 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/version-check.js
   var require_version_check = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/version-check.js"(exports) {
-      exports.isValid = function isValid(version) {
+    "../bilibili-share/node_modules/qrcode/lib/core/version-check.js"(exports2) {
+      exports2.isValid = function isValid(version) {
         return !isNaN(version) && version >= 1 && version <= 40;
       };
     }
@@ -908,27 +908,27 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/regex.js
   var require_regex = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/regex.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/regex.js"(exports2) {
       var numeric = "[0-9]+";
       var alphanumeric = "[A-Z $%*+\\-./:]+";
       var kanji = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";
       kanji = kanji.replace(/u/g, "\\u");
       var byte = "(?:(?![A-Z0-9 $%*+\\-./:]|" + kanji + ")(?:.|[\r\n]))+";
-      exports.KANJI = new RegExp(kanji, "g");
-      exports.BYTE_KANJI = new RegExp("[^A-Z0-9 $%*+\\-./:]+", "g");
-      exports.BYTE = new RegExp(byte, "g");
-      exports.NUMERIC = new RegExp(numeric, "g");
-      exports.ALPHANUMERIC = new RegExp(alphanumeric, "g");
+      exports2.KANJI = new RegExp(kanji, "g");
+      exports2.BYTE_KANJI = new RegExp("[^A-Z0-9 $%*+\\-./:]+", "g");
+      exports2.BYTE = new RegExp(byte, "g");
+      exports2.NUMERIC = new RegExp(numeric, "g");
+      exports2.ALPHANUMERIC = new RegExp(alphanumeric, "g");
       var TEST_KANJI = new RegExp("^" + kanji + "$");
       var TEST_NUMERIC = new RegExp("^" + numeric + "$");
       var TEST_ALPHANUMERIC = new RegExp("^[A-Z0-9 $%*+\\-./:]+$");
-      exports.testKanji = function testKanji(str) {
+      exports2.testKanji = function testKanji(str) {
         return TEST_KANJI.test(str);
       };
-      exports.testNumeric = function testNumeric(str) {
+      exports2.testNumeric = function testNumeric(str) {
         return TEST_NUMERIC.test(str);
       };
-      exports.testAlphanumeric = function testAlphanumeric(str) {
+      exports2.testAlphanumeric = function testAlphanumeric(str) {
         return TEST_ALPHANUMERIC.test(str);
       };
     }
@@ -936,33 +936,33 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/mode.js
   var require_mode = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/mode.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/mode.js"(exports2) {
       var VersionCheck = require_version_check();
       var Regex = require_regex();
-      exports.NUMERIC = {
+      exports2.NUMERIC = {
         id: "Numeric",
         bit: 1 << 0,
         ccBits: [10, 12, 14]
       };
-      exports.ALPHANUMERIC = {
+      exports2.ALPHANUMERIC = {
         id: "Alphanumeric",
         bit: 1 << 1,
         ccBits: [9, 11, 13]
       };
-      exports.BYTE = {
+      exports2.BYTE = {
         id: "Byte",
         bit: 1 << 2,
         ccBits: [8, 16, 16]
       };
-      exports.KANJI = {
+      exports2.KANJI = {
         id: "Kanji",
         bit: 1 << 3,
         ccBits: [8, 10, 12]
       };
-      exports.MIXED = {
+      exports2.MIXED = {
         bit: -1
       };
-      exports.getCharCountIndicator = function getCharCountIndicator(mode, version) {
+      exports2.getCharCountIndicator = function getCharCountIndicator(mode, version) {
         if (!mode.ccBits) throw new Error("Invalid mode: " + mode);
         if (!VersionCheck.isValid(version)) {
           throw new Error("Invalid version: " + version);
@@ -971,17 +971,17 @@
         else if (version < 27) return mode.ccBits[1];
         return mode.ccBits[2];
       };
-      exports.getBestModeForData = function getBestModeForData(dataStr) {
-        if (Regex.testNumeric(dataStr)) return exports.NUMERIC;
-        else if (Regex.testAlphanumeric(dataStr)) return exports.ALPHANUMERIC;
-        else if (Regex.testKanji(dataStr)) return exports.KANJI;
-        else return exports.BYTE;
+      exports2.getBestModeForData = function getBestModeForData(dataStr) {
+        if (Regex.testNumeric(dataStr)) return exports2.NUMERIC;
+        else if (Regex.testAlphanumeric(dataStr)) return exports2.ALPHANUMERIC;
+        else if (Regex.testKanji(dataStr)) return exports2.KANJI;
+        else return exports2.BYTE;
       };
-      exports.toString = function toString(mode) {
+      exports2.toString = function toString(mode) {
         if (mode && mode.id) return mode.id;
         throw new Error("Invalid mode");
       };
-      exports.isValid = function isValid(mode) {
+      exports2.isValid = function isValid(mode) {
         return mode && mode.bit && mode.ccBits;
       };
       function fromString(string) {
@@ -991,19 +991,19 @@
         const lcStr = string.toLowerCase();
         switch (lcStr) {
           case "numeric":
-            return exports.NUMERIC;
+            return exports2.NUMERIC;
           case "alphanumeric":
-            return exports.ALPHANUMERIC;
+            return exports2.ALPHANUMERIC;
           case "kanji":
-            return exports.KANJI;
+            return exports2.KANJI;
           case "byte":
-            return exports.BYTE;
+            return exports2.BYTE;
           default:
             throw new Error("Unknown mode: " + string);
         }
       }
-      exports.from = function from(value, defaultValue) {
-        if (exports.isValid(value)) {
+      exports2.from = function from(value, defaultValue) {
+        if (exports2.isValid(value)) {
           return value;
         }
         try {
@@ -1017,7 +1017,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/version.js
   var require_version = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/version.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/version.js"(exports2) {
       var Utils = require_utils();
       var ECCode = require_error_correction_code();
       var ECLevel = require_error_correction_level();
@@ -1027,7 +1027,7 @@
       var G18_BCH = Utils.getBCHDigit(G18);
       function getBestVersionForDataLength(mode, length, errorCorrectionLevel) {
         for (let currentVersion = 1; currentVersion <= 40; currentVersion++) {
-          if (length <= exports.getCapacity(currentVersion, errorCorrectionLevel, mode)) {
+          if (length <= exports2.getCapacity(currentVersion, errorCorrectionLevel, mode)) {
             return currentVersion;
           }
         }
@@ -1047,19 +1047,19 @@
       function getBestVersionForMixedData(segments, errorCorrectionLevel) {
         for (let currentVersion = 1; currentVersion <= 40; currentVersion++) {
           const length = getTotalBitsFromDataArray(segments, currentVersion);
-          if (length <= exports.getCapacity(currentVersion, errorCorrectionLevel, Mode.MIXED)) {
+          if (length <= exports2.getCapacity(currentVersion, errorCorrectionLevel, Mode.MIXED)) {
             return currentVersion;
           }
         }
         return void 0;
       }
-      exports.from = function from(value, defaultValue) {
+      exports2.from = function from(value, defaultValue) {
         if (VersionCheck.isValid(value)) {
           return parseInt(value, 10);
         }
         return defaultValue;
       };
-      exports.getCapacity = function getCapacity(version, errorCorrectionLevel, mode) {
+      exports2.getCapacity = function getCapacity(version, errorCorrectionLevel, mode) {
         if (!VersionCheck.isValid(version)) {
           throw new Error("Invalid QR Code version");
         }
@@ -1081,7 +1081,7 @@
             return Math.floor(usableBits / 8);
         }
       };
-      exports.getBestVersionForData = function getBestVersionForData(data, errorCorrectionLevel) {
+      exports2.getBestVersionForData = function getBestVersionForData(data, errorCorrectionLevel) {
         let seg;
         const ecl = ECLevel.from(errorCorrectionLevel, ECLevel.M);
         if (Array.isArray(data)) {
@@ -1097,7 +1097,7 @@
         }
         return getBestVersionForDataLength(seg.mode, seg.getLength(), ecl);
       };
-      exports.getEncodedBits = function getEncodedBits(version) {
+      exports2.getEncodedBits = function getEncodedBits(version) {
         if (!VersionCheck.isValid(version) || version < 7) {
           throw new Error("Invalid QR Code version");
         }
@@ -1112,12 +1112,12 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/format-info.js
   var require_format_info = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/format-info.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/format-info.js"(exports2) {
       var Utils = require_utils();
       var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
       var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
       var G15_BCH = Utils.getBCHDigit(G15);
-      exports.getEncodedBits = function getEncodedBits(errorCorrectionLevel, mask) {
+      exports2.getEncodedBits = function getEncodedBits(errorCorrectionLevel, mask) {
         const data = errorCorrectionLevel.bit << 3 | mask;
         let d = data << 10;
         while (Utils.getBCHDigit(d) - G15_BCH >= 0) {
@@ -1130,7 +1130,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js
   var require_numeric_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js"(exports2, module) {
       var Mode = require_mode();
       function NumericData(data) {
         this.mode = Mode.NUMERIC;
@@ -1165,7 +1165,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js
   var require_alphanumeric_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js"(exports2, module) {
       var Mode = require_mode();
       var ALPHA_NUM_CHARS = [
         "0",
@@ -1244,7 +1244,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/byte-data.js
   var require_byte_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/byte-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/byte-data.js"(exports2, module) {
       var Mode = require_mode();
       function ByteData(data) {
         this.mode = Mode.BYTE;
@@ -1274,7 +1274,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js
   var require_kanji_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js"(exports2, module) {
       var Mode = require_mode();
       var Utils = require_utils();
       function KanjiData(data) {
@@ -1313,7 +1313,7 @@
 
   // ../bilibili-share/node_modules/dijkstrajs/dijkstra.js
   var require_dijkstra = __commonJS({
-    "../bilibili-share/node_modules/dijkstrajs/dijkstra.js"(exports, module) {
+    "../bilibili-share/node_modules/dijkstrajs/dijkstra.js"(exports2, module) {
       "use strict";
       var dijkstra = {
         single_source_shortest_paths: function(graph, s, d) {
@@ -1414,7 +1414,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/segments.js
   var require_segments = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/segments.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/segments.js"(exports2) {
       var Mode = require_mode();
       var NumericData = require_numeric_data();
       var AlphanumericData = require_alphanumeric_data();
@@ -1569,7 +1569,7 @@
             return new ByteData(data);
         }
       }
-      exports.fromArray = function fromArray(array) {
+      exports2.fromArray = function fromArray(array) {
         return array.reduce(function(acc, seg) {
           if (typeof seg === "string") {
             acc.push(buildSingleSegment(seg, null));
@@ -1579,7 +1579,7 @@
           return acc;
         }, []);
       };
-      exports.fromString = function fromString(data, version) {
+      exports2.fromString = function fromString(data, version) {
         const segs = getSegmentsFromString(data, Utils.isKanjiModeEnabled());
         const nodes = buildNodes(segs);
         const graph = buildGraph(nodes, version);
@@ -1588,10 +1588,10 @@
         for (let i = 1; i < path.length - 1; i++) {
           optimizedSegs.push(graph.table[path[i]].node);
         }
-        return exports.fromArray(mergeSegments(optimizedSegs));
+        return exports2.fromArray(mergeSegments(optimizedSegs));
       };
-      exports.rawSplit = function rawSplit(data) {
-        return exports.fromArray(
+      exports2.rawSplit = function rawSplit(data) {
+        return exports2.fromArray(
           getSegmentsFromString(data, Utils.isKanjiModeEnabled())
         );
       };
@@ -1600,7 +1600,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/core/qrcode.js
   var require_qrcode = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/qrcode.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/qrcode.js"(exports2) {
       var Utils = require_utils();
       var ECLevel = require_error_correction_level();
       var BitBuffer = require_bit_buffer();
@@ -1839,7 +1839,7 @@
           segments
         };
       }
-      exports.create = function create(data, options) {
+      exports2.create = function create(data, options) {
         if (typeof data === "undefined" || data === "") {
           throw new Error("No input text");
         }
@@ -1861,7 +1861,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/renderer/utils.js
   var require_utils2 = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/utils.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/utils.js"(exports2) {
       function hex2rgba(hex) {
         if (typeof hex === "number") {
           hex = hex.toString();
@@ -1888,7 +1888,7 @@
           hex: "#" + hexCode.slice(0, 6).join("")
         };
       }
-      exports.getOptions = function getOptions(options) {
+      exports2.getOptions = function getOptions(options) {
         if (!options) options = {};
         if (!options.color) options.color = {};
         const margin = typeof options.margin === "undefined" || options.margin === null || options.margin < 0 ? 4 : options.margin;
@@ -1906,17 +1906,17 @@
           rendererOpts: options.rendererOpts || {}
         };
       };
-      exports.getScale = function getScale(qrSize, opts) {
+      exports2.getScale = function getScale(qrSize, opts) {
         return opts.width && opts.width >= qrSize + opts.margin * 2 ? opts.width / (qrSize + opts.margin * 2) : opts.scale;
       };
-      exports.getImageWidth = function getImageWidth(qrSize, opts) {
-        const scale = exports.getScale(qrSize, opts);
+      exports2.getImageWidth = function getImageWidth(qrSize, opts) {
+        const scale = exports2.getScale(qrSize, opts);
         return Math.floor((qrSize + opts.margin * 2) * scale);
       };
-      exports.qrToImageData = function qrToImageData(imgData, qr, opts) {
+      exports2.qrToImageData = function qrToImageData(imgData, qr, opts) {
         const size = qr.modules.size;
         const data = qr.modules.data;
-        const scale = exports.getScale(size, opts);
+        const scale = exports2.getScale(size, opts);
         const symbolSize = Math.floor((size + opts.margin * 2) * scale);
         const scaledMargin = opts.margin * scale;
         const palette = [opts.color.light, opts.color.dark];
@@ -1941,7 +1941,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js
   var require_canvas = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js"(exports2) {
       var Utils = require_utils2();
       function clearCanvas(ctx, canvas, size) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1958,7 +1958,7 @@
           throw new Error("You need to specify a canvas element");
         }
       }
-      exports.render = function render(qrData, canvas, options) {
+      exports2.render = function render(qrData, canvas, options) {
         let opts = options;
         let canvasEl = canvas;
         if (typeof opts === "undefined" && (!canvas || !canvas.getContext)) {
@@ -1977,14 +1977,14 @@
         ctx.putImageData(image2, 0, 0);
         return canvasEl;
       };
-      exports.renderToDataURL = function renderToDataURL(qrData, canvas, options) {
+      exports2.renderToDataURL = function renderToDataURL(qrData, canvas, options) {
         let opts = options;
         if (typeof opts === "undefined" && (!canvas || !canvas.getContext)) {
           opts = canvas;
           canvas = void 0;
         }
         if (!opts) opts = {};
-        const canvasEl = exports.render(qrData, canvas, opts);
+        const canvasEl = exports2.render(qrData, canvas, opts);
         const type = opts.type || "image/png";
         const rendererOpts = opts.rendererOpts || {};
         return canvasEl.toDataURL(type, rendererOpts.quality);
@@ -1994,7 +1994,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js
   var require_svg_tag = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js"(exports2) {
       var Utils = require_utils2();
       function getColorAttrib(color, attrib) {
         const alpha = color.a / 255;
@@ -2032,7 +2032,7 @@
         }
         return path;
       }
-      exports.render = function render(qrData, options, cb) {
+      exports2.render = function render(qrData, options, cb) {
         const opts = Utils.getOptions(options);
         const size = qrData.modules.size;
         const data = qrData.modules.data;
@@ -2052,7 +2052,7 @@
 
   // ../bilibili-share/node_modules/qrcode/lib/browser.js
   var require_browser = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/browser.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/browser.js"(exports2) {
       var canPromise = require_can_promise();
       var QRCode2 = require_qrcode();
       var CanvasRenderer = require_canvas();
@@ -2111,10 +2111,10 @@
           cb(e);
         }
       }
-      exports.create = QRCode2.create;
-      exports.toCanvas = renderCanvas.bind(null, CanvasRenderer.render);
-      exports.toDataURL = renderCanvas.bind(null, CanvasRenderer.renderToDataURL);
-      exports.toString = renderCanvas.bind(null, function(data, _, opts) {
+      exports2.create = QRCode2.create;
+      exports2.toCanvas = renderCanvas.bind(null, CanvasRenderer.render);
+      exports2.toDataURL = renderCanvas.bind(null, CanvasRenderer.renderToDataURL);
+      exports2.toString = renderCanvas.bind(null, function(data, _, opts) {
         return SvgRenderer.render(data, opts);
       });
     }
@@ -3842,8 +3842,7 @@ ${shareTarget}`;
     signature.append(author, stats);
     const qr = element("div", "bsp-d-qr");
     const frame = element("div", "bsp-d-qr-frame");
-    const qrData = await import_qrcode.default.toDataURL(model.shareTarget, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
-    frame.append(image("bsp-d-qr-image", qrData, `\u4E8C\u7EF4\u7801\uFF1A${model.shareTarget}`));
+    frame.append(await createPosterQr(model.shareTarget));
     qr.append(frame, element("div", "bsp-d-qr-caption", "\u626B\u7801\u89C2\u770B"));
     footer.append(signature, qr);
     const linkFooter = element("div", "bsp-d-link-footer");
@@ -3854,8 +3853,39 @@ ${shareTarget}`;
     await fitContent(poster, title);
     return poster;
   }
-  function exportPosterPng(poster) {
-    return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, style: { transform: "none" } });
+  async function createPosterQr(target) {
+    const data = await import_qrcode.default.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+    return image("bsp-d-qr-image", data, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
+  }
+  async function updatePosterTarget(poster, target, isCurrent) {
+    const qr = await createPosterQr(target);
+    await qr.decode();
+    if (!isCurrent()) return;
+    poster.querySelector(".bsp-d-qr-frame").replaceChildren(qr);
+    poster.querySelector(".bsp-d-link").textContent = target;
+    exports.delete(poster);
+  }
+  var fontVersion = 0;
+  document.fonts.addEventListener("loadingdone", () => {
+    fontVersion++;
+  });
+  document.fonts.addEventListener("loadingerror", () => {
+    fontVersion++;
+  });
+  var exports = /* @__PURE__ */ new WeakMap();
+  async function exportPosterPng(poster) {
+    await document.fonts.ready;
+    let cached = exports.get(poster);
+    if (!cached || cached.fontVersion !== fontVersion) {
+      const png = toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, style: { transform: "none" } });
+      cached = { fontVersion, png };
+      exports.set(poster, cached);
+      const entry = cached;
+      void png.catch(() => {
+        if (exports.get(poster) === entry) exports.delete(poster);
+      });
+    }
+    return cached.png;
   }
 
   // src/ui/panel.ts
@@ -3875,6 +3905,9 @@ ${shareTarget}`;
     loading = false;
     updating = false;
     exporting = false;
+    targetVersion = 0;
+    shareText = "";
+    markdownText = "";
     exportButtons = [];
     statusTimer = 0;
     previewObserver = new ResizeObserver(() => this.fitPoster());
@@ -3936,6 +3969,10 @@ ${shareTarget}`;
     close(restore) {
       if (this.closed) return;
       this.closed = true;
+      this.targetVersion++;
+      this.snapshot = null;
+      this.model = null;
+      this.poster = null;
       clearTimeout(this.statusTimer);
       this.previewObserver.disconnect();
       document.removeEventListener("keydown", this.onKeyDown, true);
@@ -4017,8 +4054,6 @@ ${shareTarget}`;
       }
     }
     renderReady(poster, shareTarget) {
-      const active = document.activeElement;
-      const focusName = active instanceof HTMLElement && this.panel.contains(active) ? active.getAttribute("aria-label") ?? active.textContent : null;
       if (!poster) {
         const retry = element("button", "bsp-button", "\u91CD\u8BD5");
         retry.type = "button";
@@ -4039,18 +4074,22 @@ ${shareTarget}`;
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
       const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
-      const markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
+      this.shareText = shareText;
+      this.markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
       status.setAttribute("aria-live", "polite");
       const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(status));
       const download = this.actionButton("download", "", "\u4E0B\u8F7D\u6D77\u62A5 PNG", false, () => void this.download(status));
       download.classList.add("bsp-download");
-      const combined = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(shareText, status));
+      const combined = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(this.shareText, status));
       combined.title = "\u540C\u65F6\u63D0\u4F9B\u6D77\u62A5\u4E0E\u6587\u6848\uFF0C\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u7C98\u8D34\u5176\u4E2D\u4E00\u79CD";
-      const copyText2 = this.actionButton(null, "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyText2, shareText, status));
-      const copyMarkdown = this.actionButton(null, "\u590D\u5236 Markdown", "\u590D\u5236 Markdown", false, () => void this.copyShareText(copyMarkdown, markdownText, status, "Markdown"));
-      this.exportButtons.push(copy, download, copyText2, copyMarkdown, combined);
+      const copyText2 = this.actionButton(null, "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyText2, this.shareText, status));
+      const copyMarkdown = this.actionButton(null, "\u590D\u5236 Markdown", "\u590D\u5236 Markdown", false, () => void this.copyShareText(copyMarkdown, this.markdownText, status, "Markdown"));
+      this.exportButtons = [copy, download, copyText2, copyMarkdown, combined].map((button) => ({
+        button,
+        requiresPoster: [copy, download, combined].includes(button)
+      }));
       for (const button of [copy, download, combined]) button.disabled = !poster;
       const textSection = this.renderTextPreview(shareText);
       const textHeading = element("div", "bsp-section-heading");
@@ -4077,9 +4116,29 @@ ${shareTarget}`;
       this.previewPane.querySelector(".bsp-preview-download")?.remove();
       this.previewPane.append(downloadArea);
       this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);
-      if (focusName) {
-        Array.from(this.panel.querySelectorAll("button,input,textarea,[tabindex]")).find((node) => (node.getAttribute("aria-label") ?? node.textContent) === focusName)?.focus({ preventScroll: true });
-      }
+    }
+    refreshText() {
+      if (!this.snapshot || !this.shareTarget) return;
+      this.shareText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: false });
+      this.markdownText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: true });
+      const lines = this.shareText.split("\n");
+      const link = lines.pop() ?? "";
+      const body = this.controls.querySelector(".bsp-text-card-body");
+      const address = this.controls.querySelector(".bsp-text-card-link");
+      if (body) body.textContent = lines.join("\n") + (lines.length ? "\n" : "");
+      if (address) address.textContent = link;
+      this.controls.querySelector(".bsp-manual-copy")?.remove();
+    }
+    refreshOptionControls() {
+      if (!this.snapshot) return;
+      const pills = this.controls.querySelectorAll(".bsp-option-pill");
+      const values = [this.options.partShare, this.options.timestampShare];
+      const allowed = [canEnablePartShare(this.snapshot), canEnableTimestampShare(this.snapshot)];
+      pills.forEach((button, index) => {
+        button.setAttribute("aria-pressed", String(values[index]));
+        button.classList.toggle("is-on", values[index]);
+        button.disabled = this.exporting || !allowed[index];
+      });
     }
     renderTextPreview(shareText) {
       const lines = shareText.split("\n");
@@ -4111,6 +4170,7 @@ ${shareTarget}`;
       status.classList.remove("is-show", "is-error");
     }
     showStatus(message, error = false) {
+      if (!this.ensureCurrentContext()) return;
       const status = this.controls.querySelector(".bsp-status");
       if (!status) return;
       clearTimeout(this.statusTimer);
@@ -4135,11 +4195,11 @@ ${shareTarget}`;
       const snapshot = this.snapshot;
       if (!snapshot) return container;
       container.append(
-        this.optionToggle("list", "\u6807\u8BB0\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("list", "\u6807\u8BB0\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot), (checked) => {
           void checked;
           this.applyOptions(togglePartShare(this.options, snapshot));
         }),
-        this.optionToggle("clock", "\u6807\u8BB0\u5F53\u524D\u65F6\u95F4", this.options.timestampShare, !canEnableTimestampShare(snapshot) || this.updating, (checked) => {
+        this.optionToggle("clock", "\u6807\u8BB0\u5F53\u524D\u65F6\u95F4", this.options.timestampShare, !canEnableTimestampShare(snapshot), (checked) => {
           void checked;
           this.applyOptions(toggleTimestampShare(this.options, snapshot));
         })
@@ -4160,18 +4220,19 @@ ${shareTarget}`;
       }
     }
     applyOptions(next) {
-      if (!this.ensureCurrentContext() || !this.snapshot || this.updating || this.exporting) return;
+      if (!this.ensureCurrentContext() || !this.snapshot || this.exporting) return;
       const previous = this.options;
       const targetChanged = previous.partShare !== next.partShare || previous.timestampShare !== next.timestampShare;
       const textChanged = previous.detailedText !== next.detailedText || previous.markdownText !== next.markdownText;
       this.options = next;
+      this.refreshOptionControls();
       if (textChanged) this.persistPreferences();
       if (targetChanged) {
         void this.rebuildPosterForOptions();
         return;
       }
       if (textChanged && this.shareTarget) {
-        this.renderReady(this.poster, this.shareTarget);
+        this.refreshText();
       }
     }
     persistPreferences() {
@@ -4181,38 +4242,35 @@ ${shareTarget}`;
       });
     }
     async rebuildPosterForOptions() {
-      if (!this.snapshot || this.updating) return;
+      if (!this.snapshot) return;
+      const version = ++this.targetVersion;
+      const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;
       this.updating = true;
       this.setExportButtonsDisabled(true);
       this.showUpdatingOverlay();
       try {
         const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
         const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
-        const poster = model ? await createPoster(model, this.snapshot) : null;
-        if (!this.ensureCurrentContext()) return;
+        if (this.poster) await updatePosterTarget(this.poster, shareTarget, isCurrent);
+        if (!isCurrent()) return;
         this.model = model;
-        this.poster = poster;
         this.shareTarget = shareTarget;
-        const overlay = this.previewPane.querySelector(".bsp-poster-updating");
-        const frame = this.previewPane.querySelector(".bsp-preview-frame");
-        if (frame && overlay && poster) {
-          frame.replaceChildren(poster, overlay);
-          this.fitPoster();
-          overlay.classList.add("is-leaving");
-          await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
-          overlay.remove();
-        }
-        if (this.ensureCurrentContext()) this.renderReady(poster, shareTarget);
+        this.refreshText();
       } catch (error) {
-        if (this.ensureCurrentContext()) this.renderError(error, false);
+        if (isCurrent()) this.renderError(error, false);
+      } finally {
+        if (isCurrent()) {
+          this.updating = false;
+          this.previewPane.querySelector(".bsp-poster-updating")?.remove();
+          this.setExportButtonsDisabled(false);
+        }
       }
     }
     setExportButtonsDisabled(disabled) {
-      for (const button of this.exportButtons) button.disabled = disabled;
-      for (const button of this.previewPane.querySelectorAll("button")) button.disabled = disabled;
-      for (const button of this.controls.querySelectorAll(".bsp-option-pill,input")) {
-        if (disabled) button.disabled = true;
+      for (const { button, requiresPoster } of this.exportButtons) {
+        button.disabled = disabled || requiresPoster && !this.poster;
       }
+      for (const button of this.previewPane.querySelectorAll("button:not(.bsp-download)")) button.disabled = disabled;
     }
     showUpdatingOverlay() {
       const frame = this.previewPane.querySelector(".bsp-preview-frame");
@@ -4241,7 +4299,7 @@ ${shareTarget}`;
       if (!this.ensureCurrentContext() || this.loading || this.updating || this.exporting) return null;
       this.exporting = true;
       const controls = /* @__PURE__ */ new Set([
-        ...this.exportButtons,
+        ...this.exportButtons.map(({ button }) => button),
         ...this.controls.querySelectorAll("button,input"),
         ...this.previewPane.querySelectorAll("button")
       ]);

@@ -7,7 +7,7 @@ import { browserRuntime, productionBundle, openFixture } from "./browser-test-su
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
 const browser = await chromium.launch({ headless: true });
-const output = ".scratch/bilibili-share-poster/usage-refinement/evidence/ticket01";
+const output = process.env.BSP_EVIDENCE_DIR ?? ".scratch/bilibili-share-poster/usage-refinement/evidence/ticket01";
 await mkdir(output, { recursive: true });
 const results = [];
 const canonical = "https://www.bilibili.com/video/BV1TXoWBsEGc/";
@@ -98,7 +98,7 @@ try {
     await ready(page);
     assert.equal(await timeButton(page).isEnabled(), true);
     results.push({ scenario: "in-flight image export keeps its share target stable", passed: true });
-    await page.evaluate(() => { window.fixture.targetDelay = 600; window.fixture.time = 999; window.fixture.stats.view = 999999; });
+    await page.evaluate(() => { window.fixture.time = 999; window.fixture.stats.view = 999999; });
     const requestsBefore = await page.evaluate(() => window.fixture.requests.filter(request => new URL(request.url).pathname === "/x/web-interface/view").length);
     await timeButton(page).click();
     assert.equal(await assertOutputs(page, canonical + "?p=2&t=83", "p2-time"), original);
@@ -110,7 +110,7 @@ try {
     assert.equal(await assertOutputs(page, canonical, "p2-clear"), original);
     assert.equal(await timeButton(page).getAttribute("aria-pressed"), "false");
   } finally { await context.close(); }
-  const failed = await openFixture(browser, bundle, { coverFailed: true, targetDelay: 300 });
+  const failed = await openFixture(browser, bundle, { coverFailed: true });
   try {
     const page = failed.page;
     await page.getByRole("button", { name: "生成海报", exact: true }).click();
