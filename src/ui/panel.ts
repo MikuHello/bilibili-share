@@ -50,6 +50,8 @@ export class SharePanel {
   private markdownText = "";
   private exportButtons: { button: HTMLButtonElement; requiresPoster: boolean }[] = [];
   private statusTimer = 0;
+  private hintAnchor: HTMLElement | null = null;
+  private readonly hint = element("div", "bsp-option-hint");
   private readonly previewObserver = new ResizeObserver(() => { this.fitPoster(); this.positionStatus(); });
   private readonly onClosed: () => void;
 
@@ -64,6 +66,9 @@ export class SharePanel {
     this.panel.setAttribute("aria-modal", "true");
     this.panel.setAttribute("aria-labelledby", "bsp-dialog-title");
     this.panel.tabIndex = -1;
+    this.hint.id = "bsp-option-hint";
+    this.hint.setAttribute("role", "tooltip");
+    this.hint.hidden = true;
 
     const heading = element("header", "bsp-panel-head");
     const title = element("h2", "", "分享海报");
@@ -77,7 +82,7 @@ export class SharePanel {
 
     const workspace = element("div", "bsp-workspace");
     workspace.append(this.previewPane, this.controls);
-    this.panel.append(heading, workspace);
+    this.panel.append(heading, workspace, this.hint);
     this.backdrop.append(this.panel);
     this.backdrop.addEventListener("click", (event) => {
       if (event.target === this.backdrop) this.close(true);
@@ -125,6 +130,7 @@ export class SharePanel {
     this.snapshot = null;
     this.model = null;
     this.poster = null;
+    this.hideHint();
     clearTimeout(this.statusTimer);
     this.previewObserver.disconnect();
     this.backdrop.removeEventListener("scroll", this.positionStatus, true);
@@ -173,6 +179,7 @@ export class SharePanel {
   }
 
   private renderLoading(): void {
+    this.hideHint();
     this.previewPane.replaceChildren(this.previewState("正在生成海报"));
     this.controls.replaceChildren();
   }
@@ -303,7 +310,9 @@ export class SharePanel {
       element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
       element("span", "bsp-text-card-link", link),
     );
-    card.append(content);
+    const preview = element("div", "bsp-text-preview");
+    preview.append(content);
+    card.append(preview);
     return card;
   }
 
@@ -331,6 +340,7 @@ export class SharePanel {
 
   // Prefer the viewport bottom, moving upward only to clear visible controls.
   private readonly positionStatus = (): void => {
+    this.positionHint();
     const status = this.controls.querySelector<HTMLElement>(".bsp-status.is-show");
     if (!status) return;
     const height = status.offsetHeight;
@@ -382,7 +392,7 @@ export class SharePanel {
     const snapshot = this.snapshot;
     if (!snapshot) return container;
 
-    container.append(
+    const buttons = [
       this.optionToggle("list", "标记当前分P", this.options.partShare, !canEnablePartShare(snapshot), (checked) => {
         void checked;
         this.applyOptions(togglePartShare(this.options, snapshot));
@@ -391,17 +401,56 @@ export class SharePanel {
         void checked;
         this.applyOptions(toggleTimestampShare(this.options, snapshot));
       }),
-    );
-
-    if (!snapshot.partIdentified) {
-      const notice = element("p", "bsp-option-notice", "当前分P无法识别，已禁用分P与时间戳分享；默认分享仍可用。");
-      container.append(notice);
-    } else if (Math.floor(snapshot.playbackSeconds) < 1) {
-      const notice = element("p", "bsp-option-notice", "当前播放位置不足 1 秒，时间戳分享不可用。");
-      container.append(notice);
+    ];
+    for (const button of buttons) {
+      const reason = !snapshot.partIdentified
+        ? "当前分P无法识别，已禁用分P与时间戳分享；默认分享仍可用。"
+        : button.disabled ? "当前播放位置不足 1 秒，时间戳分享不可用。" : "";
+      if (!reason) { container.append(button); continue; }
+      const anchor = element("span", "bsp-option-explanation");
+      anchor.tabIndex = 0;
+      anchor.setAttribute("role", "button");
+      anchor.setAttribute("aria-label", `${button.textContent}：查看不可用原因`);
+      anchor.setAttribute("aria-describedby", this.hint.id);
+      const show = () => {
+        if (this.closed) return;
+        this.hintAnchor = anchor;
+        this.hint.textContent = reason;
+        this.hint.hidden = false;
+        this.positionHint();
+      };
+      anchor.addEventListener("pointerenter", show);
+      anchor.addEventListener("focus", show);
+      anchor.addEventListener("click", show);
+      anchor.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); show(); }
+      });
+      anchor.addEventListener("pointerleave", () => {
+        if (document.activeElement !== anchor) this.hideHint();
+      });
+      anchor.addEventListener("blur", () => this.hideHint());
+      anchor.append(button);
+      container.append(anchor);
     }
 
     return container;
+  }
+
+  private hideHint(): void {
+    this.hint.hidden = true;
+    this.hintAnchor = null;
+  }
+
+  private positionHint(): void {
+    if (!this.hintAnchor) return;
+    const rect = this.hintAnchor.getBoundingClientRect();
+    if (!this.hintAnchor.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) {
+      this.hideHint(); return;
+    }
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - this.hint.offsetWidth - 8));
+    const top = rect.top - this.hint.offsetHeight - 8;
+    this.hint.style.left = `${left}px`;
+    this.hint.style.top = `${top >= 8 ? top : rect.bottom + 8}px`;
   }
 
   private fitPoster(): void {
@@ -549,9 +598,9 @@ export class SharePanel {
     source.value = text;
     source.rows = 6;
     source.setAttribute("aria-label", `手动复制 ${format}`);
-    this.controls.append(source);
-    this.showStatus(`${format}复制失败。请在下方文本框中手动复制。`, true);
-    source.focus();
+    this.controls.querySelector(".bsp-text-preview")?.append(source);
+    this.showStatus(`${format}复制失败。请在文案预览区域手动复制。`, true);
+    source.focus({ preventScroll: true });
     source.select();
   }
 
