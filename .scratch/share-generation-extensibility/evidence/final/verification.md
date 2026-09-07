@@ -1,6 +1,6 @@
 # Bilibili Share 0.4.0 — final verification
 
-Status: verification passed; aggregate code review pending
+Status: COMPLETE — verification and aggregate code review passed
 
 ## Delivered behavior
 
@@ -29,3 +29,17 @@ Run npm run check, npm test and npm run build. With Playwright installed, run np
 Reports/screenshots live under browser/. release.json identifies the final distributable by SHA-256. Per-ticket TDD and review evidence are recorded in issues/ and sibling evidence directories.
 
 Browser checks control external Bilibili API/GM/player boundaries; some clipboard suites exercise real Chromium clipboard while template suites capture the external clipboard boundary. This does not establish live Tampermonkey installation or live Bilibili network behavior. No remote repository or publication action was performed.
+
+## Aggregate review
+
+Review baseline a991d84 through release commit 363115d; independently reviewed against approved specification and repository standards. No implementation changes were required after review.
+
+### Standards
+
+0 documented-standard violations; 0 actionable code smells. The known browser configuration setup duplication remains an optional non-blocking maintenance suggestion.
+
+### Spec
+
+0 missing/partial requirements, 0 scope expansion, 0 incorrect implementations. The reviewers verified template integration, isolated fallback, faithful previews, poster ownership and cache/race guards. They did not independently rerun the full test suite.
+
+Total findings: Standards 0 actionable (no worst issue); Spec 0 (no worst issue).

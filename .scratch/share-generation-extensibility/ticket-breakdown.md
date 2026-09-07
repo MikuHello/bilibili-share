@@ -1,6 +1,6 @@
 # 建议拆票
 
-Status: APPROVED — owner approved all three tickets and implementation
+Status: COMPLETE — all three tickets implemented, reviewed and verified in 0.4.0
 
 1. **普通文案模板接入实际分享流程**
    - Blocked by: None
@@ -23,3 +23,7 @@ Status: APPROVED — owner approved all three tickets and implementation
 建议按 01 → 02 → 03 执行，以减少共享面板文件的集成冲突；03 在功能上不依赖前两票，因此不虚构依赖。全部完成后进行整体回归并统一提供构建与验证记录。每票使用 fresh implement 上下文、TDD 和 code-review。
 
 审批内容：规格范围、以生成结果及实际预览/复制/导出为测试入口，以及上述三票粒度与依赖。获批后发布逐票 Markdown 工单。
+
+## Completion
+
+All three approved tickets are complete. Release 0.4.0 passes 95 tests, type/build checks, 15 browser suites and 28 byte-identical poster comparisons. Aggregate Standards and Spec reviews report zero actionable findings. See evidence/final/verification.md for evidence and environmental limits.

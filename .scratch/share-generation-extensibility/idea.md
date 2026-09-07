@@ -1,6 +1,6 @@
 # 项目命名与分享生成扩展能力
 
-Status: APPROVED — specification and three-ticket implementation authorized
+Status: IMPLEMENTED — 0.4.0 batch complete
 
 ## 主人提出的需求
 

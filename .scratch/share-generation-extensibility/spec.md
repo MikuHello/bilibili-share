@@ -1,6 +1,6 @@
 # Bilibili Share：分享文案模板化与海报职责整理
 
-Status: APPROVED — specification and test interfaces approved by owner
+Status: IMPLEMENTED — three tickets complete; 0.4.0 verified and delivered
 
 ## Problem Statement
 
