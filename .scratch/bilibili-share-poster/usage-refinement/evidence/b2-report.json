@@ -1,0 +1,17 @@
+{
+  "desktop": {
+    "childrenFit": true,
+    "titleFit": true,
+    "paragraphGap": 0,
+    "viewport": 1440,
+    "scroll": 1440
+  },
+  "mobile": {
+    "childrenFit": true,
+    "titleFit": true,
+    "paragraphGap": 0,
+    "viewport": 390,
+    "scroll": 390
+  },
+  "errors": []
+}

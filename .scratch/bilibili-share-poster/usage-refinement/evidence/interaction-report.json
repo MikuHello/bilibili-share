@@ -1,0 +1,40 @@
+[
+  {
+    "toastNoLayoutShift": true,
+    "toast": "原型演示：复制海报（未写入剪贴板或下载）"
+  },
+  {
+    "darkTitleColor": "rgb(238, 240, 242)",
+    "panelBackground": "rgb(36, 39, 43)"
+  },
+  {
+    "keyboardVariant": "B — 封面色刊",
+    "url": "http://127.0.0.1:8771/prototype/?variant=B"
+  },
+  {
+    "markerOnlyTarget": true,
+    "target": "https://www.bilibili.com/video/BV1TXoWBsEGc/?p=1&t=83"
+  },
+  {
+    "variant": "poster variant-A",
+    "ratio": 0.7508474576271187,
+    "childrenFit": true
+  },
+  {
+    "variant": "poster variant-B",
+    "ratio": 0.7508474576271187,
+    "childrenFit": true
+  },
+  {
+    "variant": "poster variant-C",
+    "ratio": 0.7508474576271187,
+    "childrenFit": true
+  },
+  {
+    "mobileWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "downloadClickable": true
+  }
+]

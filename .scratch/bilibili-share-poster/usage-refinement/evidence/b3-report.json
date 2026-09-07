@@ -1,0 +1,153 @@
+{
+  "results": [
+    {
+      "shape": "wide",
+      "title": "short",
+      "coverTop": 325,
+      "footerTop": 616.765625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        2558,
+        1439
+      ]
+    },
+    {
+      "shape": "wide",
+      "title": "normal",
+      "coverTop": 325,
+      "footerTop": 690.015625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        2558,
+        1439
+      ]
+    },
+    {
+      "shape": "wide",
+      "title": "long",
+      "coverTop": 325,
+      "footerTop": 697.328125,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        2558,
+        1439
+      ]
+    },
+    {
+      "shape": "wide",
+      "title": "extreme",
+      "coverTop": 325,
+      "footerTop": 687.578125,
+      "titleFits": true,
+      "ellipsis": true,
+      "naturalSize": [
+        2558,
+        1439
+      ]
+    },
+    {
+      "shape": "square",
+      "title": "short",
+      "coverTop": 325,
+      "footerTop": 616.765625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        600,
+        600
+      ]
+    },
+    {
+      "shape": "square",
+      "title": "normal",
+      "coverTop": 325,
+      "footerTop": 690.015625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        600,
+        600
+      ]
+    },
+    {
+      "shape": "square",
+      "title": "long",
+      "coverTop": 325,
+      "footerTop": 697.328125,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        600,
+        600
+      ]
+    },
+    {
+      "shape": "square",
+      "title": "extreme",
+      "coverTop": 325,
+      "footerTop": 687.578125,
+      "titleFits": true,
+      "ellipsis": true,
+      "naturalSize": [
+        600,
+        600
+      ]
+    },
+    {
+      "shape": "portrait",
+      "title": "short",
+      "coverTop": 325,
+      "footerTop": 616.765625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        400,
+        800
+      ]
+    },
+    {
+      "shape": "portrait",
+      "title": "normal",
+      "coverTop": 325,
+      "footerTop": 690.015625,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        400,
+        800
+      ]
+    },
+    {
+      "shape": "portrait",
+      "title": "long",
+      "coverTop": 325,
+      "footerTop": 697.328125,
+      "titleFits": true,
+      "ellipsis": false,
+      "naturalSize": [
+        400,
+        800
+      ]
+    },
+    {
+      "shape": "portrait",
+      "title": "extreme",
+      "coverTop": 325,
+      "footerTop": 687.578125,
+      "titleFits": true,
+      "ellipsis": true,
+      "naturalSize": [
+        400,
+        800
+      ]
+    }
+  ],
+  "mobile": {
+    "width": 390,
+    "scroll": 390
+  },
+  "errors": []
+}
