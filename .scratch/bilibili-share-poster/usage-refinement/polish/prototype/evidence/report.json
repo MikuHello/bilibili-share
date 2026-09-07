@@ -1,0 +1,338 @@
+[
+  {
+    "variant": "A",
+    "numbers": "actual",
+    "gaps": [
+      42.61,
+      71.97,
+      84.72
+    ],
+    "iconSteps": [
+      190.34,
+      190.36,
+      190.34
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/A-actual.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "A",
+    "numbers": "equal",
+    "gaps": [
+      40.66,
+      40.67,
+      40.66
+    ],
+    "iconSteps": [
+      190.34,
+      190.36,
+      190.34
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/A-equal.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "A",
+    "numbers": "mixed",
+    "gaps": [
+      106.75,
+      45.64,
+      40.66
+    ],
+    "iconSteps": [
+      190.34,
+      190.36,
+      190.34
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/A-mixed.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "A",
+    "numbers": "extreme",
+    "gaps": [
+      22.19,
+      22.2,
+      16.56
+    ],
+    "iconSteps": [
+      190.34,
+      190.36,
+      190.34
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "25px",
+      "25px",
+      "31px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/A-extreme.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "B",
+    "numbers": "actual",
+    "gaps": [
+      84.38,
+      84.38,
+      84.38
+    ],
+    "iconSteps": [
+      232.11,
+      202.77,
+      190
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/B-actual.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "B",
+    "numbers": "equal",
+    "gaps": [
+      48.83,
+      48.81,
+      48.83
+    ],
+    "iconSteps": [
+      198.52,
+      198.5,
+      198.52
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/B-equal.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "B",
+    "numbers": "mixed",
+    "gaps": [
+      87.08,
+      87.08,
+      87.08
+    ],
+    "iconSteps": [
+      170.67,
+      231.8,
+      236.77
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/B-mixed.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "B",
+    "numbers": "extreme",
+    "gaps": [
+      28.3,
+      28.31,
+      28.3
+    ],
+    "iconSteps": [
+      222.03,
+      222.05,
+      202.08
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "31px",
+      "31px",
+      "31px",
+      "31px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/B-extreme.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "C",
+    "numbers": "actual",
+    "gaps": [
+      84.38,
+      84.38,
+      84.38
+    ],
+    "iconSteps": [
+      232.11,
+      202.77,
+      190
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/C-actual.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "C",
+    "numbers": "equal",
+    "gaps": [
+      48.83,
+      48.81,
+      48.83
+    ],
+    "iconSteps": [
+      198.52,
+      198.5,
+      198.52
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/C-equal.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "C",
+    "numbers": "mixed",
+    "gaps": [
+      87.08,
+      87.08,
+      87.08
+    ],
+    "iconSteps": [
+      170.67,
+      231.8,
+      236.77
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "36.72px",
+      "36.72px",
+      "36.72px",
+      "36.72px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/C-mixed.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  },
+  {
+    "variant": "C",
+    "numbers": "extreme",
+    "gaps": [
+      28.3,
+      28.31,
+      28.3
+    ],
+    "iconSteps": [
+      222.03,
+      222.05,
+      202.08
+    ],
+    "iconWidths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "fontSizes": [
+      "31px",
+      "31px",
+      "31px",
+      "31px"
+    ],
+    "overflow": false,
+    "qr": "{\"file\":\"\\/Users\\/mikuhello\\/project\\/dev\\/bilibili-share-refinement\\/.scratch\\/bilibili-share-poster\\/usage-refinement\\/polish\\/prototype\\/evidence\\/C-extreme.png\",\"target\":\"https:\\/\\/www.bilibili.com\\/video\\/BV1QGbD6MEDg\\/\"}"
+  }
+]

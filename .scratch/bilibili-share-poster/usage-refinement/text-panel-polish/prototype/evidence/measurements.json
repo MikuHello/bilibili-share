@@ -1,0 +1,146 @@
+[
+  {
+    "variant": "A",
+    "detail": false,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 342.59375,
+      "bottom": 532.59375,
+      "height": 190
+    },
+    "actions": {
+      "y": 617.65625,
+      "bottom": 657.65625,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    }
+  },
+  {
+    "variant": "A",
+    "detail": true,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 342.59375,
+      "bottom": 532.59375,
+      "height": 190
+    },
+    "actions": {
+      "y": 617.65625,
+      "bottom": 657.65625,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    }
+  },
+  {
+    "variant": "B",
+    "detail": false,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 433.046875,
+      "bottom": 537.1875,
+      "height": 104.140625
+    },
+    "actions": {
+      "y": 587.1875,
+      "bottom": 627.1875,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    }
+  },
+  {
+    "variant": "B",
+    "detail": true,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 409,
+      "bottom": 561.234375,
+      "height": 152.234375
+    },
+    "actions": {
+      "y": 611.234375,
+      "bottom": 651.234375,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    }
+  },
+  {
+    "variant": "C",
+    "detail": false,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 441.046875,
+      "bottom": 545.1875,
+      "height": 104.140625
+    },
+    "actions": {
+      "y": 737.65625,
+      "bottom": 777.65625,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 777.65625,
+      "height": 562.65625
+    }
+  },
+  {
+    "variant": "C",
+    "detail": true,
+    "preview": {
+      "y": 215,
+      "bottom": 721.65625,
+      "height": 506.65625
+    },
+    "text": {
+      "y": 417,
+      "bottom": 569.234375,
+      "height": 152.234375
+    },
+    "actions": {
+      "y": 737.65625,
+      "bottom": 777.65625,
+      "height": 40
+    },
+    "controls": {
+      "y": 215,
+      "bottom": 777.65625,
+      "height": 562.65625
+    }
+  }
+]
