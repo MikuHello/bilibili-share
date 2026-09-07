@@ -1,4 +1,4 @@
-export const MOTION = { fast: 160, backdrop: 200, open: 240, color: 180, overlay: 140 } as const;
+export const MOTION = { fast: 160, backdrop: 200, open: 240, color: 180 } as const;
 
 export function motionDelay(duration: number): number {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : duration;
@@ -10,7 +10,6 @@ export const MOTION_STYLES = `
   --bsp-motion-backdrop:${MOTION.backdrop}ms;
   --bsp-motion-open:${MOTION.open}ms;
   --bsp-motion-color:${MOTION.color}ms;
-  --bsp-motion-overlay:${MOTION.overlay}ms;
   --bsp-ease-out:cubic-bezier(.22,.61,.36,1);
   --bsp-ease-in-out:cubic-bezier(.4,0,.2,1);
 }
