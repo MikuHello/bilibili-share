@@ -1,6 +1,6 @@
 # 视频荣誉标签与补充说明
 
-Status: discovery in progress — Matt grill-with-docs；未批准spec，未开始生产实现。
+Status: design confirmed — 原型已确认；spec与ticket-plan已整理待审阅，未开始生产实现。
 
 ## 本轮输入
 
@@ -47,3 +47,9 @@ Status: discovery in progress — Matt grill-with-docs；未批准spec，未开�
 原型入口：`http://127.0.0.1:8784/?variant=C`，代码暂存本目录prototype/（throwaway，未进入生产构建）。A封面右上角；B标题右下；C Logo与编号之间（建议）。现有海报和面板由生产fixture生成，荣誉明确标注为模拟数据。下拉可切换三个原文或缺失，支持长标题、深色、详细文案、灰色时间戳悬停原因、成功/失败浮层。所有复制/下载行为是演示。
 
 桌面三方案、长标题+最长样例、390px移动宽度及深色截图已检查，未见横向溢出或页面脚本错误。当前位置及提示尚待主人反馈；确定后归档原型到throwaway分支，进行共同理解确认、to-spec及拆票门禁。
+
+## 第三轮：A 书签修订
+
+主人选择A方向，并明确要求标签放大、向上抬到BV/av编号与封面右上角之间，可超过封面边界，类似更高一层的书签，突出荣誉信息。原型A已修订：字号27→38px，top159→116px，right79→48px；暖金书签底、左侧燕尾口、右下小折角，跨过封面上沿并略伸出其右沿。最长示例与编号仍有间隙，无重叠或横向溢出。此轮只更新原型，具体修订尚待视觉反馈。
+
+2026-09-08主人确认“原型基本设计完成了”，要求按Matt Skills继续下一步。设计前沿视为收敛；A书签及原型归档到codex/prototype-video-honors（3e2d88eb30a859eec213a3e4ddafc3315676cc3e）。已整理spec.md与ticket-plan.md，沿用现有测试接缝，提出两个无行为阻塞关系的纵向切片。等待规格与拆分审阅后发布工单。
