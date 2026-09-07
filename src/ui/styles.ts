@@ -48,8 +48,6 @@ ${MOTION_STYLES}
 .bsp-status{position:fixed;z-index:3;bottom:24px;left:50%;width:min(420px,calc(100vw - 40px));margin:0;padding:9px 12px;border:1px solid var(--bsp-line);border-radius:6px;background:var(--bsp-surface);box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;color:var(--bsp-text);overflow-wrap:anywhere;pointer-events:none;opacity:0;visibility:hidden;transform:translate(-50%,4px);transition:opacity 120ms,transform 120ms,visibility 120ms}.bsp-status.is-show{opacity:1;visibility:visible;transform:translate(-50%,0)}.bsp-status.is-error{color:var(--bsp-error)}
 .bsp-loading-card{width:100%;max-width:380px;aspect-ratio:3/4;position:relative;margin:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#eef4f1;color:#405e65;font-size:14px;text-align:center}
 .bsp-loading-card p{margin:0}.bsp-panel .bsp-loading-card button{font-size:13px;background:#f9fbfa;border-color:#adc2c2;color:#405e65}
-.bsp-poster-updating{position:absolute;inset:0;z-index:2;background:#eef4f1b8;display:grid;place-items:center;color:#405e65;font-size:14px;transition:opacity var(--bsp-motion-overlay)}
-.bsp-poster-updating.is-leaving{opacity:0}
 .bsp-spinner{width:22px;height:22px;border:2px solid #b8c9ca;border-top-color:#405e65;border-radius:50%;animation:bsp-spin 1s linear infinite}
 .bsp-error{font-size:13px;color:var(--bsp-error);line-height:1.7;margin:0}.bsp-help{font-size:12px;color:var(--bsp-muted);line-height:1.7;margin:0}
 .bsp-manual-copy{width:100%;padding:12px;background:var(--bsp-soft);color:var(--bsp-text);border:1px solid var(--bsp-line);border-radius:6px;resize:vertical;font-size:13px!important}

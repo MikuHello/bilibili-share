@@ -166,8 +166,8 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
 }
 
 async function createPosterQr(target: string): Promise<HTMLImageElement> {
-  const data = await QRCode.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
-  return image("bsp-d-qr-image", data, `二维码：${target}`);
+  const markup = await QRCode.toString(target, { type: "svg", width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
+  return image("bsp-d-qr-image", `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, `二维码：${target}`);
 }
 
 /** Prepare offscreen, then atomically replace only the target-dependent content. */

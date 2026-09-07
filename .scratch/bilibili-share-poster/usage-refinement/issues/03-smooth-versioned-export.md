@@ -4,7 +4,7 @@
 
 **Blocked by:** 01、02
 
-**Status:** reopened
+**Status:** in-review
 
 - [x] 稳定保留面板控件，详情仅更新文案；目标变化缩小更新范围，封面/静态排版在允许时复用。
 - [x] 删除人为140ms串行等待，不以动画完成作为恢复动作前置；选项即时反馈，未完成期间不开放混合状态导出。
@@ -26,3 +26,5 @@ Evidence: [ticket03 verification](../evidence/ticket03/verification.md).
 ## 0.3.4 follow-up
 
 - [ ] Apply approved local correction from spec.md final appendix; verify and review before unified delivery.
+
+Verified: painted-frame regression now passes; SVG QR exports decode to the canonical target; update races pass. Same headless fixture median open 170.3 -> 162.3 ms, marker 35.9 -> 32.8 ms, first export 107.4 -> 106.5 ms. These small fixture changes do not establish installed Tampermonkey latency. SVG removes the measured full-resolution pixel loop while retaining QRCode and atomic target updates.

@@ -441,7 +441,6 @@ export class SharePanel {
     const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;
     this.updating = true;
     this.setExportButtonsDisabled(true);
-    this.showUpdatingOverlay();
     try {
       const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
       const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
@@ -455,7 +454,6 @@ export class SharePanel {
     } finally {
       if (isCurrent()) {
         this.updating = false;
-        this.previewPane.querySelector(".bsp-poster-updating")?.remove();
         this.setExportButtonsDisabled(false);
       }
     }
@@ -468,13 +466,6 @@ export class SharePanel {
     // Resource retry must not race a pending target update.
     for (const button of this.previewPane.querySelectorAll<HTMLButtonElement>("button:not(.bsp-download)")) button.disabled = disabled;
   }
-
-  private showUpdatingOverlay(): void {
-    const frame = this.previewPane.querySelector(".bsp-preview-frame");
-    if (!frame || frame.querySelector(".bsp-poster-updating")) return;
-    frame.append(element("div", "bsp-poster-updating", "正在更新标记"));
-  }
-
 
   private renderError(error: unknown, retryCapture: boolean): void {
     const message = error instanceof Error ? error.message : "生成海报时发生未知错误。";
