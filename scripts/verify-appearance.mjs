@@ -13,7 +13,7 @@ try {
   await page.evaluate(() => { document.documentElement.classList.add('dark'); document.body.style.background='rgb(28,30,34)'; });
   await page.waitForFunction(()=>document.querySelector('#bsp-entry.bsp-entry-dark'));
   await page.locator('#bsp-entry').screenshot({path:`${output}/entry-dark.png`});
-  await page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await page.getByRole('button',{name:'分享海报',exact:true}).click();
   await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   const dialog = page.getByRole('dialog');
   assert.equal(await dialog.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(36, 38, 43)', 'panel initializes from actual page dark marker');

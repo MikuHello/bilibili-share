@@ -10,7 +10,7 @@ await mkdir(output, { recursive: true });
 const results = [];
 const canonical = 'https://www.bilibili.com/video/BV1TXoWBsEGc/';
 const ready = page => page.waitForFunction(() => document.querySelector('.bsp-backdrop:not([aria-hidden="true"]) [aria-label="复制海报"]')?.disabled === false);
-const open = async page => { await page.getByRole('button', { name: '生成海报', exact: true }).click(); await ready(page); };
+const open = async page => { await page.getByRole('button', { name: '分享海报', exact: true }).click(); await ready(page); };
 const marker = page => page.getByRole('button', { name: '标记当前时间', exact: true });
 async function clipboard(page) {
   await page.evaluate(() => {

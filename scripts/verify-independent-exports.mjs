@@ -3,7 +3,7 @@ import {browserRuntime,productionBundle,openFixture} from './browser-test-suppor
 const {chromium}=await browserRuntime();const browser=await chromium.launch({headless:true});
 try {
  const {page,context,errors}=await openFixture(browser,await productionBundle());
- await page.getByRole('button',{name:'生成海报',exact:true}).click();
+ await page.getByRole('button',{name:'分享海报',exact:true}).click();
  await page.getByRole('button',{name:'复制海报',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:/组合复制|复制海报与文案/}).count(),0,'unsupported combined action is absent');
  for(const name of ['复制海报','复制文案','复制 Markdown','下载海报 PNG']) assert.equal(await page.getByRole('button',{name,exact:true}).isEnabled(),true);

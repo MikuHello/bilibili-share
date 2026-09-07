@@ -11,7 +11,7 @@ const results = [];
 try {
   // First tracer: opening exposes the approved named dialog and direct actions.
   const {page,context,errors} = await openFixture(browser,bundle);
-  await page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await page.getByRole('button',{name:'分享海报',exact:true}).click();
   const dialog = page.getByRole('dialog',{name:'分享海报',exact:true});
   await dialog.waitFor({timeout:5000});
   await page.getByRole('button',{name:'复制海报',exact:true}).waitFor();
@@ -63,8 +63,8 @@ try {
     else if(close==='button') await page.getByRole('button',{name:'关闭分享面板'}).click();
     else await page.mouse.click(2,2);
     await dialog.waitFor({state:'detached'});
-    assert.equal(await page.getByRole('button',{name:'生成海报',exact:true}).evaluate(n=>document.activeElement===n),true);
-    await page.getByRole('button',{name:'生成海报',exact:true}).click();
+    assert.equal(await page.getByRole('button',{name:'分享海报',exact:true}).evaluate(n=>document.activeElement===n),true);
+    await page.getByRole('button',{name:'分享海报',exact:true}).click();
     await copy.waitFor();
   }
   results.push({case:'keyboard-and-three-close-paths',passed:true});
@@ -121,7 +121,7 @@ try {
   assert.deepEqual(errors,[]);await context.close();
 
   const long = await openFixture(browser,bundle,{title:'很长的视频标题，用于验证文案滚动与操作可达。'.repeat(50)});
-  await long.page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await long.page.getByRole('button',{name:'分享海报',exact:true}).click();
   await long.page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   const longText = long.page.getByLabel('分享文案预览',{exact:true});
   assert.ok(Math.abs(await longText.evaluate(n=>n.getBoundingClientRect().height)-310)<0.1,'long text height is capped at 310px within browser subpixel rounding');
@@ -134,7 +134,7 @@ try {
   assert.deepEqual(long.errors,[]);await long.context.close();
 
   const partial = await openFixture(browser,bundle,{coverFailed:true});
-  await partial.page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await partial.page.getByRole('button',{name:'分享海报',exact:true}).click();
   await partial.page.getByText('封面暂时无法加载',{exact:true}).waitFor();
   assert.equal(await partial.page.getByRole('button',{name:'复制文案',exact:true}).isEnabled(),true);
   assert.equal(await partial.page.getByRole('button',{name:'下载海报 PNG',exact:true}).isEnabled(),false);
@@ -143,7 +143,7 @@ try {
 
   // Real Chromium clipboard writes use click gestures; only this known fixture is read.
   const real = await openFixture(browser,bundle,{realClipboard:true,context:{permissions:['clipboard-read','clipboard-write']}});
-  await real.page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await real.page.getByRole('button',{name:'分享海报',exact:true}).click();
   const realCopy=real.page.getByRole('button',{name:'复制海报',exact:true});await realCopy.waitFor();
   const knownPlain = await real.page.getByLabel('分享文案预览',{exact:true}).textContent();
   await real.page.getByRole('button',{name:'复制文案',exact:true}).click();

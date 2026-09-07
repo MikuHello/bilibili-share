@@ -39,7 +39,7 @@ export function createSharePosterEntry(appearance: PageAppearance, onOpen: () =>
   button.id = ENTRY_ID;
   button.type = "button";
   button.title = "生成分享海报";
-  button.append(posterIcon(), document.createTextNode("生成海报"));
+  button.append(posterIcon(), document.createTextNode("分享海报"));
   button.addEventListener("click", onOpen);
   button.classList.toggle("bsp-entry-dark", appearance === "dark");
   return button;

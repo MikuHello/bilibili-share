@@ -7,7 +7,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   const bundle = await productionBundle();
   const { page, context, errors } = await openFixture(browser, bundle, { paused: false, delay: 100 });
-  await page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await page.getByRole("button", { name: "分享海报", exact: true }).click();
   await page.getByRole("dialog").waitFor();
   await page.evaluate(() => window.openFixturePanel());
   assert.equal(await page.getByRole("dialog").count(), 1);
@@ -33,7 +33,7 @@ try {
   console.log("PASS: duplicate entry and immediate reopen preserve one live captured panel");
   const failed = await openFixture(browser, bundle);
   await failed.page.evaluate(() => document.querySelector("video").remove());
-  await failed.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await failed.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await failed.page.getByRole("button", { name: "重试", exact: true }).waitFor();
   await failed.page.evaluate(() => {
     history.pushState({}, "", "/video/BV1xx411c7mD/?p=1");
@@ -47,7 +47,7 @@ try {
   for (const phase of ["initial", "retry", "target"]) {
     const late = await openFixture(browser, bundle, { paused: false, coverFailed: phase === "retry", delay: phase === "initial" ? 200 : 0 });
     const p = late.page;
-    await p.getByRole("button", { name: "生成海报", exact: true }).click();
+    await p.getByRole("button", { name: "分享海报", exact: true }).click();
     if (phase === "retry") {
       await p.getByRole("button", { name: "重试", exact: true }).waitFor();
       await p.evaluate(() => { window.fixture.delay = 200; window.fixture.coverFailed = false; });
@@ -83,7 +83,7 @@ try {
   }
   console.log("PASS: navigation during initial/retry/target requests cannot resurrect old results");
   const early = await openFixture(browser, bundle, { paused: false });
-  await early.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await early.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await early.page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
   await early.page.evaluate(() => {
     history.pushState({}, "", "/video/BV1TXoWBsEGc/?p=1");
@@ -97,7 +97,7 @@ try {
   await early.context.close();
   console.log("PASS: entry checks navigation synchronously before reusing a panel");
   const stale = await openFixture(browser, bundle, { paused: false });
-  await stale.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await stale.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await stale.page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
   await stale.page.evaluate(() => {
     history.pushState({}, "", "/video/BV1TXoWBsEGc/?p=1");
@@ -109,7 +109,7 @@ try {
   await stale.context.close();
   console.log("PASS: export rejects stale capture before navigation event delivery");
   const retryStale = await openFixture(browser, bundle, { coverFailed: true });
-  await retryStale.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await retryStale.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await retryStale.page.getByRole("button", { name: "重试", exact: true }).waitFor();
   const beforeRetry = await retryStale.page.evaluate(() => window.fixture.requests.length);
   await retryStale.page.evaluate(() => {
@@ -125,7 +125,7 @@ try {
     for (const closing of ["button", "escape", "backdrop"]) {
       const closed = await openFixture(browser, bundle, { paused, coverFailed: true });
       const p = closed.page;
-      await p.getByRole("button", { name: "生成海报", exact: true }).click();
+      await p.getByRole("button", { name: "分享海报", exact: true }).click();
       await p.getByRole("button", { name: "重试", exact: true }).waitFor();
       await p.evaluate(() => { window.fixture.delay = 150; window.fixture.coverFailed = false; });
       await p.getByRole("button", { name: "重试", exact: true }).click();
@@ -136,14 +136,14 @@ try {
       assert.equal(await p.getByRole("dialog").count(), 0, "late retry cannot revive a closed panel");
       assert.equal(await p.evaluate(() => window.fixture.playCount), paused ? 0 : 1, closing + " restores only previously playing capture");
       assert.equal(await p.evaluate(() => window.fixture.paused), paused);
-      assert.equal(await p.getByRole("button", { name: "生成海报", exact: true }).evaluate(button => button === document.activeElement), true);
+      assert.equal(await p.getByRole("button", { name: "分享海报", exact: true }).evaluate(button => button === document.activeElement), true);
       assert.deepEqual(closed.errors, []);
       await closed.context.close();
     }
   }
   console.log("PASS: all close paths preserve paused/playing state and discard late retry");
   const staleMarker = await openFixture(browser, bundle);
-  await staleMarker.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await staleMarker.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await staleMarker.page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
   const beforeMarker = await staleMarker.page.evaluate(() => window.fixture.requests.length);
   await staleMarker.page.evaluate(() => {
@@ -155,7 +155,7 @@ try {
   assert.equal(await staleMarker.page.getByRole("dialog").count(), 0);
   await staleMarker.context.close();
   const replaced = await openFixture(browser, bundle, { paused: false });
-  await replaced.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await replaced.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await replaced.page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
   await replaced.page.evaluate(() => {
     const replacement = document.createElement("video");
@@ -176,7 +176,7 @@ try {
     const p = encoded.page;
     let downloads = 0;
     p.on("download", () => { downloads++; });
-    await p.getByRole("button", { name: "生成海报", exact: true }).click();
+    await p.getByRole("button", { name: "分享海报", exact: true }).click();
     await p.getByRole("button", { name: action, exact: true }).waitFor();
     await p.evaluate(() => {
       const original = HTMLCanvasElement.prototype.toDataURL;

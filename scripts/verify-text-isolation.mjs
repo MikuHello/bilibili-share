@@ -15,7 +15,7 @@ try {
     window.GM_setClipboard=(text,_type,done)=> { nativeWrite(text).then(done); };
     navigator.clipboard.writeText=text=>nativeWrite(text.match(/https:\/\/www\.bilibili\.com\/video\/[^\s)]+/)?.[0]??text);
   });
-  await page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await page.getByRole('button',{name:'分享海报',exact:true}).click();
   await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   for (const detail of [false,true]) {
     await page.getByRole('checkbox',{name:'详细信息',exact:true}).setChecked(detail);

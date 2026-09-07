@@ -37,7 +37,7 @@ try {
       return { name, durationMs: after.time - before.time, canvases: after.canvases - before.canvases, decodes: after.decodes - before.decodes, requests: after.requests - before.requests };
     }
     const stages = [];
-    stages.push(await measure('open', async () => { await page.getByRole('button', { name: '生成海报', exact: true }).click(); await ready(page); }));
+    stages.push(await measure('open', async () => { await page.getByRole('button', { name: '分享海报', exact: true }).click(); await ready(page); }));
     await page.evaluate(() => { window.kept = { controls: [...document.querySelectorAll('.bsp-controls button,.bsp-controls input')], cover: document.querySelector('.bsp-d-cover'), title: document.querySelector('.bsp-d-title') }; });
     stages.push(await measure('details', async () => { await page.getByRole('checkbox', { name: '详细信息', exact: true }).check(); await ready(page); }));
     const stableDetails = await page.evaluate(() => window.kept.controls.every(node => node.isConnected) && window.kept.title === document.querySelector('.bsp-d-title'));

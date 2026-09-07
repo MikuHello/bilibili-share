@@ -10,7 +10,7 @@ try {
   const { page, context, errors } = await openFixture(browser, bundle, { coverFailed: true });
   const diagnostics = [];
   page.on("console", message => { if (message.type() === "warning") diagnostics.push(message.text()); });
-  await page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await page.getByRole("button", { name: "分享海报", exact: true }).click();
   await page.getByText("封面暂时无法加载", { exact: true }).waitFor({ timeout: 10000 });
   const plain = page.getByRole("button", { name: "复制文案", exact: true });
   const markdown = page.getByRole("button", { name: "复制 Markdown", exact: true });
@@ -42,7 +42,7 @@ try {
   assert.deepEqual(errors, []);
   await page.getByRole("button", { name: "关闭分享面板", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "detached" });
-  await page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await page.getByRole("button", { name: "分享海报", exact: true }).click();
   await page.getByRole("checkbox", { name: "详细信息", exact: true }).waitFor();
   assert.equal(await page.getByRole("checkbox", { name: "详细信息", exact: true }).isChecked(), true);
   await plain.click();
@@ -54,7 +54,7 @@ try {
     preferences: { "bsp-panel-preferences": { theme: "B", markdownText: true, detailedText: false } },
   });
   const specialPage = special.page;
-  await specialPage.getByRole("button", { name: "生成海报", exact: true }).click();
+  await specialPage.getByRole("button", { name: "分享海报", exact: true }).click();
   await specialPage.getByRole("button", { name: "复制文案", exact: true }).click();
   const originalPlain = await specialPage.evaluate(() => window.fixture.copiedText.at(-1));
   assert.equal(originalPlain, "标题 [甲] *乙* <b>（UP主：UP_名字[丙]）\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/");
@@ -69,7 +69,7 @@ try {
   await special.context.close();
   console.log("PASS: independent Markdown preserves escaped information and ignores legacy mode");
   const blocked = await openFixture(browser, bundle, { metadataFailed: true });
-  await blocked.page.getByRole("button", { name: "生成海报", exact: true }).click();
+  await blocked.page.getByRole("button", { name: "分享海报", exact: true }).click();
   await blocked.page.getByRole("button", { name: "重试", exact: true }).waitFor();
   assert.equal(await blocked.page.getByRole("button", { name: /^复制/ }).count(), 0, "invalid identity exposes no copy action");
   assert.equal(await blocked.page.getByRole("button", { name: "下载海报 PNG", exact: true }).count(), 0);

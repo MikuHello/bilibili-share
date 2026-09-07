@@ -7,7 +7,7 @@ const out=process.env.BSP_EVIDENCE_DIR??'.scratch/bilibili-share-poster/usage-re
 await mkdir(out,{recursive:true});
 try{
  const {page,context}=await openFixture(browser,await productionBundle());
- await page.getByRole('button',{name:'生成海报',exact:true}).click();
+ await page.getByRole('button',{name:'分享海报',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('[aria-label="复制海报"]')?.disabled===false);
  await page.evaluate(()=>{
   const decode=HTMLImageElement.prototype.decode;

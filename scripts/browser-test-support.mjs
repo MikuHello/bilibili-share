@@ -77,6 +77,6 @@ export async function openFixture(browser, bundle, overrides = {}) {
     } });
   }, { coverBase64: cover.toString("base64"), overrides: { ...overrides, context: undefined } });
   await page.addScriptTag({ content: bundle });
-  await page.getByRole("button", { name: "生成海报", exact: true }).waitFor();
+  await page.getByRole("button", { name: "分享海报", exact: true }).waitFor();
   return { page, context, errors };
 }

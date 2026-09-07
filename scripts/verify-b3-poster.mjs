@@ -13,7 +13,7 @@ const results = [];
 async function verifyPoster(name, overrides) {
   const { page, context, errors } = await openFixture(browser, bundle, overrides);
   try {
-    await page.getByRole('button',{name:'生成海报',exact:true}).click();
+    await page.getByRole('button',{name:'分享海报',exact:true}).click();
     await page.getByRole('article').waitFor();
     assert.ok(await page.getByRole('dialog').evaluate(panel=>{const r=panel.getBoundingClientRect();return panel.scrollWidth<=panel.clientWidth+1 && r.left>=0 && r.right<=innerWidth;}), `${name}: panel contained in viewport`);
     if(overrides.markers) {
@@ -63,7 +63,7 @@ async function captureBackground(color) {
   const coverBase64 = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><rect width="100%" height="100%" fill="${color}"/></svg>`).toString('base64');
   const { page, context } = await openFixture(browser, bundle, { coverBase64, coverMime: 'image/svg+xml' });
   try {
-    await page.getByRole('button', { name:'生成海报', exact:true }).click();
+    await page.getByRole('button', { name:'分享海报', exact:true }).click();
     await page.getByRole('article').waitFor();
     await page.evaluate(() => { navigator.clipboard.write = async items => {
       const blob = await items[0].getType('image/png');
@@ -79,7 +79,7 @@ async function captureBackground(color) {
 try {
   const { page, context } = await openFixture(browser, bundle, { title: '把身体作为方法' });
   try {
-    await page.getByRole('button', { name: '生成海报', exact: true }).click();
+    await page.getByRole('button', { name: '分享海报', exact: true }).click();
     await page.getByRole('article').waitFor();
     const geometry = await page.getByRole('article').evaluate(poster => {
       const rect = node => { const r = node.getBoundingClientRect(); return { x:r.x, y:r.y, width:r.width, height:r.height, bottom:r.bottom }; };

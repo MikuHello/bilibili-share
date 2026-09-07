@@ -72,7 +72,7 @@ try {
   const { page, context, errors } = await openFixture(browser, bundle);
   try {
     await installClipboardRecorder(page);
-    await page.getByRole("button", { name: "生成海报", exact: true }).click();
+    await page.getByRole("button", { name: "分享海报", exact: true }).click();
     await page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
     const statuses = await page.getByRole("status").allTextContents();
     assert.ok(!statuses.includes("已使用完整链接"));
@@ -109,7 +109,7 @@ try {
   const failed = await openFixture(browser, bundle, { coverFailed: true });
   try {
     const page = failed.page;
-    await page.getByRole("button", { name: "生成海报", exact: true }).click();
+    await page.getByRole("button", { name: "分享海报", exact: true }).click();
     await ready(page);
     await timeButton(page).click();
     await assertOutputs(page, canonical + "?p=2&t=83", "failed-cover-time");
@@ -125,7 +125,7 @@ try {
     const page = fixture.page;
     try {
       await installClipboardRecorder(page);
-      await page.getByRole("button", { name: "生成海报", exact: true }).click();
+      await page.getByRole("button", { name: "分享海报", exact: true }).click();
       await ready(page);
       if (scenario.marker) { await timeButton(page).click(); await ready(page); }
       if (scenario.unavailable) assert.equal(await timeButton(page).isDisabled(), true);
@@ -141,7 +141,7 @@ try {
       if (scenario.name === "p1-time") {
         await page.getByRole("button", { name: "关闭分享面板", exact: true }).click();
         await page.getByRole("dialog").waitFor({ state: "detached" });
-        await page.getByRole("button", { name: "生成海报", exact: true }).click();
+        await page.getByRole("button", { name: "分享海报", exact: true }).click();
         await ready(page);
         assert.equal(await timeButton(page).getAttribute("aria-pressed"), "false");
         assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
