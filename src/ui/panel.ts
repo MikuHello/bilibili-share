@@ -329,7 +329,7 @@ export class SharePanel {
     const status = this.controls.querySelector<HTMLElement>(".bsp-status");
     if (!status) return;
     clearTimeout(this.statusTimer);
-    status.textContent = message;
+    status.textContent = message.replace(/。$/u, "");
     status.classList.toggle("is-error", error);
     status.classList.add("is-show");
     const delay = statusDismissDelay(error);
