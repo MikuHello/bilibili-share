@@ -1,6 +1,6 @@
 import { renderShareTextTemplate } from "./share-text-template";
 import { buildPartLabel, formatTimestamp, type GenerationSnapshot, type StatisticValue } from "./domain";
-import type { ShareOptions } from "./options";
+import { canEnablePartShare, canEnableTimestampShare, type ShareOptions } from "./options";
 
 export function buildCompactShareText(title: string, uploader: string, shareTarget: string): string {
   return `${title}（UP主：${uploader}）\n${shareTarget}`;
@@ -50,8 +50,8 @@ export function buildShareText(snapshot: GenerationSnapshot, shareTarget: string
       title: snapshot.title, uploader: snapshot.uploader, url: shareTarget,
       bvid: snapshot.bvid, aid: snapshot.aid, ...snapshot.stats,
       honor: snapshot.honor?.trim() ? snapshot.honor : null,
-      part: buildPartLabel(snapshot, options),
-      timestamp: options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1
+      part: canEnablePartShare(snapshot) ? buildPartLabel(snapshot, options) : null,
+      timestamp: options.timestampShare && canEnableTimestampShare(snapshot)
         ? formatTimestamp(snapshot.playbackSeconds) : null,
     };
     const available = (name: string) => values[name] !== null && values[name] !== undefined &&

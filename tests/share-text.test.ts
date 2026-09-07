@@ -61,6 +61,12 @@ describe("detailed and markdown share text", () => {
       { plain: { detailed: "A{{#if part}}P={{part}}{{/if}}{{#if timestamp}}T={{timestamp}}{{/if}}Z" } })).toBe("AZ");
   });
 
+  it("omits unavailable part and time data even when options are requested", () => {
+    expect(buildShareText({ ...snapshot, partIdentified: false }, target,
+      { partShare: true, timestampShare: true, detailedText: false, markdownText: false },
+      { plain: { compact: "{{part}}|{{timestamp}}{{#if part}}P{{/if}}{{#if timestamp}}T{{/if}}" } })).toBe("|");
+  });
+
   it.each([
     "{{unknown}}", "{{#if honor}}{{unknown}}{{/if}}", "{{#if unknown}}x{{/if}}",
     "{{title", "}}", "{{#if honor}}x", "{{/if}}", "{{else}}",
