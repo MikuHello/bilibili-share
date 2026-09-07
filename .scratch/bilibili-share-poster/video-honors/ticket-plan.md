@@ -1,6 +1,6 @@
 # 实现拆分提案
 
-Status: proposed — 尚未发布执行工单。
+Status: approved — 2026-09-08主人批准，已发布01、02执行工单。
 
 1. **视频主荣誉进入书签海报与详细文案**
    - Blocked by: None。

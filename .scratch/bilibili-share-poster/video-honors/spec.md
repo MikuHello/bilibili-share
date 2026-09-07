@@ -1,6 +1,6 @@
 # 视频荣誉书签与悬浮说明
 
-Status: proposed — 视觉原型已确认；规格、测试接缝与拆票待审阅，未授权生产实现。
+Status: approved — 2026-09-08主人批准规格、测试接缝与拆票，授权按Matt流程直接实现。
 Triage: ready-for-agent（规格整理；执行仍受审批状态约束）
 
 ## Problem Statement
