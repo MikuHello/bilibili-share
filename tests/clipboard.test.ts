@@ -31,7 +31,7 @@ describe("poster clipboard adapter", () => {
     expect(outcome).toEqual({ status: "failed", reason: "Clipboard API 写入被拒绝" });
     expect(describePosterCopyResult(outcome)).toEqual({
       statusMessage: "海报复制失败。",
-      helpMessage: "请使用海报下方的下载图标保存 PNG。",
+      helpMessage: "请使用复制海报左侧的下载图标保存 PNG。",
       downloadGuidance: true,
     });
   });

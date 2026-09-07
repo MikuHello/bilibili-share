@@ -504,7 +504,7 @@ export class SharePanel {
         outcome.status !== "copied",
       );
     } catch {
-      this.showStatus("海报复制失败。请使用海报下方的下载图标保存 PNG。", true);
+      this.showStatus("海报复制失败。请使用复制海报左侧的下载图标保存 PNG。", true);
     } finally {
       finish();
     }

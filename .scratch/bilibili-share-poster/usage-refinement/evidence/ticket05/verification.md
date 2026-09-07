@@ -29,8 +29,10 @@
 
 ## Standards
 
-待双轴审阅。
+独立审阅：硬性规范违规0，可操作代码异味0。条件移除证据明确，生产、图标、构建描述、术语与验证同步清理；冻结旧代码仅为探针档案，不进入生产。
 
 ## Spec
 
-待双轴审阅。
+独立Spec审阅0项发现：条件移除符合QQ真实粘贴证据与批准范围，独立导出及失败恢复保留，无平台专用适配。
+
+Regression results: targets 10 scenarios / 6 decoded PNGs; lifecycle 9 groups; text recovery 3 groups; panel keyboard, close paths, 320/390px, native Chromium clipboard and PNG download all passed. See targets/report.json and panel/report.json.
