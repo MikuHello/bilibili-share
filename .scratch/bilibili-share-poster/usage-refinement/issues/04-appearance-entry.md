@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** in-review
+**Status:** complete
 
 - [x] 明确面板标题/正文/图标/背景/控件语义颜色，验证宿主标题覆盖情形，不再出现深底黑字。
 - [x] 遵循既有有效页面模式初始化与切换，未知信号保持已知模式；支持既有标准页/BewlyCat边界。
@@ -36,3 +36,5 @@ Verification: [controlled browser + live CSS observations](../evidence/ticket04/
 - [x] Apply approved entry label correction from spec.md final appendix: 分享海报. Existing appearance browser suite and typecheck pass; review before unified delivery.
 
 Entry keeps its approved icon and geometry. Existing browser action selectors now use the visible 分享海报 label. Evidence: [entry](../interaction-smoothness/evidence/entry/browser-verification.md).
+
+0.3.4 entry review `971a087...1c3fa4b`: Spec 0 findings; Standards 0 hard violations and 0 actionable smells. Unified release remains pending ticket 06.
