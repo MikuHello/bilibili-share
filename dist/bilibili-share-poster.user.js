@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.3.2
+// @version      0.3.3
 // @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -2419,7 +2419,6 @@
 
   // src/ui/icons.ts
   var ICON_PATHS = {
-    poster: ["M4 5.5h16v13H4z", "M7 15l3.2-3.4 2.4 2.4 1.8-1.9 2.6 2.7", "M8.4 8.4h.01"],
     copy: ["M10 8h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z", "M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"],
     download: ["M12 3v12", "m8 11 4 4 4-4", "M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"],
     "copy-text": ["M8 9h8", "M8 13h5", "M4 4h16v16H4z"],
@@ -2446,7 +2445,15 @@
     return svg2;
   }
   function posterIcon() {
-    return createIcon("poster");
+    const svg2 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg2.setAttribute("viewBox", "0 0 28 28");
+    svg2.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(svg2.namespaceURI, "path");
+    path.setAttribute("fill", "currentColor");
+    path.setAttribute("fill-rule", "evenodd");
+    path.setAttribute("d", "M7 2h14a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm2 16a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H9Zm0 4a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Zm0-7h10l-3.4-4.7-2.2 2.7-1.7-2.1L9 15Zm3-7a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0Z");
+    svg2.append(path);
+    return svg2;
   }
 
   // src/ui/entry.ts
@@ -2536,18 +2543,27 @@
     }
   }
   async function copyShareTextToClipboard(text) {
+    if (typeof GM_setClipboard === "function") {
+      return copyText(text, {
+        write: (value) => new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("\u6587\u672C\u526A\u8D34\u677F\u5199\u5165\u672A\u5B8C\u6210\uFF0C\u8BF7\u91CD\u8BD5")), 5e3);
+          try {
+            GM_setClipboard(value, "text", () => {
+              clearTimeout(timer);
+              resolve();
+            });
+          } catch (error) {
+            clearTimeout(timer);
+            reject(error);
+          }
+        })
+      });
+    }
     const clipboard = browserClipboard();
     if (clipboard && typeof clipboard.writeText === "function") {
       return copyText(text, {
         async write(value) {
           await clipboard.writeText(value);
-        }
-      });
-    }
-    if (typeof GM_setClipboard === "function") {
-      return copyText(text, {
-        async write(value) {
-          GM_setClipboard(value, "text");
         }
       });
     }

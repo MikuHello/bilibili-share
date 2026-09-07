@@ -124,7 +124,7 @@ try {
   await long.page.getByRole('button',{name:'生成海报',exact:true}).click();
   await long.page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   const longText = long.page.getByLabel('分享文案预览',{exact:true});
-  assert.equal(await longText.evaluate(n=>n.getBoundingClientRect().height),310);
+  assert.ok(Math.abs(await longText.evaluate(n=>n.getBoundingClientRect().height)-310)<0.1,'long text height is capped at 310px within browser subpixel rounding');
   assert.equal(await longText.evaluate(n=>n.scrollHeight>n.clientHeight),true);
   await longText.evaluate(n=>n.scrollTop=n.scrollHeight);
   await long.page.getByRole('button',{name:'复制文案',exact:true}).click();
