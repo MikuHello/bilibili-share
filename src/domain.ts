@@ -1,5 +1,5 @@
 import type { ShareOptions } from "./options";
-import { isOpaqueShortUrl, parseCanonicalVideoIdentity } from "./share-target";
+import { parseCanonicalVideoIdentity } from "./share-target";
 
 export type StatisticValue = number | null;
 
@@ -90,8 +90,7 @@ function validateShareTarget(shareTarget: string, bvid: string): string {
 
   const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
   const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
-  const isOpaqueShort = isOpaqueShortUrl(url);
-  if (url.protocol !== "https:" || (!isCanonical && !isOpaqueShort)) {
+  if (url.protocol !== "https:" || !isCanonical) {
     throw new Error("分享链接无效");
   }
   return url.toString();
@@ -102,7 +101,7 @@ export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: stri
   const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "视频封面");
   const uploader = requireText(snapshot.uploader, "UP 主");
   const bvid = requireText(snapshot.bvid, "BV 标识");
-  if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少AV 标识");
+  if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("缺少av 标识");
   const validatedShareTarget = validateShareTarget(shareTarget, bvid);
   return {
     dimensions: { width: 1080, height: 1440 },
@@ -112,7 +111,7 @@ export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: stri
     uploader,
     bvid,
     aid: snapshot.aid,
-    identity: `${bvid} · AV${snapshot.aid}`,
+    identity: `${bvid} · av${snapshot.aid}`,
     shareTarget: validatedShareTarget,
     stats: [
       { label: "播放", value: formatCompactStat(snapshot.stats.views) },

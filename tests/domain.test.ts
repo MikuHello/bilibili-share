@@ -57,7 +57,7 @@ describe("default poster domain", () => {
       dimensions: { width: 1080, height: 1440 },
       title: completeSnapshot.title,
       uploader: completeSnapshot.uploader,
-      identity: "BV1xx411c7mD · AV170001",
+      identity: "BV1xx411c7mD · av170001",
       shareTarget,
       stats: [
         { label: "播放", value: "1234.6万" },
@@ -68,10 +68,8 @@ describe("default poster domain", () => {
     });
   });
 
-  it("assembles one validated short target into every poster destination", () => {
-    const poster = buildDefaultPoster(completeSnapshot, "https://b23.tv/a7BomhP");
-
-    expect(poster.shareTarget).toBe("https://b23.tv/a7BomhP");
+  it("rejects short targets so every poster uses a validated canonical destination", () => {
+    expect(() => buildDefaultPoster(completeSnapshot, "https://b23.tv/a7BomhP")).toThrow("分享链接无效");
   });
 
   it.each([
@@ -79,7 +77,7 @@ describe("default poster domain", () => {
     ["cover", { coverDataUrl: "" }, "视频封面"],
     ["uploader", { uploader: "" }, "UP 主"],
     ["bvid", { bvid: "" }, "BV 标识"],
-    ["aid", { aid: 0 }, "AV 标识"],
+    ["aid", { aid: 0 }, "av 标识"],
   ])("blocks export when %s is missing", (_name, replacement, label) => {
     expect(() =>
       buildDefaultPoster({ ...completeSnapshot, ...replacement }, "https://www.bilibili.com/video/BV1xx411c7mD/"),

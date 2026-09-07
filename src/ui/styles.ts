@@ -39,10 +39,9 @@ ${MOTION_STYLES}
 .bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
 .bsp-panel .bsp-text-copy-actions button:hover:not(:disabled){color:#40c5f1}
 .bsp-text-content{border:0;background:var(--bsp-soft);border-radius:6px;padding:16px;font-size:13px;line-height:1.85;max-height:270px;min-height:190px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin-top:14px;color:var(--bsp-blue)}
+.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin:0;color:var(--bsp-blue)}
 .bsp-text-options{display:flex;margin-top:14px}.bsp-text-options label{font-size:12px;color:var(--bsp-muted);display:flex;gap:7px;align-items:center;cursor:pointer}
 .bsp-text-options input{accent-color:var(--bsp-blue);width:14px;height:14px;margin:0}
-.bsp-fallback{font-size:11px;color:var(--bsp-muted);margin:10px 0 0}
 .bsp-action-group{margin-top:auto;margin-bottom:42px}
 .bsp-actions{display:flex;gap:12px}.bsp-panel .bsp-actions button{flex:1;min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;padding:8px;border-radius:6px}
 .bsp-actions svg{width:18px;height:18px;flex:none}.bsp-panel .bsp-action-primary{background:var(--bsp-blue);border-color:var(--bsp-blue);color:#fff}.bsp-panel .bsp-action-primary:hover:not(:disabled){background:#40c5f1;border-color:#40c5f1;color:#fff}

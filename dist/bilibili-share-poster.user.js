@@ -11,7 +11,6 @@
 // @grant        GM_registerMenuCommand
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
-// @connect      b23.tv
 // @connect      hdslb.com
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,18 +42,18 @@
     mod
   ));
 
-  // node_modules/qrcode/lib/can-promise.js
+  // ../bilibili-share/node_modules/qrcode/lib/can-promise.js
   var require_can_promise = __commonJS({
-    "node_modules/qrcode/lib/can-promise.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/can-promise.js"(exports, module) {
       module.exports = function() {
         return typeof Promise === "function" && Promise.prototype && Promise.prototype.then;
       };
     }
   });
 
-  // node_modules/qrcode/lib/core/utils.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/utils.js
   var require_utils = __commonJS({
-    "node_modules/qrcode/lib/core/utils.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/utils.js"(exports) {
       var toSJISFunction;
       var CODEWORDS_COUNT = [
         0,
@@ -131,9 +130,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/error-correction-level.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js
   var require_error_correction_level = __commonJS({
-    "node_modules/qrcode/lib/core/error-correction-level.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js"(exports) {
       exports.L = { bit: 1 };
       exports.M = { bit: 0 };
       exports.Q = { bit: 3 };
@@ -176,9 +175,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/bit-buffer.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js
   var require_bit_buffer = __commonJS({
-    "node_modules/qrcode/lib/core/bit-buffer.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js"(exports, module) {
       function BitBuffer() {
         this.buffer = [];
         this.length = 0;
@@ -211,9 +210,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/bit-matrix.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js
   var require_bit_matrix = __commonJS({
-    "node_modules/qrcode/lib/core/bit-matrix.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js"(exports, module) {
       function BitMatrix(size) {
         if (!size || size < 1) {
           throw new Error("BitMatrix size must be defined and greater than 0");
@@ -240,9 +239,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/alignment-pattern.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js
   var require_alignment_pattern = __commonJS({
-    "node_modules/qrcode/lib/core/alignment-pattern.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js"(exports) {
       var getSymbolSize = require_utils().getSymbolSize;
       exports.getRowColCoords = function getRowColCoords(version) {
         if (version === 1) return [];
@@ -275,9 +274,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/finder-pattern.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js
   var require_finder_pattern = __commonJS({
-    "node_modules/qrcode/lib/core/finder-pattern.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js"(exports) {
       var getSymbolSize = require_utils().getSymbolSize;
       var FINDER_PATTERN_SIZE = 7;
       exports.getPositions = function getPositions(version) {
@@ -294,9 +293,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/mask-pattern.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js
   var require_mask_pattern = __commonJS({
-    "node_modules/qrcode/lib/core/mask-pattern.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js"(exports) {
       exports.Patterns = {
         PATTERN000: 0,
         PATTERN001: 1,
@@ -436,9 +435,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/error-correction-code.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js
   var require_error_correction_code = __commonJS({
-    "node_modules/qrcode/lib/core/error-correction-code.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js"(exports) {
       var ECLevel = require_error_correction_level();
       var EC_BLOCKS_TABLE = [
         // L  M  Q  H
@@ -797,9 +796,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/galois-field.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/galois-field.js
   var require_galois_field = __commonJS({
-    "node_modules/qrcode/lib/core/galois-field.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/galois-field.js"(exports) {
       var EXP_TABLE = new Uint8Array(512);
       var LOG_TABLE = new Uint8Array(256);
       (function initTables() {
@@ -830,9 +829,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/polynomial.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/polynomial.js
   var require_polynomial = __commonJS({
-    "node_modules/qrcode/lib/core/polynomial.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/polynomial.js"(exports) {
       var GF = require_galois_field();
       exports.mul = function mul(p1, p2) {
         const coeff = new Uint8Array(p1.length + p2.length - 1);
@@ -866,9 +865,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/reed-solomon-encoder.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js
   var require_reed_solomon_encoder = __commonJS({
-    "node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports, module) {
       var Polynomial = require_polynomial();
       function ReedSolomonEncoder(degree) {
         this.genPoly = void 0;
@@ -898,18 +897,18 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/version-check.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/version-check.js
   var require_version_check = __commonJS({
-    "node_modules/qrcode/lib/core/version-check.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/version-check.js"(exports) {
       exports.isValid = function isValid(version) {
         return !isNaN(version) && version >= 1 && version <= 40;
       };
     }
   });
 
-  // node_modules/qrcode/lib/core/regex.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/regex.js
   var require_regex = __commonJS({
-    "node_modules/qrcode/lib/core/regex.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/regex.js"(exports) {
       var numeric = "[0-9]+";
       var alphanumeric = "[A-Z $%*+\\-./:]+";
       var kanji = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";
@@ -935,9 +934,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/mode.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/mode.js
   var require_mode = __commonJS({
-    "node_modules/qrcode/lib/core/mode.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/mode.js"(exports) {
       var VersionCheck = require_version_check();
       var Regex = require_regex();
       exports.NUMERIC = {
@@ -1016,9 +1015,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/version.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/version.js
   var require_version = __commonJS({
-    "node_modules/qrcode/lib/core/version.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/version.js"(exports) {
       var Utils = require_utils();
       var ECCode = require_error_correction_code();
       var ECLevel = require_error_correction_level();
@@ -1111,9 +1110,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/format-info.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/format-info.js
   var require_format_info = __commonJS({
-    "node_modules/qrcode/lib/core/format-info.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/format-info.js"(exports) {
       var Utils = require_utils();
       var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
       var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
@@ -1129,9 +1128,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/numeric-data.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js
   var require_numeric_data = __commonJS({
-    "node_modules/qrcode/lib/core/numeric-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js"(exports, module) {
       var Mode = require_mode();
       function NumericData(data) {
         this.mode = Mode.NUMERIC;
@@ -1164,9 +1163,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/alphanumeric-data.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js
   var require_alphanumeric_data = __commonJS({
-    "node_modules/qrcode/lib/core/alphanumeric-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js"(exports, module) {
       var Mode = require_mode();
       var ALPHA_NUM_CHARS = [
         "0",
@@ -1243,9 +1242,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/byte-data.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/byte-data.js
   var require_byte_data = __commonJS({
-    "node_modules/qrcode/lib/core/byte-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/byte-data.js"(exports, module) {
       var Mode = require_mode();
       function ByteData(data) {
         this.mode = Mode.BYTE;
@@ -1273,9 +1272,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/kanji-data.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js
   var require_kanji_data = __commonJS({
-    "node_modules/qrcode/lib/core/kanji-data.js"(exports, module) {
+    "../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js"(exports, module) {
       var Mode = require_mode();
       var Utils = require_utils();
       function KanjiData(data) {
@@ -1312,9 +1311,9 @@
     }
   });
 
-  // node_modules/dijkstrajs/dijkstra.js
+  // ../bilibili-share/node_modules/dijkstrajs/dijkstra.js
   var require_dijkstra = __commonJS({
-    "node_modules/dijkstrajs/dijkstra.js"(exports, module) {
+    "../bilibili-share/node_modules/dijkstrajs/dijkstra.js"(exports, module) {
       "use strict";
       var dijkstra = {
         single_source_shortest_paths: function(graph, s, d) {
@@ -1413,9 +1412,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/segments.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/segments.js
   var require_segments = __commonJS({
-    "node_modules/qrcode/lib/core/segments.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/segments.js"(exports) {
       var Mode = require_mode();
       var NumericData = require_numeric_data();
       var AlphanumericData = require_alphanumeric_data();
@@ -1599,9 +1598,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/core/qrcode.js
+  // ../bilibili-share/node_modules/qrcode/lib/core/qrcode.js
   var require_qrcode = __commonJS({
-    "node_modules/qrcode/lib/core/qrcode.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/core/qrcode.js"(exports) {
       var Utils = require_utils();
       var ECLevel = require_error_correction_level();
       var BitBuffer = require_bit_buffer();
@@ -1860,9 +1859,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/renderer/utils.js
+  // ../bilibili-share/node_modules/qrcode/lib/renderer/utils.js
   var require_utils2 = __commonJS({
-    "node_modules/qrcode/lib/renderer/utils.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/utils.js"(exports) {
       function hex2rgba(hex) {
         if (typeof hex === "number") {
           hex = hex.toString();
@@ -1940,9 +1939,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/renderer/canvas.js
+  // ../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js
   var require_canvas = __commonJS({
-    "node_modules/qrcode/lib/renderer/canvas.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js"(exports) {
       var Utils = require_utils2();
       function clearCanvas(ctx, canvas, size) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1993,9 +1992,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/renderer/svg-tag.js
+  // ../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js
   var require_svg_tag = __commonJS({
-    "node_modules/qrcode/lib/renderer/svg-tag.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js"(exports) {
       var Utils = require_utils2();
       function getColorAttrib(color, attrib) {
         const alpha = color.a / 255;
@@ -2051,9 +2050,9 @@
     }
   });
 
-  // node_modules/qrcode/lib/browser.js
+  // ../bilibili-share/node_modules/qrcode/lib/browser.js
   var require_browser = __commonJS({
-    "node_modules/qrcode/lib/browser.js"(exports) {
+    "../bilibili-share/node_modules/qrcode/lib/browser.js"(exports) {
       var canPromise = require_can_promise();
       var QRCode2 = require_qrcode();
       var CanvasRenderer = require_canvas();
@@ -2122,9 +2121,6 @@
   });
 
   // src/share-target.ts
-  function isOpaqueShortUrl(url) {
-    return url.protocol === "https:" && url.hostname === "b23.tv" && /^\/[0-9A-Za-z]+$/.test(url.pathname) && !url.search && !url.hash && !url.username && !url.password && !url.port;
-  }
   function parseCanonicalVideoIdentity(rawUrl) {
     let url;
     try {
@@ -2133,7 +2129,7 @@
       return null;
     }
     const match = url.pathname.match(/^\/video\/(BV[0-9A-Za-z]+)\/?$/i);
-    if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || !match) {
+    if (url.protocol !== "https:" || url.hostname !== "www.bilibili.com" || url.username || url.password || url.port || !match) {
       return null;
     }
     return {
@@ -2142,61 +2138,11 @@
       timestamp: url.searchParams.get("t")
     };
   }
-  function shareIdentity(rawUrl) {
-    const identity = parseCanonicalVideoIdentity(rawUrl);
-    if (!identity) throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
-    return identity;
-  }
-  function parseShortLinkResponse(payload) {
-    const response = payload;
-    if (response?.code !== 0) {
-      const detail = typeof response?.message === "string" && response.message ? `\uFF1A${response.message}` : "";
-      throw new Error(`Bilibili \u77ED\u94FE\u8BF7\u6C42\u5931\u8D25${detail}`);
-    }
-    if (typeof response.data?.content !== "string" || !response.data.content.trim()) {
-      throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
-    }
-    for (const token of response.data.content.split(/\s+/)) {
-      try {
-        const url = new URL(token);
-        if (isOpaqueShortUrl(url)) return url.toString();
-      } catch {
-      }
-    }
-    throw new Error("Bilibili \u77ED\u94FE\u54CD\u5E94\u7F3A\u5C11\u6709\u6548\u94FE\u63A5");
-  }
-  function selectShareTarget(canonicalTarget, attempt) {
-    const expected = shareIdentity(canonicalTarget);
-    if (attempt.status === "failed") {
-      return {
-        shareTarget: canonicalTarget,
-        source: "canonical-fallback",
-        fallbackReason: attempt.reason
-      };
-    }
-    let resolved;
-    try {
-      resolved = shareIdentity(attempt.resolvedUrl);
-    } catch {
-      return {
-        shareTarget: canonicalTarget,
-        source: "canonical-fallback",
-        fallbackReason: "\u77ED\u94FE\u843D\u70B9\u65E0\u6548"
-      };
-    }
-    if (resolved.bvid.toUpperCase() !== expected.bvid.toUpperCase() || resolved.part !== expected.part || resolved.timestamp !== expected.timestamp) {
-      return {
-        shareTarget: canonicalTarget,
-        source: "canonical-fallback",
-        fallbackReason: "\u77ED\u94FE\u843D\u70B9\u4E0E\u672C\u6B21\u751F\u6210\u5FEB\u7167\u4E0D\u4E00\u81F4"
-      };
-    }
-    return { shareTarget: attempt.shortUrl, source: "short" };
-  }
   function buildCanonicalShareTarget(bvid, context, options) {
+    if (!/^BV[0-9A-Za-z]+$/i.test(bvid)) throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     const params = [];
     if (options.partShare) params.push(`p=${context.partNumber}`);
-    if (options.timestampShare && Math.floor(context.playbackSeconds) >= 1) {
+    if (options.timestampShare && (context.partNumber === 1 || options.partShare) && Math.floor(context.playbackSeconds) >= 1) {
       params.push(`t=${Math.floor(context.playbackSeconds)}`);
     }
     const query = params.length > 0 ? `?${params.join("&")}` : "";
@@ -2234,15 +2180,14 @@
     const playbackSeconds = Math.max(0, Math.floor(player.currentTime || 0));
     return { ...identity, playbackSeconds, wasPlaying, player };
   }
-  function gmTextRequest(url, options = {}) {
+  function gmTextRequest(url) {
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
-        method: options.method ?? "GET",
+        method: "GET",
         url,
-        data: options.data,
         timeout: 15e3,
         anonymous: true,
-        headers: { Referer: "https://www.bilibili.com/", ...options.headers },
+        headers: { Referer: "https://www.bilibili.com/" },
         onload(response) {
           if (response.status < 200 || response.status >= 300) {
             reject(new Error(`\u8BF7\u6C42\u5931\u8D25\uFF08HTTP ${response.status}\uFF09`));
@@ -2283,31 +2228,6 @@
       });
     });
   }
-  function gmResolvedUrlRequest(url) {
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "HEAD",
-        url,
-        redirect: "follow",
-        timeout: 15e3,
-        anonymous: true,
-        headers: { Referer: "https://www.bilibili.com/" },
-        onload(response) {
-          if (response.status < 200 || response.status >= 300) {
-            reject(new Error(`\u77ED\u94FE\u89E3\u6790\u5931\u8D25\uFF08HTTP ${response.status}\uFF09`));
-            return;
-          }
-          if (!response.finalUrl) {
-            reject(new Error("\u77ED\u94FE\u89E3\u6790\u672A\u8FD4\u56DE\u843D\u70B9"));
-            return;
-          }
-          resolve(response.finalUrl);
-        },
-        ontimeout: () => reject(new Error("\u77ED\u94FE\u89E3\u6790\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5")),
-        onerror: () => reject(new Error("\u77ED\u94FE\u89E3\u6790\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5"))
-      });
-    });
-  }
   function requiredText(value, label) {
     if (typeof value !== "string" || !value.trim()) throw new Error(`\u89C6\u9891\u4FE1\u606F\u7F3A\u5C11${label}\u3002`);
     return value.trim();
@@ -2342,7 +2262,7 @@
     const partInformation = parsePartInformation(data.pages, expectedPartNumber);
     return {
       bvid,
-      aid: requiredPositiveInteger(data.aid, "AV \u6807\u8BC6"),
+      aid: requiredPositiveInteger(data.aid, "av \u6807\u8BC6"),
       coverUrl: typeof data.pic === "string" ? data.pic.trim() : "",
       title: requiredText(data.title, "\u89C6\u9891\u6807\u9898"),
       uploader: requiredText(data.owner?.name, "UP \u4E3B"),
@@ -2415,37 +2335,6 @@
       wasPlaying: capture.wasPlaying,
       stats: video.stats
     };
-  }
-  async function fetchValidatedShareTarget(snapshot, canonicalTarget) {
-    try {
-      const form = new URLSearchParams({
-        build: "6500300",
-        buvid: "bsp-userscript-public",
-        oid: snapshot.aid.toString(),
-        platform: "web",
-        share_channel: "COPY",
-        share_id: "main.ugc-video-detail.0.0.pv",
-        share_mode: "3",
-        share_origin: "vinfo_share"
-      });
-      const responseText = await gmTextRequest("https://api.bilibili.com/x/share/click", {
-        method: "POST",
-        data: form.toString(),
-        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }
-      });
-      let payload;
-      try {
-        payload = JSON.parse(responseText);
-      } catch {
-        throw new Error("Bilibili \u8FD4\u56DE\u4E86\u65E0\u6CD5\u89E3\u6790\u7684\u77ED\u94FE\u54CD\u5E94");
-      }
-      const shortUrl = parseShortLinkResponse(payload);
-      const resolvedUrl = await gmResolvedUrlRequest(shortUrl);
-      return selectShareTarget(canonicalTarget, { status: "resolved", shortUrl, resolvedUrl });
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : "\u77ED\u94FE\u6682\u65F6\u4E0D\u53EF\u7528";
-      return selectShareTarget(canonicalTarget, { status: "failed", reason });
-    }
   }
   function restorePlayback(capture) {
     if (!capture.wasPlaying || !capture.player.isConnected) return;
@@ -2799,8 +2688,7 @@
     }
     const canonicalIdentity = parseCanonicalVideoIdentity(url.toString());
     const isCanonical = canonicalIdentity?.bvid.toUpperCase() === bvid.toUpperCase();
-    const isOpaqueShort = isOpaqueShortUrl(url);
-    if (url.protocol !== "https:" || !isCanonical && !isOpaqueShort) {
+    if (url.protocol !== "https:" || !isCanonical) {
       throw new Error("\u5206\u4EAB\u94FE\u63A5\u65E0\u6548");
     }
     return url.toString();
@@ -2810,7 +2698,7 @@
     const coverDataUrl = snapshot.coverUnavailable ? "" : requireText(snapshot.coverDataUrl, "\u89C6\u9891\u5C01\u9762");
     const uploader = requireText(snapshot.uploader, "UP \u4E3B");
     const bvid = requireText(snapshot.bvid, "BV \u6807\u8BC6");
-    if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11AV \u6807\u8BC6");
+    if (!Number.isSafeInteger(snapshot.aid) || snapshot.aid <= 0) throw new Error("\u7F3A\u5C11av \u6807\u8BC6");
     const validatedShareTarget = validateShareTarget(shareTarget, bvid);
     return {
       dimensions: { width: 1080, height: 1440 },
@@ -2820,7 +2708,7 @@
       uploader,
       bvid,
       aid: snapshot.aid,
-      identity: `${bvid} \xB7 AV${snapshot.aid}`,
+      identity: `${bvid} \xB7 av${snapshot.aid}`,
       shareTarget: validatedShareTarget,
       stats: [
         { label: "\u64AD\u653E", value: formatCompactStat(snapshot.stats.views) },
@@ -2899,7 +2787,7 @@ ${shareTarget}`;
     const lines = [
       snapshot.title,
       `UP\u4E3B\uFF1A${snapshot.uploader}`,
-      `BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `BV/av\uFF1A${snapshot.bvid} \xB7 av${snapshot.aid}`,
       `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
     ];
     const partLabel = buildPartLabel(snapshot, options);
@@ -2918,7 +2806,7 @@ ${shareTarget}`;
       `**${escapeMarkdown(snapshot.title)}**`,
       "",
       `- UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}`,
-      `- BV/AV\uFF1A${snapshot.bvid} \xB7 AV${snapshot.aid}`,
+      `- BV/av\uFF1A${snapshot.bvid} \xB7 av${snapshot.aid}`,
       `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
     ];
     const partLabel = buildPartLabel(snapshot, options);
@@ -2978,7 +2866,7 @@ ${shareTarget}`;
   // src/ui/posters.ts
   var import_qrcode = __toESM(require_browser(), 1);
 
-  // node_modules/html-to-image/es/util.js
+  // ../bilibili-share/node_modules/html-to-image/es/util.js
   function resolveUrl(url, baseUrl) {
     if (url.match(/^[a-z]+:\/\//i)) {
       return url;
@@ -3128,7 +3016,7 @@ ${shareTarget}`;
     return nodePrototype.constructor.name === instance.name || isInstanceOfElement(nodePrototype, instance);
   };
 
-  // node_modules/html-to-image/es/clone-pseudos.js
+  // ../bilibili-share/node_modules/html-to-image/es/clone-pseudos.js
   function formatCSSText(style) {
     const content = style.getPropertyValue("content");
     return `${style.cssText} content: '${content.replace(/'|"/g, "")}';`;
@@ -3166,7 +3054,7 @@ ${shareTarget}`;
     clonePseudoElement(nativeNode, clonedNode, ":after", options);
   }
 
-  // node_modules/html-to-image/es/mimes.js
+  // ../bilibili-share/node_modules/html-to-image/es/mimes.js
   var WOFF = "application/font-woff";
   var JPEG = "image/jpeg";
   var mimes = {
@@ -3191,7 +3079,7 @@ ${shareTarget}`;
     return mimes[extension] || "";
   }
 
-  // node_modules/html-to-image/es/dataurl.js
+  // ../bilibili-share/node_modules/html-to-image/es/dataurl.js
   function getContentFromDataUrl(dataURL) {
     return dataURL.split(/,/)[1];
   }
@@ -3262,7 +3150,7 @@ ${shareTarget}`;
     return dataURL;
   }
 
-  // node_modules/html-to-image/es/clone-node.js
+  // ../bilibili-share/node_modules/html-to-image/es/clone-node.js
   async function cloneCanvasElement(canvas) {
     const dataURL = canvas.toDataURL();
     if (dataURL === "data:,") {
@@ -3427,7 +3315,7 @@ ${shareTarget}`;
     return Promise.resolve(node).then((clonedNode) => cloneSingleNode(clonedNode, options)).then((clonedNode) => cloneChildren(node, clonedNode, options)).then((clonedNode) => decorate(node, clonedNode, options)).then((clonedNode) => ensureSVGSymbols(clonedNode, options));
   }
 
-  // node_modules/html-to-image/es/embed-resources.js
+  // ../bilibili-share/node_modules/html-to-image/es/embed-resources.js
   var URL_REGEX = /url\((['"]?)([^'"]+?)\1\)/g;
   var URL_WITH_FORMAT_REGEX = /url\([^)]+\)\s*format\((["']?)([^"']+)\1\)/g;
   var FONT_SRC_REGEX = /src:\s*(?:url\([^)]+\)\s*format\([^)]+\)[,;]\s*)+/g;
@@ -3484,7 +3372,7 @@ ${shareTarget}`;
     return urls.reduce((deferred, url) => deferred.then((css) => embed(css, url, baseUrl, options)), Promise.resolve(filteredCSSText));
   }
 
-  // node_modules/html-to-image/es/embed-images.js
+  // ../bilibili-share/node_modules/html-to-image/es/embed-images.js
   async function embedProp(propName, node, options) {
     var _a;
     const propValue = (_a = node.style) === null || _a === void 0 ? void 0 : _a.getPropertyValue(propName);
@@ -3544,7 +3432,7 @@ ${shareTarget}`;
     }
   }
 
-  // node_modules/html-to-image/es/apply-style.js
+  // ../bilibili-share/node_modules/html-to-image/es/apply-style.js
   function applyStyle(node, options) {
     const { style } = node;
     if (options.backgroundColor) {
@@ -3565,7 +3453,7 @@ ${shareTarget}`;
     return node;
   }
 
-  // node_modules/html-to-image/es/embed-webfonts.js
+  // ../bilibili-share/node_modules/html-to-image/es/embed-webfonts.js
   var cssFetchCache = {};
   async function fetchCSS(url) {
     let cache2 = cssFetchCache[url];
@@ -3735,7 +3623,7 @@ ${shareTarget}`;
     }
   }
 
-  // node_modules/html-to-image/es/index.js
+  // ../bilibili-share/node_modules/html-to-image/es/index.js
   async function toSvg(node, options = {}) {
     const { width, height } = getImageSize(node, options);
     const clonedNode = await cloneNode(node, options, true);
@@ -3903,7 +3791,7 @@ ${shareTarget}`;
     const bv = element("span");
     bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
     const av = element("span");
-    av.append(element("b", "", "AV"), document.createTextNode(String(model.aid)));
+    av.append(element("b", "", "av"), document.createTextNode(String(model.aid)));
     ids.append(bv, av);
     signature.append(author, stats, ids);
     const qr = element("div", "bsp-d-qr");
@@ -3936,7 +3824,7 @@ ${shareTarget}`;
     model = null;
     poster = null;
     options = createDefaultShareOptions();
-    targetSelection = null;
+    shareTarget = null;
     closed = false;
     loading = false;
     updating = false;
@@ -4067,23 +3955,22 @@ ${shareTarget}`;
       this.loading = true;
       try {
         const snapshot = await fetchGenerationSnapshot(this.capture);
-        const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
-        const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
-        const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget);
+        const shareTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
+        const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, shareTarget);
         const poster = model ? await createPoster(model) : null;
         if (!this.ensureCurrentContext()) return;
         this.snapshot = snapshot;
         this.model = model;
         this.poster = poster;
-        this.targetSelection = targetSelection;
-        this.renderReady(poster, targetSelection);
+        this.shareTarget = shareTarget;
+        this.renderReady(poster, shareTarget);
       } catch (error) {
         if (this.ensureCurrentContext()) this.renderError(error, false);
       } finally {
         this.loading = false;
       }
     }
-    renderReady(poster, targetSelection) {
+    renderReady(poster, shareTarget) {
       const active = document.activeElement;
       const focusName = active instanceof HTMLElement && this.panel.contains(active) ? active.getAttribute("aria-label") ?? active.textContent : null;
       if (!poster) {
@@ -4105,8 +3992,8 @@ ${shareTarget}`;
       clearTimeout(this.statusTimer);
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
-      const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
-      const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
+      const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
+      const markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
       status.setAttribute("aria-live", "polite");
@@ -4135,11 +4022,6 @@ ${shareTarget}`;
       const textOptions = element("div", "bsp-text-options");
       textOptions.append(detailLabel);
       textSection.append(textOptions);
-      if (targetSelection.source === "canonical-fallback") {
-        const fallback = element("p", "bsp-fallback", "\u5DF2\u4F7F\u7528\u5B8C\u6574\u94FE\u63A5");
-        fallback.setAttribute("role", "status");
-        textSection.append(fallback);
-      }
       const actions = element("div", "bsp-actions");
       actions.append(copy, combined);
       const actionGroup = element("div", "bsp-action-group");
@@ -4242,8 +4124,8 @@ ${shareTarget}`;
         void this.rebuildPosterForOptions();
         return;
       }
-      if (textChanged && this.targetSelection) {
-        this.renderReady(this.poster, this.targetSelection);
+      if (textChanged && this.shareTarget) {
+        this.renderReady(this.poster, this.shareTarget);
       }
     }
     persistPreferences() {
@@ -4258,14 +4140,13 @@ ${shareTarget}`;
       this.setExportButtonsDisabled(true);
       this.showUpdatingOverlay();
       try {
-        const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
-        const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-        const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget);
+        const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
+        const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
         const poster = model ? await createPoster(model) : null;
         if (!this.ensureCurrentContext()) return;
         this.model = model;
         this.poster = poster;
-        this.targetSelection = targetSelection;
+        this.shareTarget = shareTarget;
         const overlay = this.previewPane.querySelector(".bsp-poster-updating");
         const frame = this.previewPane.querySelector(".bsp-preview-frame");
         if (frame && overlay && poster) {
@@ -4275,7 +4156,7 @@ ${shareTarget}`;
           await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
           overlay.remove();
         }
-        if (this.ensureCurrentContext()) this.renderReady(poster, targetSelection);
+        if (this.ensureCurrentContext()) this.renderReady(poster, shareTarget);
       } catch (error) {
         if (this.ensureCurrentContext()) this.renderError(error, false);
       }
@@ -4452,10 +4333,9 @@ ${MOTION_STYLES}
 .bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
 .bsp-panel .bsp-text-copy-actions button:hover:not(:disabled){color:#40c5f1}
 .bsp-text-content{border:0;background:var(--bsp-soft);border-radius:6px;padding:16px;font-size:13px;line-height:1.85;max-height:270px;min-height:190px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin-top:14px;color:var(--bsp-blue)}
+.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin:0;color:var(--bsp-blue)}
 .bsp-text-options{display:flex;margin-top:14px}.bsp-text-options label{font-size:12px;color:var(--bsp-muted);display:flex;gap:7px;align-items:center;cursor:pointer}
 .bsp-text-options input{accent-color:var(--bsp-blue);width:14px;height:14px;margin:0}
-.bsp-fallback{font-size:11px;color:var(--bsp-muted);margin:10px 0 0}
 .bsp-action-group{margin-top:auto;margin-bottom:42px}
 .bsp-actions{display:flex;gap:12px}.bsp-panel .bsp-actions button{flex:1;min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;padding:8px;border-radius:6px}
 .bsp-actions svg{width:18px;height:18px;flex:none}.bsp-panel .bsp-action-primary{background:var(--bsp-blue);border-color:var(--bsp-blue);color:#fff}.bsp-panel .bsp-action-primary:hover:not(:disabled){background:#40c5f1;border-color:#40c5f1;color:#fff}

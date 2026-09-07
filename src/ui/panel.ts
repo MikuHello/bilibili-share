@@ -2,7 +2,6 @@ import type { PageAppearance } from "./appearance";
 import {
   captureAndPausePlayback,
   fetchGenerationSnapshot,
-  fetchValidatedShareTarget,
   readPageIdentity,
   restorePlayback,
   type PlaybackCapture,
@@ -26,7 +25,7 @@ import {
   type ShareOptions,
 } from "../options";
 import { buildShareText } from "../share-text";
-import { buildCanonicalShareTarget, type ShareTargetSelection } from "../share-target";
+import { buildCanonicalShareTarget } from "../share-target";
 import { element } from "./dom";
 import { statusDismissDelay } from "./feedback";
 import { MOTION, motionDelay } from "./motion";
@@ -43,7 +42,7 @@ export class SharePanel {
   private model: SharePoster | null = null;
   private poster: HTMLElement | null = null;
   private options: ShareOptions = createDefaultShareOptions();
-  private targetSelection: ShareTargetSelection | null = null;
+  private shareTarget: string | null = null;
   private closed = false;
   private loading = false;
   private updating = false;
@@ -184,16 +183,15 @@ export class SharePanel {
     this.loading = true;
     try {
       const snapshot = await fetchGenerationSnapshot(this.capture);
-      const canonicalTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
-      const targetSelection = await fetchValidatedShareTarget(snapshot, canonicalTarget);
-      const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, targetSelection.shareTarget);
+      const shareTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
+      const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, shareTarget);
       const poster = model ? await createPoster(model) : null;
       if (!this.ensureCurrentContext()) return;
       this.snapshot = snapshot;
       this.model = model;
       this.poster = poster;
-      this.targetSelection = targetSelection;
-      this.renderReady(poster, targetSelection);
+      this.shareTarget = shareTarget;
+      this.renderReady(poster, shareTarget);
     } catch (error) {
       if (this.ensureCurrentContext()) this.renderError(error, false);
     } finally {
@@ -201,7 +199,7 @@ export class SharePanel {
     }
   }
 
-  private renderReady(poster: HTMLElement | null, targetSelection: ShareTargetSelection): void {
+  private renderReady(poster: HTMLElement | null, shareTarget: string): void {
     const active = document.activeElement;
     const focusName = active instanceof HTMLElement && this.panel.contains(active)
       ? active.getAttribute("aria-label") ?? active.textContent : null;
@@ -221,8 +219,8 @@ export class SharePanel {
     clearTimeout(this.statusTimer);
     if (!this.snapshot) return;
     const snapshot = this.snapshot;
-    const shareText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: false });
-    const markdownText = buildShareText(snapshot, targetSelection.shareTarget, { ...this.options, markdownText: true });
+    const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
+    const markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
     const status = element("p", "bsp-status");
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
@@ -252,11 +250,7 @@ export class SharePanel {
     const textOptions = element("div", "bsp-text-options");
     textOptions.append(detailLabel);
     textSection.append(textOptions);
-    if (targetSelection.source === "canonical-fallback") {
-      const fallback = element("p", "bsp-fallback", "已使用完整链接");
-      fallback.setAttribute("role", "status");
-      textSection.append(fallback);
-    }
+
     const actions = element("div", "bsp-actions");
     actions.append(copy, combined);
     const actionGroup = element("div", "bsp-action-group");
@@ -384,8 +378,8 @@ export class SharePanel {
       void this.rebuildPosterForOptions();
       return;
     }
-    if (textChanged && this.targetSelection) {
-      this.renderReady(this.poster, this.targetSelection);
+    if (textChanged && this.shareTarget) {
+      this.renderReady(this.poster, this.shareTarget);
     }
   }
 
@@ -402,14 +396,13 @@ export class SharePanel {
     this.setExportButtonsDisabled(true);
     this.showUpdatingOverlay();
     try {
-      const canonicalTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
-      const targetSelection = await fetchValidatedShareTarget(this.snapshot, canonicalTarget);
-      const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, targetSelection.shareTarget);
+      const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
+      const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
       const poster = model ? await createPoster(model) : null;
       if (!this.ensureCurrentContext()) return;
       this.model = model;
       this.poster = poster;
-      this.targetSelection = targetSelection;
+      this.shareTarget = shareTarget;
       const overlay = this.previewPane.querySelector<HTMLElement>(".bsp-poster-updating");
       const frame = this.previewPane.querySelector<HTMLElement>(".bsp-preview-frame");
       if (frame && overlay && poster) {
@@ -419,7 +412,7 @@ export class SharePanel {
         await new Promise((resolve) => setTimeout(resolve, motionDelay(MOTION.overlay)));
         overlay.remove();
       }
-      if (this.ensureCurrentContext()) this.renderReady(poster, targetSelection);
+      if (this.ensureCurrentContext()) this.renderReady(poster, shareTarget);
     } catch (error) {
       if (this.ensureCurrentContext()) this.renderError(error, false);
     }

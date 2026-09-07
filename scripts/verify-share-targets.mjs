@@ -7,7 +7,7 @@ import { browserRuntime, productionBundle, openFixture } from "./browser-test-su
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
 const browser = await chromium.launch({ headless: true });
-const output = ".scratch/bilibili-share-poster/redesign/acceptance/ticket04";
+const output = ".scratch/bilibili-share-poster/usage-refinement/evidence/ticket01";
 await mkdir(output, { recursive: true });
 const results = [];
 const canonical = "https://www.bilibili.com/video/BV1TXoWBsEGc/";
@@ -79,11 +79,13 @@ try {
     await page.getByRole("button", { name: "生成海报", exact: true }).click();
     await page.getByRole("button", { name: "复制文案", exact: true }).waitFor();
     const statuses = await page.getByRole("status").allTextContents();
-    assert.ok(statuses.includes("已使用完整链接"), `Expected concise fallback notice, received ${JSON.stringify(statuses)}`);
+    assert.ok(!statuses.includes("已使用完整链接"));
+    assert.equal(await page.locator(".bsp-text-card-link").evaluate(node => getComputedStyle(node).marginTop), "0px");
     assert.equal(await page.getByRole("button", { name: "标记当前分P", exact: true }).count(), 1);
     assert.equal(await page.getByRole("button", { name: "标记当前时间", exact: true }).count(), 1);
     assert.deepEqual(errors, []);
-    results.push({ scenario: "canonical fallback has only the approved concise notice", passed: true });
+    results.push({ scenario: "canonical target needs no fallback notice", passed: true });
+    assert.equal(await page.evaluate(() => window.fixture.requests.some(request => /b23\.tv|\/x\/share\/click/.test(request.url))), false);
     const original = await assertOutputs(page, canonical, "default-p2");
     assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
     assert.equal(await timeButton(page).getAttribute("aria-pressed"), "false");
@@ -99,9 +101,8 @@ try {
     await page.evaluate(() => { window.fixture.targetDelay = 600; window.fixture.time = 999; window.fixture.stats.view = 999999; });
     const requestsBefore = await page.evaluate(() => window.fixture.requests.filter(request => new URL(request.url).pathname === "/x/web-interface/view").length);
     await timeButton(page).click();
-    for (const button of await exportButtons(page).all()) assert.equal(await button.isDisabled(), true, "all exports lock while target is pending");
-    assert.ok((await page.getByRole("article").innerText()).endsWith(canonical), "old preview remains during target update");
     assert.equal(await assertOutputs(page, canonical + "?p=2&t=83", "p2-time"), original);
+    assert.equal(await page.evaluate(() => window.fixture.requests.some(request => /b23\.tv|\/x\/share\/click/.test(request.url))), false);
     assert.equal(await partButton(page).getAttribute("aria-pressed"), "true");
     assert.equal(await timeButton(page).getAttribute("aria-pressed"), "true");
     assert.equal(await page.evaluate(() => window.fixture.requests.filter(request => new URL(request.url).pathname === "/x/web-interface/view").length), requestsBefore);
@@ -115,8 +116,6 @@ try {
     await page.getByRole("button", { name: "生成海报", exact: true }).click();
     await ready(page);
     await timeButton(page).click();
-    assert.equal(await page.getByRole("button", { name: "重试", exact: true }).isDisabled(), true, "retry must not race a pending target change");
-    for (const button of await exportButtons(page).all()) assert.equal(await button.isDisabled(), true);
     await assertOutputs(page, canonical + "?p=2&t=83", "failed-cover-time");
     assert.equal(await page.getByRole("button", { name: "重试", exact: true }).isEnabled(), true);
     assert.deepEqual(failed.errors, []);
@@ -125,11 +124,6 @@ try {
     { name: "p1-time", overrides: { part: 1 }, marker: true, target: canonical + "?t=83" },
     { name: "below-one-second", overrides: { part: 1, time: 0.9 }, unavailable: true, target: canonical },
     { name: "unknown-part", overrides: { unknownPart: true }, unavailable: true, target: canonical },
-    { name: "valid-short", overrides: { shortLink: true }, target: "https://b23.tv/BspDemo" },
-    { name: "wrong-bvid", overrides: { shortLink: true, resolvedUrl: "https://www.bilibili.com/video/BV1xx411c7mD/" }, target: canonical },
-    { name: "short-loses-time", overrides: { shortLink: true, resolvedUrl: canonical + "?p=2" }, marker: true, target: canonical + "?p=2&t=83" },
-    { name: "short-loses-part", overrides: { shortLink: true, resolvedUrl: canonical + "?t=83" }, marker: true, target: canonical + "?p=2&t=83" },
-    { name: "short-keeps-markers", overrides: { shortLink: true, resolvedUrl: canonical + "?p=2&t=83" }, marker: true, target: "https://b23.tv/BspDemo" },
   ]) {
     const fixture = await openFixture(browser, bundle, scenario.overrides);
     const page = fixture.page;
@@ -146,7 +140,7 @@ try {
       if (scenario.overrides.part === 1) assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
       await assertOutputs(page, scenario.target, scenario.name);
       const fallback = await page.getByRole("status").allTextContents();
-      assert.equal(fallback.includes("已使用完整链接"), scenario.target !== "https://b23.tv/BspDemo");
+      assert.equal(fallback.includes("已使用完整链接"), false);
       assert.deepEqual(fixture.errors, []);
       if (scenario.name === "p1-time") {
         await page.getByRole("button", { name: "关闭分享面板", exact: true }).click();

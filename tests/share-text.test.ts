@@ -10,22 +10,14 @@ describe("compact share text", () => {
   });
 
   it("does not add or remove brackets from a title", () => {
-    expect(buildCompactShareText("没有包裹的标题", "UP 主甲", "https://b23.tv/a7BomhP")).toBe(
-      "没有包裹的标题（UP主：UP 主甲）\nhttps://b23.tv/a7BomhP",
+    expect(buildCompactShareText("没有包裹的标题", "UP 主甲", "https://www.bilibili.com/video/BV1xx411c7mD/")).toBe(
+      "没有包裹的标题（UP主：UP 主甲）\nhttps://www.bilibili.com/video/BV1xx411c7mD/",
     );
   });
 
-  it("uses the same target for short and canonical fallback paths", () => {
-    const short = buildCompactShareText("标题", "UP 主甲", "https://b23.tv/a7BomhP");
-    const fallback = buildCompactShareText("标题", "UP 主甲", "https://www.bilibili.com/video/BV1xx411c7mD/");
-
-    expect(short).toContain("\nhttps://b23.tv/a7BomhP");
-    expect(fallback).toContain("\nhttps://www.bilibili.com/video/BV1xx411c7mD/");
-  });
-
   it("preserves source-language title and uploader characters", () => {
-    expect(buildCompactShareText("進撃の巨人 Season 3", "AnimeUp主", "https://b23.tv/a7BomhP")).toBe(
-      "進撃の巨人 Season 3（UP主：AnimeUp主）\nhttps://b23.tv/a7BomhP",
+    expect(buildCompactShareText("進撃の巨人 Season 3", "AnimeUp主", "https://www.bilibili.com/video/BV1xx411c7mD/")).toBe(
+      "進撃の巨人 Season 3（UP主：AnimeUp主）\nhttps://www.bilibili.com/video/BV1xx411c7mD/",
     );
   });
 });
@@ -61,7 +53,7 @@ describe("detailed and markdown share text", () => {
         markdownText: false,
       }),
     ).toBe(
-      "【测试】详细文案标题\nUP主：UP 主甲\nBV/AV：BV1xx411c7mD · AV170001\n播放：12,345,678　点赞：98,765　投币：0　收藏：--\n分P：P2 · 第二集\n时间：01:02:03\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
+      "【测试】详细文案标题\nUP主：UP 主甲\nBV/av：BV1xx411c7mD · av170001\n播放：12,345,678　点赞：98,765　投币：0　收藏：--\n分P：P2 · 第二集\n时间：01:02:03\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
     );
   });
 
@@ -85,7 +77,7 @@ describe("detailed and markdown share text", () => {
         markdownText: true,
       }),
     ).toBe(
-      "**【测试】详细文案标题**\n\n- UP主：UP 主甲\n- BV/AV：BV1xx411c7mD · AV170001\n- 播放：12,345,678 · 点赞：98,765 · 投币：0 · 收藏：--\n- 分P：P2 · 第二集\n- 时间：01:02:03\n- 链接：https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
+      "**【测试】详细文案标题**\n\n- UP主：UP 主甲\n- BV/av：BV1xx411c7mD · av170001\n- 播放：12,345,678 · 点赞：98,765 · 投币：0 · 收藏：--\n- 分P：P2 · 第二集\n- 时间：01:02:03\n- 链接：https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
     );
   });
 

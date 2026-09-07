@@ -99,7 +99,7 @@ export async function createPoster(model: SharePoster): Promise<HTMLElement> {
   });
   const ids = element("div", "bsp-d-ids");
   const bv = element("span"); bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
-  const av = element("span"); av.append(element("b", "", "AV"), document.createTextNode(String(model.aid)));
+  const av = element("span"); av.append(element("b", "", "av"), document.createTextNode(String(model.aid)));
   ids.append(bv, av);
   signature.append(author, stats, ids);
   const qr = element("div", "bsp-d-qr");

@@ -18,7 +18,6 @@ const header = `// ==UserScript==
 // @grant        GM_registerMenuCommand
 // @grant        window.onurlchange
 // @connect      api.bilibili.com
-// @connect      b23.tv
 // @connect      hdslb.com
 // @run-at       document-idle
 // ==/UserScript==`;

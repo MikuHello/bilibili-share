@@ -10,31 +10,8 @@ const note = element("p", "", "样例仅用于验证布局。更改场景后重�
 drawer.append(note);
 const flags = new Map<string, HTMLInputElement>();
 const originalPart = new URL(location.href).searchParams.get("p");
-let selectedPart = false;
-let selectedTimestamp = false;
-let capturedSeconds = 0;
-// Observe user actions at the DOM boundary; production state remains private.
-document.addEventListener("click", (event) => {
-  const target = event.target instanceof Element ? event.target.closest("button") : null;
-  if (target?.id === "bsp-entry" && !document.querySelector(".bsp-panel")) {
-    selectedPart = false;
-    selectedTimestamp = false;
-    capturedSeconds = Math.floor(document.querySelector<HTMLVideoElement>("video")?.currentTime ?? 0);
-  }
-  if (!target?.classList.contains("bsp-option-pill")) return;
-  const checked = target.getAttribute("aria-pressed") !== "true";
-  const laterPart = Number(new URL(location.href).searchParams.get("p") || "1") > 1;
-  if (target.textContent === "标记当前分P") {
-    selectedPart = checked;
-    if (!checked) selectedTimestamp = false;
-  }
-  if (target.textContent === "标记当前时间") {
-    selectedTimestamp = checked;
-    if (checked && laterPart) selectedPart = true;
-  }
-}, true);
 for (const [key, title] of [
-  ["fixture", "使用样例数据"], ["long", "长链接降级"], ["title", "长标题"],
+  ["fixture", "使用样例数据"], ["title", "长标题"],
   ["stats", "缺失统计"], ["part", "多分P"], ["cover", "封面缺失"],
   ["narrow", "窄面板"], ["motion", "减少动效"],
 ]) {
@@ -89,13 +66,6 @@ globalThis.GM_xmlhttpRequest = ((details: Tampermonkey.Request<unknown>) => {
         stat: enabled("stats") ? {} : { view: 12345678, like: 98765, coin: 3456, favorite: 7890 },
         pages: [{ page: part, part: enabled("part") ? "城市漫游 · 第二章" : "正片" }],
       } });
-    } else if (url.pathname === "/x/share/click") {
-      responseText = JSON.stringify(enabled("long") ? { code: -1 } : { code: 0, data: { content: "https://b23.tv/BspDemo" } });
-    } else if (url.hostname === "b23.tv") {
-      const destination = new URL(`https://www.bilibili.com${location.pathname}`);
-      if (selectedPart) destination.searchParams.set("p", new URL(location.href).searchParams.get("p") || "1");
-      if (selectedTimestamp) destination.searchParams.set("t", String(capturedSeconds));
-      finalUrl = destination.href;
     } else if (url.hostname.endsWith("hdslb.com")) {
       const canvas = document.createElement("canvas");
       canvas.width = enabled("cover") ? 1 : 640;
