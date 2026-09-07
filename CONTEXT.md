@@ -51,3 +51,7 @@ _Avoid_: Live statistics, page-load data
 **Standard video page**:
 A Bilibili Web `/video/BV...` page for an ordinary uploaded video. It excludes bangumi, film, live, and other content-specific page types.
 _Avoid_: Every Bilibili content page
+
+**Video honor (视频荣誉)**:
+A Bilibili-provided distinction attached to a video, such as 每周必看、入站必刷 or a ranking achievement, retaining its original label including issue or rank.
+_Avoid_: User-created slogan, ordinary video tag

@@ -27,3 +27,9 @@ Status: discovery in progress — Matt grill-with-docs；未批准spec，未开�
 5. 前沿收敛、原型确认 → 主人确认共同理解 → to-spec → 规格与拆票批准 → to-tickets → 每票fresh implement/TDD/code-review → 统一交付。
 
 原型仅用于选择标签位置及说明交互；不直接合入生产。不主动安装或发布。
+
+## 第一轮答复
+
+主人确认：标签缺失/失败时省略，继续正常分享；详细plain与Markdown在收藏统计行后另起一行写标签，简洁文案均不包含。主人选择“全部信息都收进提示里”，覆盖操作结果及错误，不仅静态说明。第二轮正在确认点击结果是否主动显示按钮旁提示，以及保留恢复入口。
+
+一方API确认：现有view响应data.honor_reply.honor[].desc包含原始荣誉文案，无额外请求。BV1a3th65EQb标题匹配截图1，含第389期每周必看、全站排行榜最高第1名和热门收录；BV1MN4y177PB含入站必刷98大视频等五项。数组顺序不等于页面优先级，匿名页面访问受风控，未确认其优先级。第二轮待决定页面主标签/三类已有荣誉全部/API所有荣誉。完整证据见api-investigation.md。
