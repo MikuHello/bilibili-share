@@ -40,7 +40,7 @@ ${MOTION_STYLES}
 .bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
 .bsp-panel .bsp-text-copy-actions button:hover:not(:disabled){color:#40c5f1}
 .bsp-text-content{color:var(--bsp-text);border:0;background:var(--bsp-soft);border-radius:6px;padding:16px;font-size:13px;line-height:1.85;max-height:310px;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin:0;color:var(--bsp-blue)}
+.bsp-text-card-link{color:var(--bsp-blue)}
 .bsp-text-options{display:flex;margin-top:12px}.bsp-text-options label{font-size:12px;color:var(--bsp-muted);display:flex;gap:7px;align-items:center;cursor:pointer}
 .bsp-text-options input{accent-color:var(--bsp-blue);width:14px;height:14px;margin:0}
 .bsp-action-group{position:relative;margin:0}

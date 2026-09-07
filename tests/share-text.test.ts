@@ -39,6 +39,46 @@ describe("detailed and markdown share text", () => {
   } as const;
   const target = "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723";
 
+  it("overrides only plain compact wording through the public generation interface", () => {
+    const options = { partShare: true, timestampShare: true, detailedText: false, markdownText: false };
+    const templates = { plain: { compact: "{{url}}\n{{title}} / {{title}} — {{uploader}} 🐾\n结束" } };
+    expect(buildShareText(snapshot, target, options, templates)).toBe(
+      "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723\n【测试】详细文案标题 / 【测试】详细文案标题 — UP 主甲 🐾\n结束",
+    );
+    expect(buildShareText(snapshot, target, { ...options, detailedText: true }, templates))
+      .toBe(buildShareText(snapshot, target, { ...options, detailedText: true }));
+    expect(buildShareText(snapshot, target, { ...options, markdownText: true }, templates))
+      .toBe(buildShareText(snapshot, target, { ...options, markdownText: true }));
+  });
+
+  it("renders available conditions, zero statistics and missing placeholders without trimming whitespace", () => {
+    const options = { partShare: true, timestampShare: true, detailedText: true, markdownText: false };
+    const templates = { plain: { detailed: " {{bvid}} av{{aid}} {{views}} {{likes}} {{coins}} {{favorites}}\n{{#if coins}}zero={{coins}}\n{{/if}}{{#if favorites}}missing\n{{/if}}{{#if honor}}honor={{honor}}\n{{/if}}{{#if part}}{{part}}\n{{/if}}{{#if timestamp}}{{timestamp}}{{/if}} {{honor}} " } };
+    expect(buildShareText({ ...snapshot, honor: "  " }, target, options, templates)).toBe(
+      " BV1xx411c7mD av170001 12,345,678 98,765 0 --\nzero=0\nP2 · 第二集\n01:02:03  ",
+    );
+    expect(buildShareText(snapshot, target, { ...options, partShare: false, timestampShare: false },
+      { plain: { detailed: "A{{#if part}}P={{part}}{{/if}}{{#if timestamp}}T={{timestamp}}{{/if}}Z" } })).toBe("AZ");
+  });
+
+  it.each([
+    "{{unknown}}", "{{#if honor}}{{unknown}}{{/if}}", "{{#if unknown}}x{{/if}}",
+    "{{title", "}}", "{{#if honor}}x", "{{/if}}", "{{else}}",
+    "{{#if title}}{{#if honor}}x{{/if}}{{/if}}", "{{ title }}", "{{title()}}",
+  ])("diagnoses invalid syntax even inside hidden blocks: %s", template => {
+    expect(() => buildShareText(snapshot, target,
+      { partShare: false, timestampShare: false, detailedText: false, markdownText: false },
+      { plain: { compact: template } })).toThrow(/plain\.compact.*line \d+, column \d+/);
+  });
+
+  it("escapes literal delimiters and never interprets variable data as template syntax", () => {
+    expect(buildShareText({ ...snapshot, title: "{{unknown}} {{#if title}}猫{{/if}}" }, target,
+      { partShare: false, timestampShare: false, detailedText: false, markdownText: false },
+      { plain: { compact: "\\{{title\\}}|{{title}}|\\\\" } })).toBe(
+        "{{title}}|{{unknown}} {{#if title}}猫{{/if}}|\\",
+      );
+  });
+
   it("places the original honor after detailed statistics, escapes Markdown and excludes it from compact text", () => {
     const honored = { ...snapshot, honor: "第389期每周必看 [特别*篇]" };
     for (const markdownText of [false, true]) {

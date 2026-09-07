@@ -23,6 +23,8 @@ import {
   type ShareOptions,
 } from "../options";
 import { buildShareText } from "../share-text";
+import { shareTextTemplates } from "../share-text-config";
+import { ShareTextTemplateError } from "../share-text-template";
 import { buildCanonicalShareTarget } from "../share-target";
 import { element } from "./dom";
 import { statusDismissDelay } from "./feedback";
@@ -233,9 +235,9 @@ export class SharePanel {
     clearTimeout(this.statusTimer);
     if (!this.snapshot) return;
     const snapshot = this.snapshot;
-    const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
+    const shareText = this.buildText(snapshot, shareTarget, false);
     this.shareText = shareText;
-    this.markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
+    this.markdownText = this.buildText(snapshot, shareTarget, true);
     const status = element("p", "bsp-status");
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
@@ -275,14 +277,10 @@ export class SharePanel {
 
   private refreshText(): void {
     if (!this.snapshot || !this.shareTarget) return;
-    this.shareText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: false });
-    this.markdownText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: true });
-    const lines = this.shareText.split("\n");
-    const link = lines.pop() ?? "";
-    const body = this.controls.querySelector(".bsp-text-card-body");
-    const address = this.controls.querySelector(".bsp-text-card-link");
-    if (body) body.textContent = lines.join("\n") + (lines.length ? "\n" : "");
-    if (address) address.textContent = link;
+    this.shareText = this.buildText(this.snapshot, this.shareTarget, false);
+    this.markdownText = this.buildText(this.snapshot, this.shareTarget, true);
+    const content = this.controls.querySelector<HTMLElement>(".bsp-text-content");
+    if (content) this.fillTextPreview(content, this.shareText);
     this.controls.querySelector(".bsp-manual-copy")?.remove();
   }
 
@@ -298,18 +296,33 @@ export class SharePanel {
     });
   }
 
+  private buildText(snapshot: GenerationSnapshot, target: string, markdownText: boolean): string {
+    const options = { ...this.options, markdownText };
+    try {
+      return buildShareText(snapshot, target, options, shareTextTemplates);
+    } catch (error) {
+      if (!(error instanceof ShareTextTemplateError)) throw error;
+      console.warn("[Bilibili Share] Invalid share-text template; using built-in preset", error.message);
+      return buildShareText(snapshot, target, options);
+    }
+  }
+
+  private fillTextPreview(content: HTMLElement, text: string): void {
+    const target = this.shareTarget ?? "";
+    const segments = target ? text.split(target) : [text];
+    content.replaceChildren();
+    segments.forEach((segment, index) => {
+      if (index) content.append(element("span", "bsp-text-card-link", target));
+      if (segment) content.append(element("span", "bsp-text-card-body", segment));
+    });
+  }
+
   private renderTextPreview(shareText: string): HTMLElement {
-    const lines = shareText.split("\n");
-    const link = lines.pop() ?? "";
-    const body = lines.join("\n");
     const card = element("div", "bsp-text-card");
     const content = element("div", "bsp-text-content");
     content.setAttribute("aria-label", "分享文案预览");
     content.tabIndex = 0;
-    content.append(
-      element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
-      element("span", "bsp-text-card-link", link),
-    );
+    this.fillTextPreview(content, shareText);
     const preview = element("div", "bsp-text-preview");
     preview.append(content);
     card.append(preview);
