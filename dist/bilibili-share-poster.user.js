@@ -2,7 +2,7 @@
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      0.2.0
-// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制普通文案、Markdown 与图文组合内容
+// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard
@@ -2423,7 +2423,6 @@
     copy: ["M10 8h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z", "M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"],
     download: ["M12 3v12", "m8 11 4 4 4-4", "M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"],
     "copy-text": ["M8 9h8", "M8 13h5", "M4 4h16v16H4z"],
-    combined: ["M5 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "m6 12 3-3 3 3", "M18 8h3M18 12h3M8 20h13"],
     list: ["M5 5h14", "M5 12h14", "M5 19h14"],
     clock: ["M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0", "M12 7v5l3 2"],
     detail: ["M4 7h16", "M4 12h10", "M4 17h16", "m16 13 2 2 4-4"],
@@ -2553,76 +2552,6 @@
       });
     }
     return { status: "failed", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u6587\u672C\u526A\u8D34\u677F\u5199\u5165" };
-  }
-  function escapeHtml(value) {
-    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  }
-  function buildCombinedHtml(posterDataUrl, shareText) {
-    return `<img src="${escapeHtml(posterDataUrl)}" alt="\u5206\u4EAB\u6D77\u62A5"><br><pre>${escapeHtml(shareText)}</pre>`;
-  }
-  async function copyCombined(posterDataUrl, shareText, ports) {
-    const html = buildCombinedHtml(posterDataUrl, shareText);
-    try {
-      await ports.writeCombined(posterDataUrl, shareText, html);
-      return { status: "copied" };
-    } catch (combinedError) {
-      const combinedReason = combinedError instanceof Error && combinedError.message ? combinedError.message : "\u7EC4\u5408\u5199\u5165\u5931\u8D25";
-      try {
-        await ports.writeText(shareText);
-        return { status: "text-fallback", reason: combinedReason };
-      } catch (textError) {
-        return {
-          status: "failed",
-          reason: textError instanceof Error && textError.message ? textError.message : "\u6587\u6848\u5199\u5165\u5931\u8D25"
-        };
-      }
-    }
-  }
-  function describeCombinedCopyResult(outcome) {
-    if (outcome.status === "copied") {
-      return {
-        statusMessage: "\u5DF2\u5199\u5165\u517C\u5BB9\u683C\u5F0F\u3002",
-        helpMessage: "\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u53D6\u5176\u4E2D\u4E00\u79CD\uFF1B\u4E0D\u4FDD\u8BC1\u7C98\u8D34\u65F6\u56FE\u4E0E\u6587\u540C\u65F6\u51FA\u73B0\u3002"
-      };
-    }
-    if (outcome.status === "text-fallback") {
-      return {
-        statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\uFF0C\u5DF2\u6539\u4E3A\u4EC5\u590D\u5236\u6587\u6848\u3002",
-        helpMessage: "\u6D77\u62A5\u4ECD\u9700\u5355\u72EC\u590D\u5236\u6216\u4E0B\u8F7D PNG\u3002"
-      };
-    }
-    return {
-      statusMessage: "\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002",
-      helpMessage: "\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\uFF1B\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D PNG\u201D\u3002"
-    };
-  }
-  async function copyCombinedPosterAndText(posterDataUrl, shareText, canContinue = () => true) {
-    const clipboardItemCtor = clipboardItemConstructor();
-    const clipboard = browserClipboard();
-    if (clipboardItemCtor && clipboard) {
-      const textBlob = new Blob([shareText], { type: "text/plain" });
-      const htmlBlob = new Blob([buildCombinedHtml(posterDataUrl, shareText)], { type: "text/html" });
-      const ports = {
-        async writeCombined(dataUrl, _text, _html) {
-          await clipboard.write([
-            new clipboardItemCtor({
-              "image/png": pngDataUrlToBlob(dataUrl),
-              "text/plain": textBlob,
-              "text/html": htmlBlob
-            })
-          ]);
-        },
-        writeText: async (text) => {
-          if (!canContinue()) throw new Error("\u5206\u4EAB\u4E0A\u4E0B\u6587\u5DF2\u5931\u6548");
-          const outcome = await copyShareTextToClipboard(text);
-          if (outcome.status === "failed") throw new Error(outcome.reason);
-        }
-      };
-      return copyCombined(posterDataUrl, shareText, ports);
-    }
-    if (!canContinue()) return { status: "failed", reason: "\u5206\u4EAB\u4E0A\u4E0B\u6587\u5DF2\u5931\u6548" };
-    const textOutcome = await copyShareTextToClipboard(shareText);
-    return textOutcome.status === "copied" ? { status: "text-fallback", reason: "\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u7EC4\u5408\u526A\u8D34\u677F\u5199\u5165" } : { status: "failed", reason: textOutcome.reason };
   }
   function pngDataUrlToBlob(dataUrl) {
     const [header, base64] = dataUrl.split(",");
@@ -4082,15 +4011,13 @@ ${shareTarget}`;
       const copy = this.actionButton("copy", "\u590D\u5236\u6D77\u62A5", "\u590D\u5236\u6D77\u62A5", true, () => void this.copyPoster(status));
       const download = this.actionButton("download", "", "\u4E0B\u8F7D\u6D77\u62A5 PNG", false, () => void this.download(status));
       download.classList.add("bsp-download");
-      const combined = this.actionButton("combined", "\u7EC4\u5408\u590D\u5236", "\u7EC4\u5408\u590D\u5236", false, () => void this.copyCombined(this.shareText, status));
-      combined.title = "\u540C\u65F6\u63D0\u4F9B\u6D77\u62A5\u4E0E\u6587\u6848\uFF0C\u63A5\u6536\u65B9\u53EF\u80FD\u53EA\u7C98\u8D34\u5176\u4E2D\u4E00\u79CD";
       const copyText2 = this.actionButton(null, "\u590D\u5236\u6587\u6848", "\u590D\u5236\u6587\u6848", false, () => void this.copyShareText(copyText2, this.shareText, status));
       const copyMarkdown = this.actionButton(null, "\u590D\u5236 Markdown", "\u590D\u5236 Markdown", false, () => void this.copyShareText(copyMarkdown, this.markdownText, status, "Markdown"));
-      this.exportButtons = [copy, download, copyText2, copyMarkdown, combined].map((button) => ({
+      this.exportButtons = [copy, download, copyText2, copyMarkdown].map((button) => ({
         button,
-        requiresPoster: [copy, download, combined].includes(button)
+        requiresPoster: [copy, download].includes(button)
       }));
-      for (const button of [copy, download, combined]) button.disabled = !poster;
+      for (const button of [copy, download]) button.disabled = !poster;
       const textSection = this.renderTextPreview(shareText);
       const textHeading = element("div", "bsp-section-heading");
       const textActions = element("div", "bsp-text-copy-actions");
@@ -4108,7 +4035,7 @@ ${shareTarget}`;
       textOptions.append(detailLabel);
       textSection.append(textOptions);
       const actions = element("div", "bsp-actions");
-      actions.append(copy, combined);
+      actions.append(copy);
       const actionGroup = element("div", "bsp-action-group");
       actionGroup.append(actions, status);
       const downloadArea = element("div", "bsp-preview-download");
@@ -4358,23 +4285,6 @@ ${shareTarget}`;
       this.showStatus(`${format}\u590D\u5236\u5931\u8D25\u3002\u8BF7\u5728\u4E0B\u65B9\u6587\u672C\u6846\u4E2D\u624B\u52A8\u590D\u5236\u3002`, true);
       source.focus();
       source.select();
-    }
-    async copyCombined(text, status) {
-      if (!this.poster || !this.model) return;
-      const finish = this.beginExport();
-      if (!finish) return;
-      this.clearStatus(status);
-      try {
-        const dataUrl = await this.posterPngDataUrl();
-        if (!this.ensureCurrentContext()) return;
-        const outcome = await copyCombinedPosterAndText(dataUrl, text, () => this.ensureCurrentContext());
-        const feedback = describeCombinedCopyResult(outcome);
-        this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
-      } catch {
-        this.showStatus("\u7EC4\u5408\u590D\u5236\u5931\u8D25\u3002\u6D77\u62A5\u8BF7\u4F7F\u7528\u201C\u590D\u5236\u6D77\u62A5\u201D\u6216\u201C\u4E0B\u8F7D\u201D\uFF1B\u6587\u6848\u4ECD\u5728\u4E0A\u65B9\uFF0C\u53EF\u624B\u52A8\u5168\u9009\u590D\u5236\u3002", true);
-      } finally {
-        finish();
-      }
     }
     async download(status) {
       if (!this.poster || !this.snapshot || !this.model) return;

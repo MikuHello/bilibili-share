@@ -13,8 +13,7 @@ const results = [];
 const canonical = "https://www.bilibili.com/video/BV1TXoWBsEGc/";
 const partButton = page => page.getByRole("button", { name: "标记当前分P", exact: true });
 const timeButton = page => page.getByRole("button", { name: "标记当前时间", exact: true });
-const exportButtons = page => page.getByRole("button", { name: /^(复制文案|复制 Markdown|复制海报|下载海报(?: PNG)?|复制海报与文案的兼容格式|组合复制)$/ });
-const combinedButton = page => page.getByRole("button", { name: /^(复制海报与文案的兼容格式|组合复制)$/ });
+const exportButtons = page => page.getByRole("button", { name: /^(复制文案|复制 Markdown|复制海报|下载海报(?: PNG)?)$/ });
 async function ready(page) {
   await page.waitForFunction(() => {
     const button = document.querySelector('[aria-label="复制文案"]');
@@ -53,11 +52,9 @@ async function assertOutputs(page, target, name) {
   assert.equal(await page.getByRole("dialog").getByLabel("分享文案预览", { exact: true }).textContent(), preview);
   if (await page.getByRole("button", { name: "复制海报", exact: true }).isEnabled()) {
     await page.evaluate(() => { window.clipboardWrites = []; });
-    await combinedButton(page).click();
+    await page.getByRole("button", { name: "复制海报", exact: true }).click();
     await page.waitForFunction(() => window.clipboardWrites.length === 1);
     const content = await page.evaluate(() => window.clipboardWrites[0]);
-    assert.equal(content["text/plain"], preview);
-    assert.ok(content["text/html"].includes(target.replaceAll("&", "&amp;")));
     const path = `${output}/${name}.png`;
     await writeFile(path, Buffer.from(content["image/png"].split(",")[1], "base64"));
     const decoded = JSON.parse(execFileSync("swift", ["scripts/verify-poster-qr.swift", path], { encoding: "utf8" }).trim());
@@ -68,7 +65,6 @@ async function assertOutputs(page, target, name) {
     results.push({ scenario: name, target, decoded: decoded.target, passed: true });
     return nonTargetText;
   }
-  assert.equal(await combinedButton(page).isEnabled(), false);
   results.push({ scenario: name, target, textOnly: true, passed: true });
   return null;
 }
@@ -90,9 +86,9 @@ try {
     assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
     assert.equal(await timeButton(page).getAttribute("aria-pressed"), "false");
     await page.evaluate(() => { window.holdClipboard = true; });
-    await combinedButton(page).click();
+    await page.getByRole("button", { name: "复制海报", exact: true }).click();
     await page.waitForFunction(() => window.clipboardWaiting === true);
-    assert.equal(await timeButton(page).isDisabled(), true, "target cannot change while an existing combined export is unfinished");
+    assert.equal(await timeButton(page).isDisabled(), true, "target cannot change while an existing image export is unfinished");
     assert.equal(await partButton(page).isDisabled(), true);
     await page.evaluate(() => { window.holdClipboard = false; window.releaseClipboard(); });
     await ready(page);

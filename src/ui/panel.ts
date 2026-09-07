@@ -7,10 +7,8 @@ import {
   type PlaybackCapture,
 } from "../bilibili";
 import {
-  copyCombinedPosterAndText,
   copyPosterPngToClipboard,
   copyShareTextToClipboard,
-  describeCombinedCopyResult,
   describePosterCopyResult,
 } from "../clipboard";
 import { buildPosterFilename, buildSharePoster, type GenerationSnapshot, type SharePoster } from "../domain";
@@ -232,14 +230,12 @@ export class SharePanel {
     const copy = this.actionButton("copy", "复制海报", "复制海报", true, () => void this.copyPoster(status));
     const download = this.actionButton("download", "", "下载海报 PNG", false, () => void this.download(status));
     download.classList.add("bsp-download");
-    const combined = this.actionButton("combined", "组合复制", "组合复制", false, () => void this.copyCombined(this.shareText, status));
-    combined.title = "同时提供海报与文案，接收方可能只粘贴其中一种";
     const copyText = this.actionButton(null, "复制文案", "复制文案", false, () => void this.copyShareText(copyText, this.shareText, status));
     const copyMarkdown = this.actionButton(null, "复制 Markdown", "复制 Markdown", false, () => void this.copyShareText(copyMarkdown, this.markdownText, status, "Markdown"));
-    this.exportButtons = [copy, download, copyText, copyMarkdown, combined].map(button => ({
-      button, requiresPoster: [copy, download, combined].includes(button),
+    this.exportButtons = [copy, download, copyText, copyMarkdown].map(button => ({
+      button, requiresPoster: [copy, download].includes(button),
     }));
-    for (const button of [copy, download, combined]) button.disabled = !poster;
+    for (const button of [copy, download]) button.disabled = !poster;
 
     const textSection = this.renderTextPreview(shareText);
     const textHeading = element("div", "bsp-section-heading");
@@ -259,7 +255,7 @@ export class SharePanel {
     textSection.append(textOptions);
 
     const actions = element("div", "bsp-actions");
-    actions.append(copy, combined);
+    actions.append(copy);
     const actionGroup = element("div", "bsp-action-group");
     actionGroup.append(actions, status);
     const downloadArea = element("div", "bsp-preview-download");
@@ -547,27 +543,6 @@ export class SharePanel {
     source.focus();
     source.select();
   }
-
-  private async copyCombined(text: string, status: HTMLElement): Promise<void> {
-    if (!this.poster || !this.model) return;
-    const finish = this.beginExport();
-    if (!finish) return;
-    this.clearStatus(status);
-    try {
-      const dataUrl = await this.posterPngDataUrl();
-      if (!this.ensureCurrentContext()) return;
-      const outcome = await copyCombinedPosterAndText(dataUrl, text, () => this.ensureCurrentContext());
-      const feedback = describeCombinedCopyResult(outcome);
-      this.showStatus(`${feedback.statusMessage} ${feedback.helpMessage}`, outcome.status === "failed");
-    } catch {
-      this.showStatus("组合复制失败。海报请使用“复制海报”或“下载”；文案仍在上方，可手动全选复制。", true);
-    } finally {
-      finish();
-    }
-  }
-
-
-
 
   private async download(status: HTMLElement): Promise<void> {
     if (!this.poster || !this.snapshot || !this.model) return;

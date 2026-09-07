@@ -171,7 +171,7 @@ try {
   // Navigation may occur after an action starts but before its PNG is ready,
   // with the manager URL event still pending. Exercise the browser canvas
   // boundary, never the panel's private methods or state.
-  for (const action of ["复制海报", "组合复制", "下载海报 PNG"]) {
+  for (const action of ["复制海报", "下载海报 PNG"]) {
     const encoded = await openFixture(browser, bundle, { paused: false });
     const p = encoded.page;
     let downloads = 0;
@@ -199,25 +199,8 @@ try {
     assert.deepEqual(encoded.errors, []);
     await encoded.context.close();
   }
-  console.log("PASS: navigation at PNG completion blocks stale copy, combined copy and download");
-  const fallback = await openFixture(browser, bundle, { paused: false });
-  try {
-    const p = fallback.page;
-    await p.getByRole("button", { name: "生成海报", exact: true }).click();
-    await p.getByRole("button", { name: "组合复制", exact: true }).waitFor();
-    await p.evaluate(() => {
-      navigator.clipboard.write = async () => {
-        history.pushState({}, "", "/video/BV1xx411c7mD/?p=1");
-        throw new Error("Controlled clipboard rejection after navigation");
-      };
-    });
-    await p.getByRole("button", { name: "组合复制", exact: true }).click();
-    await p.getByRole("dialog").waitFor({ state: "detached" });
-    assert.equal(await p.evaluate(() => window.fixture.copiedText.length), 0, "a rejected combined write cannot start a stale text fallback after navigation");
-    assert.equal(await p.evaluate(() => window.fixture.playCount), 0);
-    assert.deepEqual(fallback.errors, []);
-  } finally { await fallback.context.close(); }
-  console.log("PASS: combined-write rejection after navigation cannot start stale text fallback");
+  console.log("PASS: navigation at PNG completion blocks stale copy and download");
+
 } finally {
   await browser.close();
 }

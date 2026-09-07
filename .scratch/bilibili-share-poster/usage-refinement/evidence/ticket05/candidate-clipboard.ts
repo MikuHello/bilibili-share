@@ -105,6 +105,111 @@ export async function copyShareTextToClipboard(text: string): Promise<TextCopyOu
   return { status: "failed", reason: "当前浏览器不支持文本剪贴板写入" };
 }
 
+export type CombinedCopyOutcome =
+  | { status: "copied" }
+  | { status: "text-fallback"; reason: string }
+  | { status: "failed"; reason: string };
+
+export interface CombinedClipboardPorts {
+  writeCombined(dataUrl: string, text: string, html: string): Promise<void>;
+  writeText(text: string): Promise<void>;
+}
+
+export interface CombinedCopyFeedback {
+  statusMessage: string;
+  helpMessage: string;
+}
+
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+export function buildCombinedHtml(posterDataUrl: string, shareText: string): string {
+  return `<img src="${escapeHtml(posterDataUrl)}" alt="分享海报"><br><pre>${escapeHtml(shareText)}</pre>`;
+}
+
+export async function copyCombined(
+  posterDataUrl: string,
+  shareText: string,
+  ports: CombinedClipboardPorts,
+): Promise<CombinedCopyOutcome> {
+  const html = buildCombinedHtml(posterDataUrl, shareText);
+  try {
+    await ports.writeCombined(posterDataUrl, shareText, html);
+    return { status: "copied" };
+  } catch (combinedError) {
+    const combinedReason = combinedError instanceof Error && combinedError.message ? combinedError.message : "组合写入失败";
+    try {
+      await ports.writeText(shareText);
+      return { status: "text-fallback", reason: combinedReason };
+    } catch (textError) {
+      return {
+        status: "failed",
+        reason: textError instanceof Error && textError.message ? textError.message : "文案写入失败",
+      };
+    }
+  }
+}
+
+export function describeCombinedCopyResult(outcome: CombinedCopyOutcome): CombinedCopyFeedback {
+  if (outcome.status === "copied") {
+    return {
+      statusMessage: "已写入兼容格式。",
+      helpMessage: "接收方可能只取其中一种；不保证粘贴时图与文同时出现。",
+    };
+  }
+  if (outcome.status === "text-fallback") {
+    return {
+      statusMessage: "组合复制失败，已改为仅复制文案。",
+      helpMessage: "海报仍需单独复制或下载 PNG。",
+    };
+  }
+  return {
+    statusMessage: "组合复制失败。",
+    helpMessage: "文案仍在上方，可手动全选复制；海报请使用“复制海报”或“下载 PNG”。",
+  };
+}
+
+export async function copyCombinedPosterAndText(
+  posterDataUrl: string,
+  shareText: string,
+  canContinue: () => boolean = () => true,
+): Promise<CombinedCopyOutcome> {
+  const clipboardItemCtor = clipboardItemConstructor();
+  const clipboard = browserClipboard();
+  if (clipboardItemCtor && clipboard) {
+    const textBlob = new Blob([shareText], { type: "text/plain" });
+    const htmlBlob = new Blob([buildCombinedHtml(posterDataUrl, shareText)], { type: "text/html" });
+    const ports: CombinedClipboardPorts = {
+      async writeCombined(dataUrl, _text, _html) {
+        await clipboard.write([
+          new clipboardItemCtor({
+            "image/png": pngDataUrlToBlob(dataUrl),
+            "text/plain": textBlob,
+            "text/html": htmlBlob,
+          }),
+        ]);
+      },
+      writeText: async (text) => {
+        if (!canContinue()) throw new Error("分享上下文已失效");
+        const outcome = await copyShareTextToClipboard(text);
+        if (outcome.status === "failed") throw new Error(outcome.reason);
+      },
+    };
+    return copyCombined(posterDataUrl, shareText, ports);
+  }
+  if (!canContinue()) return { status: "failed", reason: "分享上下文已失效" };
+  const textOutcome = await copyShareTextToClipboard(shareText);
+  return textOutcome.status === "copied"
+    ? { status: "text-fallback", reason: "当前浏览器不支持组合剪贴板写入" }
+    : { status: "failed", reason: textOutcome.reason };
+}
+
+
+
 function pngDataUrlToBlob(dataUrl: string): Blob {
   const [header, base64] = dataUrl.split(",");
   if (!header?.startsWith("data:image/png") || !base64) throw new Error("海报 PNG 数据无效");

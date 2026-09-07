@@ -1,10 +1,10 @@
 # Bilibili Share
 
-A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. It pauses the current standard video, captures one stable generation snapshot, validates an anonymous `b23.tv` short-link redirect, and previews the approved mist-blue default poster. Export actions cover copy poster, download 1080×1440 PNG, separate plain-text and Markdown copy, and best-effort combined poster-and-plain-text clipboard copy.
+A Tampermonkey userscript that adds a “生成海报” action beside Bilibili Web's official share control. It pauses the current standard video, captures one stable generation snapshot, derives a canonical share target, and previews the approved B3 poster with a blurred background derived from its cover. Export actions cover copy poster, download 1080×1440 PNG, separate plain-text and Markdown copy. Combined copy has been removed after actual QQ paste testing produced only an image; copy the poster and text separately.
 
-The poster, QR code, and visible link always use one share target. A validated `b23.tv` URL is preferred; any request, response, or redirect mismatch falls back visibly to the canonical `https://www.bilibili.com/video/<BV>/` URL without blocking preview or download. “标记当前分P” and “标记当前时间” build `?p=` and `?t=` targets from the same snapshot. They change the poster QR code and visible link; poster content remains unchanged. “详细信息” is remembered, while Markdown is a separate copy action. The panel follows the actual page light/dark mode; the poster keeps its own palette.
+The poster, QR code, and visible link always use one share target. All outputs use the canonical `https://www.bilibili.com/video/<BV>/` URL, with no short-link requests. “标记当前分P” and “标记当前时间” build `?p=` and `?t=` targets from the same snapshot. They change the poster QR code and visible link; poster content remains unchanged. “详细信息” is remembered, while Markdown is a separate copy action. The panel follows the actual page light/dark mode; the poster keeps its own palette.
 
-If the cover fails, valid plain text and Markdown remain available with a retry action; image and combined exports stay disabled. Current ticket state lives in [the redesign plan](.scratch/bilibili-share-poster/redesign/ticket-breakdown.md).
+If the cover fails, valid plain text and Markdown remain available with a retry action; image exports stay disabled. Current ticket state lives in [the refinement plan](.scratch/bilibili-share-poster/usage-refinement/ticket-breakdown.md).
 
 ## Install
 

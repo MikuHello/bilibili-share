@@ -1,0 +1,56 @@
+Window: "未命名.rtfd", App: 文本编辑.
+0 标准窗口 未命名.rtfd, Secondary Actions: Raise, URL: file:///Users/mikuhello/Library/Mobile%20Documents/com~apple~TextEdit/Documents/%E6%9C%AA%E5%91%BD%E5%90%8D.rtfd/
+	1 滚动区 Secondary Actions: Scroll Left, Scroll Right, Scroll Up, Scroll Down
+		2 文本输入区 (settable) ID: First Text View, Value: [附带的图像]
+组合粘贴验证 · x
+https://www.bilibili.com/video/BV1GJ411x7h7/
+
+			3 附带的图像
+		4 滚动条 (disabled, settable, float) 0.1851851791143417
+		5 滚动条 (settable, float) 1
+			6 值指示器 (settable, float) 1
+			7 增箭头按钮
+			8 减箭头按钮
+			9 增页面按钮
+			10 减页面按钮
+		11 标尺
+			12 标尺标记 (settable, float) Value: 0, Secondary Actions: Delete
+			13 标尺标记 (settable, float) Value: 20.31746031746032, Secondary Actions: Delete
+			14 标尺标记 (settable, float) Value: 0, Secondary Actions: Delete
+	15 container
+		16 复选框 Description: 粗体, Help: 粗体文本, Value: 0
+		17 复选框 Description: 斜体, Help: 斜体文本, Value: 0
+		18 复选框 Description: 下划线, Help: 下划线文本, Value: 0
+		19 复选框 Description: 删除线, Help: 文本删除线, Value: 0
+	20 颜色池 Description: 文本颜色, Help: 点按以选取文本颜色, Value: rgb 1 1 1 1, Secondary Actions: 显示颜色面板
+	21 颜色池 Description: 文本背景颜色, Help: 点按以选取文本的背景颜色, Value: rgb 0.117647 0.117647 0.117647 1, Secondary Actions: 显示颜色面板
+	22 弹出式按钮 Description: 字样, Help: 选取字样, Value: Courier
+	23 弹出式按钮 Description: 样式, Help: 选取样式, Value: 常规体
+	24 组合框 (settable) Description: 字体大小, Help: 设置字体大小, Value: 13, Secondary Actions: Confirm
+		25 按钮 字体大小
+	26 container
+		27 复选框 Description: 左对齐, Help: 文本左对齐, Value: 1
+		28 复选框 Description: 居中对齐, Help: 文本居中, Value: 0
+		29 复选框 Description: 右对齐, Help: 文本右对齐, Value: 0
+		30 复选框 Description: 完全对齐, Help: 文本两端对齐, Value: 0
+	31 菜单按钮 Description: 列表样式, Help: 列表符号和编号
+	32 弹出式按钮 Description: 行距, Help: 行和段落的间距, Value: 1.0
+	33 关闭按钮
+	34 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	35 最小化按钮
+	36 菜单按钮 (disabled) 已编辑, Description: 文稿操作
+	37 文本 —
+	38 图像 未命名.rtfd
+	39 文本 未命名.rtfd
+40 menu bar
+	41 文本编辑
+	42 文件
+	43 编辑
+	44 格式
+	45 显示
+	46 窗口
+	47 帮助
+
+The focused UI element is 2 文本输入区 (settable) ID: First Text View, Value: [附带的图像]
+组合粘贴验证 · x
+https://www.bilibili.com/video/BV1GJ411x7h7/

@@ -1,0 +1,9 @@
+New disposable unsaved document: image attachment and editable text confirmed.
+The following is a diff from the previous accessibility tree for Window: "未命名.rtfd" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~67 标准窗口 未命名.rtfd, Secondary Actions: Raise, URL: file:///Users/mikuhello/Library/Mobile%20Documents/com~apple~TextEdit/Documents/%E6%9C%AA%E5%91%BD%E5%90%8D.rtfd/
+~	104 文本 —
++	105 图像 未命名.rtfd
++	106 文本 未命名.rtfd
+The focused UI element is 69 文本输入区 (settable) ID: First Text View, Value: [附带的图像]
+组合粘贴验证 · 可编辑文字
+https://www.bilibili.com/video/BV1GJ411x7h7/

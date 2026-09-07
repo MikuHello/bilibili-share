@@ -9,7 +9,7 @@ const header = `// ==UserScript==
 // @name         Bilibili 分享海报${development ? " · 开发调试" : ""}
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      ${version}
-// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制普通文案、Markdown 与图文组合内容
+// @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard

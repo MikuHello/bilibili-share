@@ -28,10 +28,6 @@ _Avoid_: Poster text, debug data
 An alternative share-text representation containing Markdown syntax for Markdown-aware destinations, selected through a dedicated copy action. Its format is independent from the selected detail level.
 _Avoid_: Rich-text clipboard, styled poster
 
-**Combined copy**:
-A best-effort clipboard action offering the share poster and plain share text at the selected detail level together. Capable destinations may paste the poster before the text; other destinations may choose only one representation.
-_Avoid_: Guaranteed image-and-text paste, third text mode
-
 **Share target**:
 The single video destination represented by both the poster's QR code and its visible link, optionally including a playback position.
 _Avoid_: QR target, link target

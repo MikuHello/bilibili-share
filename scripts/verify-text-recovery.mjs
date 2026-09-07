@@ -19,7 +19,6 @@ try {
   assert.equal(await markdown.isEnabled(), true, "Markdown survives cover failure");
   assert.equal(await page.getByRole("button", { name: "复制海报", exact: true }).isEnabled(), false);
   assert.equal(await page.getByRole("button", { name: "下载海报 PNG", exact: true }).isEnabled(), false);
-  assert.equal(await page.getByRole("button", { name: "组合复制", exact: true }).isEnabled(), false);
   assert.equal(await page.getByText("COVER UNAVAILABLE", { exact: true }).count(), 0);
   await plain.click();
   assert.equal(await page.evaluate(() => window.fixture.copiedText.at(-1)),
@@ -67,9 +66,6 @@ try {
   await specialPage.evaluate(() => { window.fixture.clipboardFailed = true; });
   await specialPage.getByRole("button", { name: "复制 Markdown", exact: true }).click();
   assert.equal(await specialPage.getByRole("textbox", { name: "手动复制 Markdown", exact: true }).inputValue(), copiedMarkdown);
-  await specialPage.evaluate(() => { window.fixture.clipboardFailed = false; window.fixture.combinedFailed = true; });
-  await specialPage.getByRole("button", { name: "组合复制", exact: true }).click();
-  await specialPage.waitForFunction(expected => window.fixture.copiedText.at(-1) === expected, originalPlain);
   await special.context.close();
   console.log("PASS: independent Markdown preserves escaped information and ignores legacy mode");
   const blocked = await openFixture(browser, bundle, { metadataFailed: true });
