@@ -120,6 +120,19 @@ try {
   }
   assert.deepEqual(errors,[]);await context.close();
 
+  const long = await openFixture(browser,bundle,{title:'很长的视频标题，用于验证文案滚动与操作可达。'.repeat(50)});
+  await long.page.getByRole('button',{name:'生成海报',exact:true}).click();
+  await long.page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
+  const longText = long.page.getByLabel('分享文案预览',{exact:true});
+  assert.equal(await longText.evaluate(n=>n.getBoundingClientRect().height),310);
+  assert.equal(await longText.evaluate(n=>n.scrollHeight>n.clientHeight),true);
+  await longText.evaluate(n=>n.scrollTop=n.scrollHeight);
+  await long.page.getByRole('button',{name:'复制文案',exact:true}).click();
+  await long.page.getByRole('status').filter({hasText:'普通文案已复制'}).waitFor();
+  await long.page.screenshot({animations:'disabled',path:`${out}/long-text.png`});
+  results.push({case:'long-text-capped-scrollable',passed:true});
+  assert.deepEqual(long.errors,[]);await long.context.close();
+
   const partial = await openFixture(browser,bundle,{coverFailed:true});
   await partial.page.getByRole('button',{name:'生成海报',exact:true}).click();
   await partial.page.getByText('封面暂时无法加载',{exact:true}).waitFor();
