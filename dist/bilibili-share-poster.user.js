@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.3.4
+// @version      0.3.5
 // @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -2241,6 +2241,14 @@
   function statistic(value) {
     return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
   }
+  function primaryHonor(data) {
+    const numericType = (value) => typeof value === "string" || typeof value === "number" ? Number(value) : NaN;
+    if ([1, 2].includes(numericType(data.argue_info?.argue_type))) return void 0;
+    const honors = data.honor_reply?.honor;
+    const first = Array.isArray(honors) ? honors[0] : void 0;
+    if (![1, 2, 3].includes(numericType(first?.type))) return void 0;
+    return typeof first?.desc === "string" && first.desc.trim() ? first.desc : void 0;
+  }
   function parsePartInformation(pages, expectedPartNumber) {
     if (!Array.isArray(pages)) return { partTitle: null, partIdentified: false };
     const current = pages.find(
@@ -2268,6 +2276,7 @@
       uploader: requiredText(data.owner?.name, "UP \u4E3B"),
       partTitle: partInformation.partTitle,
       partIdentified: partInformation.partIdentified,
+      honor: primaryHonor(data),
       stats: {
         views: statistic(data.stat?.view),
         likes: statistic(data.stat?.like),
@@ -2327,6 +2336,7 @@
       coverDataUrl: cover.dataUrl,
       coverUnavailable: cover.unavailable,
       title: video.title,
+      honor: video.honor,
       uploader: video.uploader,
       partNumber: capture.partNumber,
       partTitle: video.partTitle,
@@ -2648,6 +2658,7 @@
     const validatedShareTarget = validateShareTarget(shareTarget, bvid);
     return {
       dimensions: { width: 1080, height: 1440 },
+      honor: snapshot.honor,
       coverDataUrl,
       coverUnavailable: snapshot.coverUnavailable,
       title,
@@ -2735,6 +2746,7 @@ ${shareTarget}`;
       `UP\u4E3B\uFF1A${snapshot.uploader}`,
       `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
     ];
+    if (snapshot.honor) lines.push(snapshot.honor);
     const partLabel = buildPartLabel(snapshot, options);
     if (partLabel) lines.push(`\u5206P\uFF1A${partLabel}`);
     if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
@@ -2753,6 +2765,7 @@ ${shareTarget}`;
       `- UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}`,
       `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
     ];
+    if (snapshot.honor) lines.push(`- ${escapeMarkdown(snapshot.honor)}`);
     const partLabel = buildPartLabel(snapshot, options);
     if (partLabel) lines.push(`- \u5206P\uFF1A${escapeMarkdown(partLabel)}`);
     if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
@@ -3623,6 +3636,9 @@ ${shareTarget}`;
 .bsp-d-ids{display:grid;gap:6.48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:25.92px;letter-spacing:.3px;white-space:nowrap}
 .bsp-d-ids b{font-weight:inherit}
 .bsp-d-cover{display:block;width:950.4px;height:547.2px;object-fit:contain;object-position:center;justify-self:center}
+.bsp-d-honor{position:absolute;right:48px;top:116px;z-index:1;isolation:isolate;max-width:950.4px;font-size:38px;font-weight:600;line-height:1.3;letter-spacing:.3px;padding:10px 22px 10px 34px;color:#583b16;overflow-wrap:anywhere;white-space:pre-wrap;filter:drop-shadow(0 5px 7px #422b1726)}
+.bsp-d-honor::before{content:"";position:absolute;inset:0;z-index:-1;background:#f1ce84;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14px 50%)}
+.bsp-d-honor::after{content:"";position:absolute;right:0;top:100%;width:16.8px;height:14px;background:#a57839;clip-path:polygon(0 0,100% 0,0 100%)}
 .bsp-d-editorial{min-height:0;padding:43.2px 64.8px 32.4px}
 .bsp-d-title-space{min-height:0}
 .bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
@@ -3713,6 +3729,14 @@ ${shareTarget}`;
     try {
       await document.fonts.ready;
       await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
+      const honor = poster.querySelector(".bsp-d-honor");
+      if (honor) {
+        const maxHeight = 520;
+        for (let size = 38; size >= 1; size--) {
+          honor.style.fontSize = `${size}px`;
+          if (honor.offsetHeight <= maxHeight) break;
+        }
+      }
       const probe = title.cloneNode(true);
       Object.assign(probe.style, { position: "absolute", width: `${title.getBoundingClientRect().width}px`, visibility: "hidden" });
       title.parentElement.append(probe);
@@ -3797,6 +3821,7 @@ ${shareTarget}`;
     address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
     linkFooter.append(address);
     poster.append(style, mast, cover, editorial, footer, linkFooter);
+    if (model.honor) poster.append(element("div", "bsp-d-honor", model.honor));
     await fitContent(poster, title);
     return poster;
   }
@@ -3857,6 +3882,8 @@ ${shareTarget}`;
     markdownText = "";
     exportButtons = [];
     statusTimer = 0;
+    hintAnchor = null;
+    hint = element("div", "bsp-option-hint");
     previewObserver = new ResizeObserver(() => {
       this.fitPoster();
       this.positionStatus();
@@ -3872,6 +3899,9 @@ ${shareTarget}`;
       this.panel.setAttribute("aria-modal", "true");
       this.panel.setAttribute("aria-labelledby", "bsp-dialog-title");
       this.panel.tabIndex = -1;
+      this.hint.id = "bsp-option-hint";
+      this.hint.setAttribute("role", "tooltip");
+      this.hint.hidden = true;
       const heading = element("header", "bsp-panel-head");
       const title = element("h2", "", "\u5206\u4EAB\u6D77\u62A5");
       title.id = "bsp-dialog-title";
@@ -3883,7 +3913,7 @@ ${shareTarget}`;
       heading.append(title, close);
       const workspace = element("div", "bsp-workspace");
       workspace.append(this.previewPane, this.controls);
-      this.panel.append(heading, workspace);
+      this.panel.append(heading, workspace, this.hint);
       this.backdrop.append(this.panel);
       this.backdrop.addEventListener("click", (event) => {
         if (event.target === this.backdrop) this.close(true);
@@ -3926,6 +3956,7 @@ ${shareTarget}`;
       this.snapshot = null;
       this.model = null;
       this.poster = null;
+      this.hideHint();
       clearTimeout(this.statusTimer);
       this.previewObserver.disconnect();
       this.backdrop.removeEventListener("scroll", this.positionStatus, true);
@@ -3975,6 +4006,7 @@ ${shareTarget}`;
       return state;
     }
     renderLoading() {
+      this.hideHint();
       this.previewPane.replaceChildren(this.previewState("\u6B63\u5728\u751F\u6210\u6D77\u62A5"));
       this.controls.replaceChildren();
     }
@@ -4101,7 +4133,9 @@ ${shareTarget}`;
         element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
         element("span", "bsp-text-card-link", link)
       );
-      card.append(content);
+      const preview = element("div", "bsp-text-preview");
+      preview.append(content);
+      card.append(preview);
       return card;
     }
     actionButton(iconName, label, tip, primary, onClick) {
@@ -4120,6 +4154,7 @@ ${shareTarget}`;
     }
     // Prefer the viewport bottom, moving upward only to clear visible controls.
     positionStatus = () => {
+      this.positionHint();
       const status = this.controls.querySelector(".bsp-status.is-show");
       if (!status) return;
       const height = status.offsetHeight;
@@ -4158,7 +4193,7 @@ ${shareTarget}`;
       const container = element("div", "bsp-options");
       const snapshot = this.snapshot;
       if (!snapshot) return container;
-      container.append(
+      const buttons = [
         this.optionToggle("list", "\u6807\u8BB0\u5F53\u524D\u5206P", this.options.partShare, !canEnablePartShare(snapshot), (checked) => {
           void checked;
           this.applyOptions(togglePartShare(this.options, snapshot));
@@ -4167,15 +4202,58 @@ ${shareTarget}`;
           void checked;
           this.applyOptions(toggleTimestampShare(this.options, snapshot));
         })
-      );
-      if (!snapshot.partIdentified) {
-        const notice = element("p", "bsp-option-notice", "\u5F53\u524D\u5206P\u65E0\u6CD5\u8BC6\u522B\uFF0C\u5DF2\u7981\u7528\u5206P\u4E0E\u65F6\u95F4\u6233\u5206\u4EAB\uFF1B\u9ED8\u8BA4\u5206\u4EAB\u4ECD\u53EF\u7528\u3002");
-        container.append(notice);
-      } else if (Math.floor(snapshot.playbackSeconds) < 1) {
-        const notice = element("p", "bsp-option-notice", "\u5F53\u524D\u64AD\u653E\u4F4D\u7F6E\u4E0D\u8DB3 1 \u79D2\uFF0C\u65F6\u95F4\u6233\u5206\u4EAB\u4E0D\u53EF\u7528\u3002");
-        container.append(notice);
+      ];
+      for (const button of buttons) {
+        const reason = !snapshot.partIdentified ? "\u5F53\u524D\u5206P\u65E0\u6CD5\u8BC6\u522B\uFF0C\u5DF2\u7981\u7528\u5206P\u4E0E\u65F6\u95F4\u6233\u5206\u4EAB\uFF1B\u9ED8\u8BA4\u5206\u4EAB\u4ECD\u53EF\u7528\u3002" : button.disabled ? "\u5F53\u524D\u64AD\u653E\u4F4D\u7F6E\u4E0D\u8DB3 1 \u79D2\uFF0C\u65F6\u95F4\u6233\u5206\u4EAB\u4E0D\u53EF\u7528\u3002" : "";
+        if (!reason) {
+          container.append(button);
+          continue;
+        }
+        const anchor = element("span", "bsp-option-explanation");
+        anchor.tabIndex = 0;
+        anchor.setAttribute("role", "button");
+        anchor.setAttribute("aria-label", `${button.textContent}\uFF1A\u67E5\u770B\u4E0D\u53EF\u7528\u539F\u56E0`);
+        anchor.setAttribute("aria-describedby", this.hint.id);
+        const show = () => {
+          if (this.closed) return;
+          this.hintAnchor = anchor;
+          this.hint.textContent = reason;
+          this.hint.hidden = false;
+          this.positionHint();
+        };
+        anchor.addEventListener("pointerenter", show);
+        anchor.addEventListener("focus", show);
+        anchor.addEventListener("click", show);
+        anchor.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            show();
+          }
+        });
+        anchor.addEventListener("pointerleave", () => {
+          if (document.activeElement !== anchor) this.hideHint();
+        });
+        anchor.addEventListener("blur", () => this.hideHint());
+        anchor.append(button);
+        container.append(anchor);
       }
       return container;
+    }
+    hideHint() {
+      this.hint.hidden = true;
+      this.hintAnchor = null;
+    }
+    positionHint() {
+      if (!this.hintAnchor) return;
+      const rect = this.hintAnchor.getBoundingClientRect();
+      if (!this.hintAnchor.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) {
+        this.hideHint();
+        return;
+      }
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - this.hint.offsetWidth - 8));
+      const top = rect.top - this.hint.offsetHeight - 8;
+      this.hint.style.left = `${left}px`;
+      this.hint.style.top = `${top >= 8 ? top : rect.bottom + 8}px`;
     }
     fitPoster() {
       for (const frame of this.previewPane.querySelectorAll(".bsp-preview-frame")) {
@@ -4311,9 +4389,9 @@ ${shareTarget}`;
       source.value = text;
       source.rows = 6;
       source.setAttribute("aria-label", `\u624B\u52A8\u590D\u5236 ${format}`);
-      this.controls.append(source);
-      this.showStatus(`${format}\u590D\u5236\u5931\u8D25\u3002\u8BF7\u5728\u4E0B\u65B9\u6587\u672C\u6846\u4E2D\u624B\u52A8\u590D\u5236\u3002`, true);
-      source.focus();
+      this.controls.querySelector(".bsp-text-preview")?.append(source);
+      this.showStatus(`${format}\u590D\u5236\u5931\u8D25\u3002\u8BF7\u5728\u6587\u6848\u9884\u89C8\u533A\u57DF\u624B\u52A8\u590D\u5236\u3002`, true);
+      source.focus({ preventScroll: true });
       source.select();
     }
     async download(status) {
@@ -4371,7 +4449,8 @@ ${MOTION_STYLES}
 .bsp-options{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:12px;min-width:0}
 .bsp-panel .bsp-option-pill{position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 8px;border:1px solid var(--bsp-line);border-radius:6px;font-size:12px;white-space:nowrap;background:transparent;color:var(--bsp-muted)}
 .bsp-option-pill svg{width:16px;height:16px;flex:none}.bsp-panel .bsp-option-pill.is-on{background:var(--bsp-blue-bg);border-color:var(--bsp-blue);color:var(--bsp-blue)}
-.bsp-option-notice{flex-basis:100%;font-size:11px;line-height:1.6;margin:0;color:var(--bsp-muted)}
+.bsp-option-explanation{display:flex;flex:1;min-width:0;cursor:help;border-radius:6px}.bsp-option-explanation:focus-visible{outline:3px solid var(--bsp-blue);outline-offset:4px}.bsp-option-explanation>button:disabled{pointer-events:none}
+.bsp-option-hint{position:fixed;z-index:4;width:max-content;max-width:min(300px,calc(100vw - 16px));padding:8px 12px;border:1px solid var(--bsp-line);border-radius:6px;background:var(--bsp-surface);box-shadow:0 4px 16px #0002;font-size:12px;line-height:1.6;color:var(--bsp-text);pointer-events:none}.bsp-option-hint[hidden]{display:none}
 .bsp-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .bsp-section-heading h3{color:var(--bsp-text);margin:0;font-size:14px;font-weight:400;white-space:nowrap}
 .bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
@@ -4388,7 +4467,7 @@ ${MOTION_STYLES}
 .bsp-loading-card p{margin:0}.bsp-panel .bsp-loading-card button{font-size:13px;background:#f9fbfa;border-color:#adc2c2;color:#405e65}
 .bsp-spinner{width:22px;height:22px;border:2px solid #b8c9ca;border-top-color:#405e65;border-radius:50%;animation:bsp-spin 1s linear infinite}
 .bsp-error{font-size:13px;color:var(--bsp-error);line-height:1.7;margin:0}.bsp-help{font-size:12px;color:var(--bsp-muted);line-height:1.7;margin:0}
-.bsp-manual-copy{width:100%;padding:12px;background:var(--bsp-soft);color:var(--bsp-text);border:1px solid var(--bsp-line);border-radius:6px;resize:vertical;font-size:13px!important}
+.bsp-text-preview{position:relative}.bsp-manual-copy{position:absolute;inset:0;width:100%;height:100%;padding:12px;background:var(--bsp-soft);color:var(--bsp-text);border:1px solid var(--bsp-line);border-radius:6px;resize:none;font-size:13px!important;pointer-events:auto}
 @keyframes bsp-spin{to{transform:rotate(360deg)}}
 @keyframes bsp-backdrop-in{from{opacity:0}to{opacity:1}}
 @keyframes bsp-panel-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}

@@ -1,6 +1,6 @@
 # 实现拆分提案
 
-Status: approved — 2026-09-08主人批准，已发布01、02执行工单。
+Status: complete — 01、02均完成实现及双轴评审；0.3.5统一构建通过13套浏览器验收，见evidence/final/verification.md。
 
 1. **视频主荣誉进入书签海报与详细文案**
    - Blocked by: None。

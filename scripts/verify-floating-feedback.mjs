@@ -5,7 +5,7 @@ import { browserRuntime, productionBundle, openFixture } from './browser-test-su
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
-const output = '.scratch/bilibili-share-poster/video-honors/evidence/02';
+const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/video-honors/evidence/02';
 await mkdir(output, { recursive: true });
 try {
   const { page, context, errors } = await openFixture(browser, bundle, { time: 0.4, title: '长文案滚动后的手动复制仍然可用。'.repeat(35) });
@@ -55,6 +55,10 @@ try {
     const { page, context, errors } = await openFixture(browser, bundle, { unknownPart, time: 0.2,
       context: { viewport: { width: 390, height: 844 }, hasTouch: true, colorScheme: 'dark', reducedMotion: 'reduce' } });
     try {
+      if (unknownPart) {
+        await page.evaluate(() => document.documentElement.classList.add('dark'));
+        await page.waitForFunction(() => document.querySelector('#bsp-entry.bsp-entry-dark'));
+      }
       await page.getByRole('button', { name: '分享海报', exact: true }).click();
       await page.getByRole('article').waitFor();
       const anchor = page.getByRole('button', { name: '标记当前时间：查看不可用原因', exact: true });
@@ -62,6 +66,7 @@ try {
       assert.match(await page.getByRole('tooltip').textContent(), unknownPart ? /分P无法识别/ : /不足 1 秒/);
       const hint = await page.getByRole('tooltip').boundingBox();
       assert.ok(hint.x >= 0 && hint.x + hint.width <= 390 && hint.y >= 0);
+      if (unknownPart) assert.equal(await page.getByRole('tooltip').evaluate(node => getComputedStyle(node).backgroundColor), 'rgb(36, 38, 43)');
       await page.screenshot({ path: `${output}/touch-${unknownPart}.png` });
       await page.getByRole('button', { name: '复制文案', exact: true }).tap();
       assert.equal(await page.getByRole('tooltip').isVisible(), false);

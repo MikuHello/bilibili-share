@@ -131,7 +131,8 @@ try {
       if (scenario.unavailable) assert.equal(await timeButton(page).isDisabled(), true);
       if (scenario.overrides.unknownPart) {
         assert.equal(await partButton(page).isDisabled(), true);
-        assert.ok((await page.getByRole("dialog").innerText()).includes("当前分P无法识别"));
+        await page.getByRole("button", { name: "标记当前分P：查看不可用原因", exact: true }).focus();
+        assert.ok((await page.getByRole("tooltip").innerText()).includes("当前分P无法识别"));
       }
       if (scenario.overrides.part === 1) assert.equal(await partButton(page).getAttribute("aria-pressed"), "false");
       await assertOutputs(page, scenario.target, scenario.name);
