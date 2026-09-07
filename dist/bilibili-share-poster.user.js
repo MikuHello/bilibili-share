@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.3.5
+// @version      0.4.0
 // @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -42,18 +42,18 @@
     mod
   ));
 
-  // ../bilibili-share/node_modules/qrcode/lib/can-promise.js
+  // node_modules/qrcode/lib/can-promise.js
   var require_can_promise = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/can-promise.js"(exports2, module) {
+    "node_modules/qrcode/lib/can-promise.js"(exports2, module) {
       module.exports = function() {
         return typeof Promise === "function" && Promise.prototype && Promise.prototype.then;
       };
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/utils.js
+  // node_modules/qrcode/lib/core/utils.js
   var require_utils = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/utils.js"(exports2) {
+    "node_modules/qrcode/lib/core/utils.js"(exports2) {
       var toSJISFunction;
       var CODEWORDS_COUNT = [
         0,
@@ -130,9 +130,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js
+  // node_modules/qrcode/lib/core/error-correction-level.js
   var require_error_correction_level = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-level.js"(exports2) {
+    "node_modules/qrcode/lib/core/error-correction-level.js"(exports2) {
       exports2.L = { bit: 1 };
       exports2.M = { bit: 0 };
       exports2.Q = { bit: 3 };
@@ -175,9 +175,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js
+  // node_modules/qrcode/lib/core/bit-buffer.js
   var require_bit_buffer = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/bit-buffer.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/bit-buffer.js"(exports2, module) {
       function BitBuffer() {
         this.buffer = [];
         this.length = 0;
@@ -210,9 +210,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js
+  // node_modules/qrcode/lib/core/bit-matrix.js
   var require_bit_matrix = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/bit-matrix.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/bit-matrix.js"(exports2, module) {
       function BitMatrix(size) {
         if (!size || size < 1) {
           throw new Error("BitMatrix size must be defined and greater than 0");
@@ -239,9 +239,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js
+  // node_modules/qrcode/lib/core/alignment-pattern.js
   var require_alignment_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/alignment-pattern.js"(exports2) {
+    "node_modules/qrcode/lib/core/alignment-pattern.js"(exports2) {
       var getSymbolSize = require_utils().getSymbolSize;
       exports2.getRowColCoords = function getRowColCoords(version) {
         if (version === 1) return [];
@@ -274,9 +274,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js
+  // node_modules/qrcode/lib/core/finder-pattern.js
   var require_finder_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/finder-pattern.js"(exports2) {
+    "node_modules/qrcode/lib/core/finder-pattern.js"(exports2) {
       var getSymbolSize = require_utils().getSymbolSize;
       var FINDER_PATTERN_SIZE = 7;
       exports2.getPositions = function getPositions(version) {
@@ -293,9 +293,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js
+  // node_modules/qrcode/lib/core/mask-pattern.js
   var require_mask_pattern = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/mask-pattern.js"(exports2) {
+    "node_modules/qrcode/lib/core/mask-pattern.js"(exports2) {
       exports2.Patterns = {
         PATTERN000: 0,
         PATTERN001: 1,
@@ -435,9 +435,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js
+  // node_modules/qrcode/lib/core/error-correction-code.js
   var require_error_correction_code = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/error-correction-code.js"(exports2) {
+    "node_modules/qrcode/lib/core/error-correction-code.js"(exports2) {
       var ECLevel = require_error_correction_level();
       var EC_BLOCKS_TABLE = [
         // L  M  Q  H
@@ -796,9 +796,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/galois-field.js
+  // node_modules/qrcode/lib/core/galois-field.js
   var require_galois_field = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/galois-field.js"(exports2) {
+    "node_modules/qrcode/lib/core/galois-field.js"(exports2) {
       var EXP_TABLE = new Uint8Array(512);
       var LOG_TABLE = new Uint8Array(256);
       (function initTables() {
@@ -829,9 +829,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/polynomial.js
+  // node_modules/qrcode/lib/core/polynomial.js
   var require_polynomial = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/polynomial.js"(exports2) {
+    "node_modules/qrcode/lib/core/polynomial.js"(exports2) {
       var GF = require_galois_field();
       exports2.mul = function mul(p1, p2) {
         const coeff = new Uint8Array(p1.length + p2.length - 1);
@@ -865,9 +865,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js
+  // node_modules/qrcode/lib/core/reed-solomon-encoder.js
   var require_reed_solomon_encoder = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports2, module) {
       var Polynomial = require_polynomial();
       function ReedSolomonEncoder(degree) {
         this.genPoly = void 0;
@@ -897,18 +897,18 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/version-check.js
+  // node_modules/qrcode/lib/core/version-check.js
   var require_version_check = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/version-check.js"(exports2) {
+    "node_modules/qrcode/lib/core/version-check.js"(exports2) {
       exports2.isValid = function isValid(version) {
         return !isNaN(version) && version >= 1 && version <= 40;
       };
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/regex.js
+  // node_modules/qrcode/lib/core/regex.js
   var require_regex = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/regex.js"(exports2) {
+    "node_modules/qrcode/lib/core/regex.js"(exports2) {
       var numeric = "[0-9]+";
       var alphanumeric = "[A-Z $%*+\\-./:]+";
       var kanji = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";
@@ -934,9 +934,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/mode.js
+  // node_modules/qrcode/lib/core/mode.js
   var require_mode = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/mode.js"(exports2) {
+    "node_modules/qrcode/lib/core/mode.js"(exports2) {
       var VersionCheck = require_version_check();
       var Regex = require_regex();
       exports2.NUMERIC = {
@@ -1015,9 +1015,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/version.js
+  // node_modules/qrcode/lib/core/version.js
   var require_version = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/version.js"(exports2) {
+    "node_modules/qrcode/lib/core/version.js"(exports2) {
       var Utils = require_utils();
       var ECCode = require_error_correction_code();
       var ECLevel = require_error_correction_level();
@@ -1110,9 +1110,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/format-info.js
+  // node_modules/qrcode/lib/core/format-info.js
   var require_format_info = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/format-info.js"(exports2) {
+    "node_modules/qrcode/lib/core/format-info.js"(exports2) {
       var Utils = require_utils();
       var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
       var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
@@ -1128,9 +1128,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js
+  // node_modules/qrcode/lib/core/numeric-data.js
   var require_numeric_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/numeric-data.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/numeric-data.js"(exports2, module) {
       var Mode = require_mode();
       function NumericData(data) {
         this.mode = Mode.NUMERIC;
@@ -1163,9 +1163,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js
+  // node_modules/qrcode/lib/core/alphanumeric-data.js
   var require_alphanumeric_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/alphanumeric-data.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/alphanumeric-data.js"(exports2, module) {
       var Mode = require_mode();
       var ALPHA_NUM_CHARS = [
         "0",
@@ -1242,9 +1242,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/byte-data.js
+  // node_modules/qrcode/lib/core/byte-data.js
   var require_byte_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/byte-data.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/byte-data.js"(exports2, module) {
       var Mode = require_mode();
       function ByteData(data) {
         this.mode = Mode.BYTE;
@@ -1272,9 +1272,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js
+  // node_modules/qrcode/lib/core/kanji-data.js
   var require_kanji_data = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/kanji-data.js"(exports2, module) {
+    "node_modules/qrcode/lib/core/kanji-data.js"(exports2, module) {
       var Mode = require_mode();
       var Utils = require_utils();
       function KanjiData(data) {
@@ -1311,9 +1311,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/dijkstrajs/dijkstra.js
+  // node_modules/dijkstrajs/dijkstra.js
   var require_dijkstra = __commonJS({
-    "../bilibili-share/node_modules/dijkstrajs/dijkstra.js"(exports2, module) {
+    "node_modules/dijkstrajs/dijkstra.js"(exports2, module) {
       "use strict";
       var dijkstra = {
         single_source_shortest_paths: function(graph, s, d) {
@@ -1412,9 +1412,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/segments.js
+  // node_modules/qrcode/lib/core/segments.js
   var require_segments = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/segments.js"(exports2) {
+    "node_modules/qrcode/lib/core/segments.js"(exports2) {
       var Mode = require_mode();
       var NumericData = require_numeric_data();
       var AlphanumericData = require_alphanumeric_data();
@@ -1598,9 +1598,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/core/qrcode.js
+  // node_modules/qrcode/lib/core/qrcode.js
   var require_qrcode = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/core/qrcode.js"(exports2) {
+    "node_modules/qrcode/lib/core/qrcode.js"(exports2) {
       var Utils = require_utils();
       var ECLevel = require_error_correction_level();
       var BitBuffer = require_bit_buffer();
@@ -1859,9 +1859,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/renderer/utils.js
+  // node_modules/qrcode/lib/renderer/utils.js
   var require_utils2 = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/utils.js"(exports2) {
+    "node_modules/qrcode/lib/renderer/utils.js"(exports2) {
       function hex2rgba(hex) {
         if (typeof hex === "number") {
           hex = hex.toString();
@@ -1939,9 +1939,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js
+  // node_modules/qrcode/lib/renderer/canvas.js
   var require_canvas = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/canvas.js"(exports2) {
+    "node_modules/qrcode/lib/renderer/canvas.js"(exports2) {
       var Utils = require_utils2();
       function clearCanvas(ctx, canvas, size) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1992,9 +1992,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js
+  // node_modules/qrcode/lib/renderer/svg-tag.js
   var require_svg_tag = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/renderer/svg-tag.js"(exports2) {
+    "node_modules/qrcode/lib/renderer/svg-tag.js"(exports2) {
       var Utils = require_utils2();
       function getColorAttrib(color, attrib) {
         const alpha = color.a / 255;
@@ -2050,9 +2050,9 @@
     }
   });
 
-  // ../bilibili-share/node_modules/qrcode/lib/browser.js
+  // node_modules/qrcode/lib/browser.js
   var require_browser = __commonJS({
-    "../bilibili-share/node_modules/qrcode/lib/browser.js"(exports2) {
+    "node_modules/qrcode/lib/browser.js"(exports2) {
       var canPromise = require_can_promise();
       var QRCode2 = require_qrcode();
       var CanvasRenderer = require_canvas();
@@ -2730,60 +2730,105 @@
     };
   }
 
-  // src/share-text.ts
-  function buildCompactShareText(title, uploader, shareTarget) {
-    return `${title}\uFF08UP\u4E3B\uFF1A${uploader}\uFF09
-${shareTarget}`;
+  // src/share-text-template.ts
+  var ShareTextTemplateError = class extends Error {
+    constructor(preset, position, template, reason) {
+      const before = template.slice(0, position);
+      const line = before.split("\n").length;
+      const column = position - before.lastIndexOf("\n");
+      super(`${preset} at line ${line}, column ${column}: ${reason}`);
+      this.preset = preset;
+      this.position = position;
+      this.name = "ShareTextTemplateError";
+    }
+  };
+  function renderShareTextTemplate(template, preset, values) {
+    let output = "";
+    let condition;
+    const fail = (position, reason) => {
+      throw new ShareTextTemplateError(preset, position, template, reason);
+    };
+    const variable = (name, position) => {
+      if (!Object.hasOwn(values, name)) fail(position, `Unknown variable ${JSON.stringify(name)}`);
+      return values[name];
+    };
+    const append = (text) => {
+      if (!condition || condition.available) output += text;
+    };
+    for (let i = 0; i < template.length; ) {
+      const escaped = ["{{", "}}", "\\"].find((token2) => template.startsWith(`\\${token2}`, i));
+      if (escaped) {
+        append(escaped);
+        i += escaped.length + 1;
+        continue;
+      }
+      if (template.startsWith("}}", i)) fail(i, "Unexpected closing delimiter");
+      if (!template.startsWith("{{", i)) {
+        append(template[i]);
+        i++;
+        continue;
+      }
+      const end = template.indexOf("}}", i + 2);
+      if (end === -1) fail(i, "Unclosed template instruction");
+      const token = template.slice(i + 2, end);
+      if (token.startsWith("#if ")) {
+        if (condition) fail(i, "Nested conditions are unsupported");
+        condition = { available: variable(token.slice(4), i).available, position: i };
+      } else if (token === "/if") {
+        if (!condition) fail(i, "Unexpected /if");
+        condition = void 0;
+      } else {
+        append(variable(token, i).text);
+      }
+      i = end + 2;
+    }
+    if (condition) fail(condition.position, "Unclosed condition");
+    return output;
   }
+
+  // src/share-text.ts
   function formatExactStat(value) {
     if (value === null || !Number.isFinite(value)) return "--";
     const whole = Math.max(0, Math.trunc(value));
     return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
-  function plainDetailedText(snapshot, shareTarget, options) {
-    const lines = [
-      snapshot.title,
-      `UP\u4E3B\uFF1A${snapshot.uploader}`,
-      `\u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)}\u3000\u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)}\u3000\u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)}\u3000\u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
-    ];
-    if (snapshot.honor) lines.push(snapshot.honor);
-    const partLabel = buildPartLabel(snapshot, options);
-    if (partLabel) lines.push(`\u5206P\uFF1A${partLabel}`);
-    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
-      lines.push(`\u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
-    }
-    lines.push(`${snapshot.bvid} \xB7 av${snapshot.aid}`, shareTarget);
-    return lines.join("\n");
-  }
   function escapeMarkdown(value) {
     return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replace(/([\\`*_[\]{}()#+.!|>~-])/g, "\\$1");
   }
-  function markdownDetailedText(snapshot, shareTarget, options) {
-    const lines = [
-      `**${escapeMarkdown(snapshot.title)}**`,
-      "",
-      `- UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}`,
-      `- \u64AD\u653E\uFF1A${formatExactStat(snapshot.stats.views)} \xB7 \u70B9\u8D5E\uFF1A${formatExactStat(snapshot.stats.likes)} \xB7 \u6295\u5E01\uFF1A${formatExactStat(snapshot.stats.coins)} \xB7 \u6536\u85CF\uFF1A${formatExactStat(snapshot.stats.favorites)}`
-    ];
-    if (snapshot.honor) lines.push(`- ${escapeMarkdown(snapshot.honor)}`);
-    const partLabel = buildPartLabel(snapshot, options);
-    if (partLabel) lines.push(`- \u5206P\uFF1A${escapeMarkdown(partLabel)}`);
-    if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
-      lines.push(`- \u65F6\u95F4\uFF1A${formatTimestamp(snapshot.playbackSeconds)}`);
-    }
-    lines.push(`- ${snapshot.bvid} \xB7 av${snapshot.aid}`, `- \u94FE\u63A5\uFF1A${shareTarget}`);
-    return lines.join("\n");
+  var DEFAULT_PLAIN_TEMPLATES = {
+    compact: "{{title}}\uFF08UP\u4E3B\uFF1A{{uploader}}\uFF09\n{{url}}",
+    detailed: "{{title}}\nUP\u4E3B\uFF1A{{uploader}}\n\u64AD\u653E\uFF1A{{views}}\u3000\u70B9\u8D5E\uFF1A{{likes}}\u3000\u6295\u5E01\uFF1A{{coins}}\u3000\u6536\u85CF\uFF1A{{favorites}}\n{{#if honor}}{{honor}}\n{{/if}}{{#if part}}\u5206P\uFF1A{{part}}\n{{/if}}{{#if timestamp}}\u65F6\u95F4\uFF1A{{timestamp}}\n{{/if}}{{bvid}} \xB7 av{{aid}}\n{{url}}"
+  };
+  var DEFAULT_MARKDOWN_TEMPLATES = {
+    compact: "[{{title}}]({{url}})\uFF08UP\u4E3B\uFF1A{{uploader}}\uFF09\n{{url}}",
+    detailed: "**{{title}}**\n\n- UP\u4E3B\uFF1A{{uploader}}\n- \u64AD\u653E\uFF1A{{views}} \xB7 \u70B9\u8D5E\uFF1A{{likes}} \xB7 \u6295\u5E01\uFF1A{{coins}} \xB7 \u6536\u85CF\uFF1A{{favorites}}\n{{#if honor}}- {{honor}}\n{{/if}}{{#if part}}- \u5206P\uFF1A{{part}}\n{{/if}}{{#if timestamp}}- \u65F6\u95F4\uFF1A{{timestamp}}\n{{/if}}- {{bvid}} \xB7 av{{aid}}\n- \u94FE\u63A5\uFF1A{{url}}"
+  };
+  function buildShareText(snapshot, shareTarget, options, templates = {}) {
+    const format = options.markdownText ? "markdown" : "plain";
+    const preset = options.detailedText ? "detailed" : "compact";
+    const values = {
+      title: snapshot.title,
+      uploader: snapshot.uploader,
+      url: shareTarget,
+      bvid: snapshot.bvid,
+      aid: snapshot.aid,
+      ...snapshot.stats,
+      honor: snapshot.honor?.trim() ? snapshot.honor : null,
+      part: canEnablePartShare(snapshot) ? buildPartLabel(snapshot, options) : null,
+      timestamp: options.timestampShare && canEnableTimestampShare(snapshot) ? formatTimestamp(snapshot.playbackSeconds) : null
+    };
+    const available = (name) => values[name] !== null && values[name] !== void 0 && (typeof values[name] === "number" ? Number.isFinite(values[name]) : String(values[name]).trim() !== "");
+    const defaults = options.markdownText ? DEFAULT_MARKDOWN_TEMPLATES : DEFAULT_PLAIN_TEMPLATES;
+    const template = templates[format]?.[preset] ?? defaults[preset];
+    const variables = Object.fromEntries(Object.entries(values).map(([name, value]) => [name, {
+      available: available(name),
+      text: ["views", "likes", "coins", "favorites"].includes(name) ? formatExactStat(value) : options.markdownText && name !== "url" ? escapeMarkdown(String(value ?? "")) : String(value ?? "")
+    }]));
+    return renderShareTextTemplate(template, `${format}.${preset}`, variables);
   }
-  function buildShareText(snapshot, shareTarget, options) {
-    if (options.detailedText) {
-      return options.markdownText ? markdownDetailedText(snapshot, shareTarget, options) : plainDetailedText(snapshot, shareTarget, options);
-    }
-    if (options.markdownText) {
-      return `[${escapeMarkdown(snapshot.title)}](${shareTarget})\uFF08UP\u4E3B\uFF1A${escapeMarkdown(snapshot.uploader)}\uFF09
-${shareTarget}`;
-    }
-    return buildCompactShareText(snapshot.title, snapshot.uploader, shareTarget);
-  }
+
+  // src/share-text-config.ts
+  var shareTextTemplates = {};
 
   // src/ui/dom.ts
   function element(tag, className, text) {
@@ -2819,10 +2864,231 @@ ${shareTarget}`;
   }
 }`;
 
-  // src/ui/posters.ts
+  // src/ui/default-poster.ts
   var import_qrcode = __toESM(require_browser(), 1);
 
-  // ../bilibili-share/node_modules/html-to-image/es/util.js
+  // src/ui/poster-assets.ts
+  var posterAssets = {
+    "brand": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%202240%201024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%2300AEEC%22%20d%3D%22M2079.810048%20913.566175c-10.01309%200-18.554608%200.799768-26.936172-0.159954-16.987063-1.951433-33.974126-1.567544-50.99318-2.079395-10.972811-0.287916-10.652904-0.287916-11.580634-10.90883-2.71921-32.406582-5.694345-64.781173-8.605499-97.155764-2.527266-28.439735-4.926568-56.91146-7.70976-85.319204-2.527266-26.040432-5.566382-52.016883-8.317583-78.025324-2.623238-24.440897-5.054531-48.913784-7.77374-73.322691a12681.114551%2012681.114551%200%200%200-10.684895-92.133223c-3.295042-27.128116-6.558094-54.320213-10.205034-81.416339a20559.272961%2020559.272961%200%200%200-17.530905-125.979387c-6.398141-44.723002-14.075909-89.22207-22.105576-133.657156-1.439582-7.965685-1.247637-8.253601%206.36615-9.533229%2031.670796-5.406429%2063.501545-10.01309%2095.716183-9.309295%203.486987%200.095972%207.005964%200.159954%2010.460959%200.607823%205.662354%200.703795%208.605499%203.454996%208.925406%2010.045081%201.119675%2022.969325%202.71921%2045.938649%204.414717%2068.875983%202.71921%2037.589076%205.662354%2075.178151%208.477537%20112.735236%201.791479%2024.184971%203.327033%2048.305961%205.150503%2072.426951%202.911154%2038.772732%205.982261%2077.513473%208.925406%20116.286205%201.791479%2023.705111%203.359024%2047.474203%205.182494%2071.179313%202.783191%2034.805885%205.822308%2069.579778%208.637489%20104.353672%201.791479%2022.137566%203.391014%2044.307123%205.278466%2066.44469%202.783191%2032.79047%205.790317%2065.580941%208.63749%2098.371411%202.143377%2025.592562%204.09481%2051.249106%206.270178%2077.673426zM853.670395%20114.918282c4.638652%200%2011.644616-0.511851%2018.554607%200.127963%208.797443%200.799768%2010.49295%203.071107%2011.036793%2011.900541%202.527266%2040.372267%204.894578%2080.776524%207.581796%20121.180782%202.943145%2043.571337%206.174206%2087.078693%209.405267%20130.586048%202.975135%2039.956388%205.950271%2079.912775%209.149341%20119.869163%203.486987%2043.891244%207.357862%2087.718507%2010.876839%20131.609751%202.655228%2033.622229%204.926568%2067.244457%207.677768%20100.898677%202.623238%2031.222926%205.694345%2062.38187%208.509527%2093.572805%202.399303%2026.8402%204.830596%2053.71239%207.165918%2080.58458%200.735786%208.509527%200.127963%209.053369-9.053369%208.829434-24.025018-0.575833-47.922073-3.391014-71.947091-2.71921-5.502401%200.159954-7.101936-2.367312-8.029666-7.581796-1.983424-11.356699-1.663517-22.905343-2.879163-34.390006-3.295042-30.359177-5.182494-60.846317-7.965685-91.269474-2.495275-27.639967-5.502401-55.215953-8.349574-82.82393-2.527266-25.240664-5.02254-50.481329-7.709759-75.753984-2.687219-24.792795-5.534392-49.61758-8.349573-74.442365-2.591247-22.841362-5.118512-45.682723-7.869713-68.524085-4.062819-33.462275-8.093648-66.92455-12.508365-100.322844-4.062819-30.647093-8.66948-61.198214-12.988225-91.813317-5.886289-41.587914-12.508365-83.079855-19.834236-124.411842a1393.96288%201393.96288%200%200%200-5.310457-28.023856c-0.959721-4.702633-0.095972-7.421843%205.278466-8.157629%2014.139891-1.887451%2028.24779-4.830596%2042.451663-6.206196%2014.203872-1.311619%2028.407744-3.966847%2045.106891-2.71921z%20m1006.075609%20403.33878c27.064134%200%2027.703949%200.191944%2032.054684%2024.536869%205.342447%2030.03927%209.08536%2060.334465%2012.636328%2090.62966%203.742912%2032.278619%207.517815%2064.557238%2010.972811%2096.867848%202.783191%2026.008441%205.118512%2052.080864%207.74175%2078.089305%202.7512%2027.256079%205.662354%2054.416185%208.509527%2081.640274%201.567544%2015.387528%203.039117%2030.775056%204.798605%2046.130593%200.511851%204.446708-0.831758%206.81402-5.214485%207.325871-9.245313%201.055693-18.426645%202.27134-27.639967%203.263052-16.891091%201.82347-33.814173%203.614949-50.737254%205.182493-8.733462%200.799768-9.309294%200.319907-10.940821-8.125638-14.843686-76.617733-29.719363-153.171485-44.435086-229.821208-9.789155-50.961189-19.322384-101.95437-28.919595-152.915559a805.525894%20805.525894%200%200%201-3.582959-21.081873c-0.639814-4.030829%200.44787-6.622075%205.022541-7.70976%2030.48714-7.133927%2061.294186-12.636328%2089.733921-14.011927z%20m-1137.077537%200c28.951586%200%2028.823623%200.095972%2033.302322%2026.360339%206.909992%2040.660183%2011.804569%2081.544301%2016.187295%20122.556382%204.286754%2039.796434%208.957397%2079.560878%2013.148179%20119.357311%202.847173%2027.224088%205.086522%2054.512157%207.74175%2081.704255%201.887451%2019.354375%204.126801%2038.644769%206.174206%2057.967153%200.255926%202.367312%200.383888%204.734624%200.543842%207.133927%200.415879%209.469248%200%2010.237025-9.117351%2011.164755-18.074747%201.887451-36.181485%203.454996-54.256232%205.246476-6.558094%200.639814-13.084197%201.599535-19.57831%202.239349-8.63749%200.799768-8.925406%200.767777-10.620913-7.965685-6.078234-30.679084-11.964523-61.422149-17.914793-92.101233-14.267853-73.898523-28.69566-147.733065-42.867542-221.631589-5.662354-29.559409-10.524941-59.246781-16.091323-88.838181-1.023702-5.406429-0.255926-7.933694%205.342447-9.245313%2030.199223-7.037955%2060.590391-12.540355%2088.006423-13.947946z%20m382.128944%20309.861946v124.027954c0%201.183656-0.127963%202.399303%200.03199%203.582959%200.607823%206.014252-1.599535%208.66948-7.805731%208.413555-8.157629-0.351898-16.251277-0.127963-24.408906%200.063981-17.019054%200.319907-34.070098-0.351898-51.057162%201.599535-9.405267%201.087684-9.213322%200.511851-10.141052-9.405266-2.783191-31.222926-5.822308-62.413861-8.669481-93.636787-2.623238-28.823623-4.99055-57.711228-7.677768-86.534851-2.71921-29.655381-5.758326-59.214791-8.509527-88.838181-1.887451-19.770254-3.550968-39.508518-5.214485-59.278772-2.175368-25.720525-4.190782-51.409059-6.462122-77.129585-0.959721-10.844848-0.159954-12.380402%2010.588923-13.500076a531.877423%20531.877423%200%200%201%2083.527724-2.591247c6.941982%200.383888%2013.851974%201.727498%2020.570022%203.359024%208.477536%202.015414%209.405267%203.263052%209.853137%2012.124476%200.92773%2017.850812%201.855461%2035.701624%202.335321%2053.584427%200.543842%2019.866226%200.095972%2039.764443%200.831758%2059.63067%201.855461%2054.800074%201.567544%20109.664129%202.207359%20164.528184z%20m1134.806197%205.630364v117.437869c0%201.983424-0.063981%203.966847%200.03199%205.982262%200.415879%205.150503-1.983424%206.973973-6.878001%206.941982-12.028504-0.095972-24.025018%200-36.021531%200.159954-13.564058%200.127963-27.096125%200.063981-40.628192%201.535553-8.925406%201.023702-8.989387%200.351898-9.789155-8.509527-3.678931-40.660183-7.549806-81.320366-11.260728-122.04453-3.391014-37.525094-6.526103-75.082179-9.981099-112.639265-3.550968-38.740741-7.421843-77.38551-10.90883-116.09426-1.727498-19.386366-3.16708-38.772732-4.606661-58.159097-0.575833-8.445546%200.351898-9.949109%209.885127-10.716886%2016.571184-1.311619%2033.078387-3.550968%2049.777534-3.263051%2016.635165%200.319907%2033.302322-0.607823%2049.841515%202.559256%2014.011928%202.687219%2014.715723%203.486987%2015.547481%2018.458635%202.399303%2044.051198%201.663517%2088.230358%203.231061%20132.281556%201.599535%2046.89837%200.479861%2093.79674%201.759489%20146.069549zM1831.498213%20305.135c9.789155%200.575833%2017.498914%200.095972%2025.176683%201.791479%204.894578%201.119675%207.357862%203.327033%207.837723%208.573509%202.303331%2025.240664%204.798605%2050.51332%207.32587%2075.785975%202.015414%2020.50604%204.158791%2041.012081%206.238188%2061.518121l0.191944%201.183656c1.663517%2012.924244%201.279628%2013.276142-11.292718%2013.979937-11.196746%200.607823-22.361501%201.599535-33.558247%202.27134-7.357862%200.44787-9.693183%201.695507-10.90883-9.021378-4.190782-37.813011-9.053369-75.530049-13.692021-113.311069a1185.0316%201185.0316%200%200%200-4.286754-31.798759c-0.92773-5.982261%201.407591-9.277304%207.005964-9.757164%207.357862-0.671805%2014.715723-0.863749%2019.962198-1.215647z%20m-1133.398606%200.159954c7.549806%200.415879%2015.323547-0.159954%2022.937334%201.599535%204.350736%200.991712%206.558094%202.815182%206.973973%207.773741%200.92773%2011.83656%202.7512%2023.641129%203.870875%2035.477689%203.550968%2036.309448%206.909992%2072.650886%2010.237025%20108.992324%200.703795%207.901704%200.543842%208.061657-6.84601%208.605499-13.116188%200.959721-26.264367%201.919442-39.412546%202.463284-7.645778%200.351898-8.605499-0.575833-9.56522-8.381564-3.327033-26.744227-6.462122-53.520446-9.661192-80.296664-2.591247-22.073585-4.766615-44.14717-7.901704-66.156773-0.863749-6.078234%201.119675-7.74175%205.982262-8.733462%207.709759-1.567544%2015.451509-1.055693%2023.385203-1.343609z%20m399.147998%20100.002936c0%2023.001315%200.063981%2045.97064-0.031991%2069.003946%200%2010.332997-0.127963%2010.396978-10.396978%2010.269016a324.289753%20324.289753%200%200%201-36.981252-1.919443c-7.933694-0.991712-8.093648-0.735786-8.317583-9.149341-0.799768-28.119828-1.631526-56.239655-2.207359-84.359483-0.415879-19.034468-0.639814-38.004955-1.791479-57.039422-0.607823-9.821146-0.063981-9.917118%209.373276-10.045081%2013.915956-0.159954%2027.799921%200.479861%2041.619904%202.591247%208.317583%201.279628%208.701471%201.279628%208.733462%2010.49295%200.063981%2023.385204%200.063981%2046.770407%200.063981%2070.187602h-0.063981z%20m1135.38203%200.607824c0%2023.033306%200.063981%2046.034621-0.031991%2069.035936%200%209.661192-0.159954%209.725174-9.853137%209.661192a505.32514%20505.32514%200%200%201-38.132917-1.791479c-6.302168-0.479861-8.157629-3.135089-7.74175-8.861425%200.063981-0.799768%200-1.599535%200-2.399302-0.959721-44.403095-1.919442-88.7742-2.815182-133.177296-0.031991-2.367312-0.159954-4.734624-0.063982-7.133926%200.127963-8.957397%200.159954-9.181332%209.149341-9.117351%2012.380402%200.063981%2024.664832%200.703795%2037.013243%201.919442%2015.067621%201.503563%2012.412393%203.359024%2012.476375%2015.259566%200.063981%2022.169557%200.031991%2044.403095%200%2066.604643z%20m-1565.593%2054.000306c0.287916%2012.636328%200.287916%2012.604337-11.804569%2015.547481-8.221611%202.015414-16.443221%204.222773-24.728813%206.046243-7.069945%201.599535-8.317583%200.703795-9.53323-6.238187-8.445546-47.090314-16.8591-94.212619-25.240664-141.334924-1.695507-9.757164-1.247637-10.364988%208.349573-12.060495%2011.804569-2.079396%2023.577148-4.126801%2035.381717-5.950271%207.517815-1.183656%208.477536-0.767777%209.9811%207.517815%202.975135%2016.731138%205.790317%2033.526256%207.997675%2050.385357%203.423005%2026.680246%206.238187%2053.456464%209.309295%2080.168701%200.255926%201.951433%200.191944%203.966847%200.287916%205.91828z%20m1064.138735-136.696273c15.451509-2.527266%2031.030982-5.086522%2046.610454-7.549806%205.598373-0.863749%207.29388%202.655228%208.029666%207.645778%202.655228%2018.426645%205.982261%2036.725327%208.157629%2055.183962%203.19907%2026.744227%207.581797%2053.360492%208.413555%2080.328655%200.063981%202.7512%200.031991%205.566382%200.095972%208.317583%200.159954%204.286754-1.983424%206.494113-5.950271%207.421843-10.556932%202.367312-21.113864%204.734624-31.638805%207.261889-5.054531%201.215647-6.750038-0.92773-7.581796-5.854298-3.16708-18.746552-6.81402-37.397131-10.045081-56.079702-5.47041-30.775056-10.780867-61.582103-16.091323-92.38915-0.127963-1.119675%200-2.303331%200-4.286754z%20m-710.64147%20108.032603c-0.44787%2016.37924%200.543842%2030.647093-1.695507%2044.914947-0.671805%204.510689-1.983424%207.421843-6.846011%207.837722-10.428969%200.863749-20.825947%201.695507-31.190935%202.7512-5.02254%200.543842-6.430131-1.631526-7.261889-6.558094-2.335321-14.55577-1.919442-29.303484-3.327033-43.923234-2.655228-27.607976-3.774903-55.407897-5.566383-83.111846-0.44787-6.750038-1.119675-13.436095-1.663516-20.186134-0.287916-3.774903%201.215647-5.886289%205.246475-6.046242%2013.500077-0.543842%2026.936172-3.007126%2040.50023-2.527266%207.933694%200.287916%208.605499%200.799768%209.181331%208.797443%200.351898%205.534392%200.255926%2011.132765%200.383889%2016.699147l2.239349%2081.352357z%20m1134.902169-15.867388c0%2019.066459%200.223935%2038.132918-0.031991%2057.199376-0.159954%209.917118-1.279628%2010.780867-10.652904%2011.644616-9.277304%200.863749-18.490626%201.567544-27.735939%202.559256-5.214485%200.543842-7.645778-0.991712-7.965685-6.973973-1.34361-25.336637-3.16708-50.673273-4.926568-75.977919-1.3756-20.985901-2.943145-41.939811-4.414717-62.893722-0.159954-2.399303-0.031991-4.798605-0.191944-7.165917-0.223935-4.190782%201.055693-6.654066%205.758326-6.81402%2013.116188-0.44787%2026.136404-2.975135%2039.348564-2.495274%208.061657%200.287916%208.18962%200.415879%208.797444%208.797443%201.951433%2027.32006%202.143377%2054.704102%202.015414%2082.120134zM628.295894%20756.171918c16.571184%2018.234701%2017.402942%2039.828425%2011.932532%2062.413861-5.502401%2022.585436-18.042756%2041.204025-33.23834%2057.903171-25.49659%2027.895893-56.303637%2048.497905-89.062116%2065.99682-56.399609%2030.135242-116.190232%2050.161422-178.572103%2061.997982-44.882956%208.477536-90.053828%2015.00364-135.704561%2017.498914-13.915956%200.767777-27.799921%201.407591-41.715876%201.311619-10.077071%200-20.186133%200.287916-30.231214-0.063981-8.541518-0.319907-9.789155-1.791479-10.49295-10.716886-2.591247-32.022693-4.798605-64.077378-7.645778-96.100071-3.327033-37.109215-7.229899-74.18644-10.812858-111.295654-2.623238-26.8402-4.894578-53.744381-7.773741-80.520599-3.327033-31.542833-7.069945-63.021684-10.716885-94.564517-3.327033-29.111539-6.526103-58.28706-10.045081-87.430591-3.934856-32.278619-7.997676-64.493257-12.31642-96.707894a8228.968456%208228.968456%200%200%200-13.212161-92.996973%205984.500754%205984.500754%200%200%200-24.312934-152.627642%203243.825263%203243.825263%200%200%200-23.67312-123.740038c-1.151665-5.502401%200.511851-7.709759%205.342448-9.725174C52.335283%2047.609843%2098.465876%2028.063524%20144.724432%208.77313c8.605499-3.582959%2017.434933-6.590085%2026.584274-8.285592%206.334159-1.183656%207.965685%200.127963%207.773741%206.494113-0.479861%2016.283268%200.191944%2032.630517-1.407591%2048.849803a161.393095%20161.393095%200%200%200-0.639814%2013.084197c-0.735786%2058.383032-1.439582%20116.798056%200.095972%20175.213079%201.34361%2051.185124%204.030829%20102.338258%207.005964%20153.491392%202.335321%2040.372267%205.694345%2080.744534%209.149341%20121.052819%203.391014%2039.508518%207.517815%2078.953054%2011.38869%20118.461572%200.735786%207.517815%201.407591%208.221611%209.949108%207.069945a381.329176%20381.329176%200%200%201%2050.833227-4.190782c52.880632-0.127963%20104.897514%207.133927%20156.338564%2019.322384%2045.010919%2010.684895%2088.806191%2024.920757%20130.777993%2044.818975%2020.793957%209.853136%2040.692174%2021.241827%2058.830902%2035.701624%206.174206%204.862587%2011.676606%2010.46096%2016.891091%2016.315259z%20m1126.840512-9.597211c20.47405%2017.946784%2027.927883%2039.924397%2022.105576%2067.116494-4.830596%2022.425483-15.771416%2041.268006-30.359177%2058.127107-23.417194%2027.096125-51.856929%2047.698138-82.631985%2064.909136-60.334465%2033.782182-124.603787%2055.727804-192.168151%2068.396122a1151.089465%201151.089465%200%200%201-111.455609%2015.547481c-21.177845%201.82347-42.451662%204.09481-66.220754%202.623238h-27.76793c-5.406429%200-8.477536-1.695507-8.925406-8.125638-2.047405-28.087837-4.414717-56.143683-6.941983-84.19953-2.687219-29.623391-5.662354-59.246781-8.477536-88.870172-2.559256-27.224088-4.926568-54.512157-7.709759-81.736245-2.559256-25.656544-5.502401-51.249106-8.285592-76.873659-2.591247-24.057008-5.086522-48.114017-7.933695-72.139035-3.423005-29.111539-7.037955-58.223079-10.652904-87.334618-3.391014-27.160107-6.750038-54.288222-10.364987-81.416338a6133.577429%206133.577429%200%200%200-12.156467-87.142675c-5.694345-37.653057-11.804569-75.178151-17.818822-112.767227a3259.14881%203259.14881%200%200%200-29.111539-158.993792c-0.44787-2.335321-0.671805-4.734624-1.3756-7.005964-1.663517-5.118512-0.063981-7.837722%204.958559-9.821146C1191.012355%2047.641834%201238.61452%2024.448575%201288.2321%206.149893c6.494113-2.431293%2013.052207-5.150503%2020.058171-5.854299%206.302168-0.639814%207.901704%200.383888%207.29388%207.101936-3.327033%2036.43741-1.407591%2073.066765-3.135089%20109.536166-1.407591%2029.751354-1.247637%2059.598679%200.255926%2089.382023%200.351898%207.549806%200.639814%2015.131602%200.575832%2022.649418-0.383888%2035.765606%201.503563%2071.499221%203.327033%20107.200845%202.335321%2047.186286%205.758326%2094.276601%209.245313%20141.398906%202.527266%2034.006117%205.822308%2067.948253%209.021379%20101.922379%201.695507%2018.586598%203.518977%2037.141206%205.822308%2055.631832%201.247637%2010.205034%201.759489%2010.301006%2011.772578%208.957396%2017.658868-2.399303%2035.349726-4.350736%2053.200539-4.09481%2062.637796%200.799768%20124.027954%2010.684895%20184.266447%2027.863902%2040.788146%2011.580634%2080.488608%2026.040432%20117.981712%2046.290547a253.55831%20253.55831%200%200%201%2047.218277%2032.438573zM308.676783%20922.811488c23.161269-11.068783%20135.608589-98.947243%20144.533995-113.279078-54.576139-23.513166-109.344222-45.362816-168.239105-63.24562l23.70511%20176.524698z%20m1277.196815-107.520752c2.879163-3.103098%202.559256-5.502401-1.343609-7.229899-7.773741-3.550968-15.4835-7.325871-23.353213-10.556932-42.003793-17.179007-84.19953-33.814173-127.482951-47.37823-3.774903-1.151665-7.645778-3.774903-12.476374-1.535554l23.321222%20173.45359c3.454996%200.767777%204.798605-0.831758%206.33416-1.919442%2039.316574-28.855614%2078.889073-57.35933%20116.638102-88.390312%206.36615-5.182494%2012.668318-10.396978%2018.362663-16.443221z%22%2F%3E%3C%2Fsvg%3E",
+    "up": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%23FB7299%22%20d%3D%22M1.33334%205.16669C1.33334%203.78597%202.45263%202.66669%203.83334%202.66669H12.1667C13.5474%202.66669%2014.6667%203.78597%2014.6667%205.16669V10.8334C14.6667%2012.2141%2013.5474%2013.3334%2012.1667%2013.3334H3.83334C2.45263%2013.3334%201.33334%2012.2141%201.33334%2010.8334V5.16669ZM3.83334%203.66669C3.00492%203.66669%202.33334%204.33826%202.33334%205.16669V10.8334C2.33334%2011.6618%203.00492%2012.3334%203.83334%2012.3334H12.1667C12.9951%2012.3334%2013.6667%2011.6618%2013.6667%2010.8334V5.16669C13.6667%204.33826%2012.9951%203.66669%2012.1667%203.66669H3.83334ZM4.33334%205.50002C4.60949%205.50002%204.83334%205.72388%204.83334%206.00002V8.50002C4.83334%209.05231%205.28106%209.50002%205.83334%209.50002C6.38563%209.50002%206.83334%209.05231%206.83334%208.50002V6.00002C6.83334%205.72388%207.0572%205.50002%207.33334%205.50002C7.60949%205.50002%207.83334%205.72388%207.83334%206.00002V8.50002C7.83334%209.60459%206.93791%2010.5%205.83334%2010.5C4.72877%2010.5%203.83334%209.60459%203.83334%208.50002V6.00002C3.83334%205.72388%204.0572%205.50002%204.33334%205.50002ZM9.00001%205.50002C8.72387%205.50002%208.50001%205.72388%208.50001%206.00002V10C8.50001%2010.2762%208.72387%2010.5%209.00001%2010.5C9.27615%2010.5%209.50001%2010.2762%209.50001%2010V9.33335H10.5833C11.6419%209.33335%2012.5%208.47523%2012.5%207.41669C12.5%206.35814%2011.6419%205.50002%2010.5833%205.50002H9.00001ZM10.5833%208.33335H9.50001V6.50002H10.5833C11.0896%206.50002%2011.5%206.91043%2011.5%207.41669C11.5%207.92295%2011.0896%208.33335%2010.5833%208.33335Z%22%2F%3E%3C%2Fsvg%3E",
+    "like": "data:image/svg+xml,%3Csvg%20width%3D%2236%22%20height%3D%2236%22%20viewBox%3D%220%200%2036%2036%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M9.77234%2030.8573V11.7471H7.54573C5.50932%2011.7471%203.85742%2013.3931%203.85742%2015.425V27.1794C3.85742%2029.2112%205.50932%2030.8573%207.54573%2030.8573H9.77234ZM11.9902%2030.8573V11.7054C14.9897%2010.627%2016.6942%207.8853%2017.1055%203.33591C17.2666%201.55463%2018.9633%200.814421%2020.5803%201.59505C22.1847%202.36964%2023.243%204.32583%2023.243%206.93947C23.243%208.50265%2023.0478%2010.1054%2022.6582%2011.7471H29.7324C31.7739%2011.7471%2033.4289%2013.402%2033.4289%2015.4435C33.4289%2015.7416%2033.3928%2016.0386%2033.3215%2016.328L30.9883%2025.7957C30.2558%2028.7683%2027.5894%2030.8573%2024.528%2030.8573H11.9911H11.9902Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "coin": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M14.045%2025.5454C7.69377%2025.5454%202.54504%2020.3967%202.54504%2014.0454C2.54504%207.69413%207.69377%202.54541%2014.045%202.54541C20.3963%202.54541%2025.545%207.69413%2025.545%2014.0454C25.545%2017.0954%2024.3334%2020.0205%2022.1768%2022.1771C20.0201%2024.3338%2017.095%2025.5454%2014.045%2025.5454ZM9.66202%206.81624H18.2761C18.825%206.81624%2019.27%207.22183%2019.27%207.72216C19.27%208.22248%2018.825%208.62807%2018.2761%208.62807H14.95V10.2903C17.989%2010.4444%2020.3766%2012.9487%2020.3855%2015.9916V17.1995C20.3854%2017.6997%2019.9799%2018.1052%2019.4796%2018.1052C18.9793%2018.1052%2018.5738%2017.6997%2018.5737%2017.1995V15.9916C18.5667%2013.9478%2016.9882%2012.2535%2014.95%2012.1022V20.5574C14.95%2021.0577%2014.5444%2021.4633%2014.0441%2021.4633C13.5437%2021.4633%2013.1382%2021.0577%2013.1382%2020.5574V12.1022C11.1%2012.2535%209.52148%2013.9478%209.51448%2015.9916V17.1995C9.5144%2017.6997%209.10883%2018.1052%208.60856%2018.1052C8.1083%2018.1052%207.70273%2017.6997%207.70265%2017.1995V15.9916C7.71158%2012.9487%2010.0992%2010.4444%2013.1382%2010.2903V8.62807H9.66202C9.11309%208.62807%208.66809%208.22248%208.66809%207.72216C8.66809%207.22183%209.11309%206.81624%209.66202%206.81624Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "favorite": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M19.8071%209.26152C18.7438%209.09915%2017.7624%208.36846%2017.3534%207.39421L15.4723%203.4972C14.8998%202.1982%2013.1004%202.1982%2012.4461%203.4972L10.6468%207.39421C10.1561%208.36846%209.25639%209.09915%208.19315%209.26152L3.94016%209.91102C2.63155%2010.0734%202.05904%2011.6972%203.04049%2012.6714L6.23023%2015.9189C6.96632%2016.6496%207.29348%2017.705%207.1299%2018.7605L6.39381%2023.307C6.14844%2024.6872%207.62063%2025.6614%208.84745%2025.0119L12.4461%2023.0634C13.4276%2022.4951%2014.6544%2022.4951%2015.6359%2023.0634L19.2345%2025.0119C20.4614%2025.6614%2021.8518%2024.6872%2021.6882%2023.307L20.8703%2018.7605C20.7051%2017.705%2021.0339%2016.6496%2021.77%2015.9189L24.9597%2012.6714C25.9412%2011.6972%2025.3687%2010.0734%2024.06%209.91102L19.8071%209.26152Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E"
+  };
+
+  // src/ui/poster-styles.ts
+  var posterStyles = `
+.bsp-poster.bsp-default-poster{all:initial;box-sizing:border-box;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:144px 547.2px auto minmax(0,1fr) 100.8px;flex:none;width:1080px;height:1440px;overflow:hidden;background:#e8eded;color:#203039;font-family:"PingFang SC","Microsoft YaHei",sans-serif;transform-origin:top left;-webkit-text-stroke:0;text-shadow:none}
+.bsp-default-poster::after{display:none}
+.bsp-default-poster *{box-sizing:border-box}
+.bsp-d-mast{display:flex;justify-content:space-between;align-items:center;padding:32.4px 64.8px;gap:21.6px;min-height:0}
+.bsp-d-brand{width:151.2px;height:75.6px;object-fit:contain}
+.bsp-d-ids{display:grid;gap:6.48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:25.92px;letter-spacing:.3px;white-space:nowrap}
+.bsp-d-ids b{font-weight:inherit}
+.bsp-d-cover{display:block;width:950.4px;height:547.2px;object-fit:contain;object-position:center;justify-self:center}
+.bsp-d-honor{position:absolute;right:48px;top:116px;z-index:1;isolation:isolate;max-width:950.4px;font-size:38px;font-weight:600;line-height:1.3;letter-spacing:.3px;padding:10px 22px 10px 34px;color:#583b16;overflow-wrap:anywhere;white-space:pre-wrap;filter:drop-shadow(0 5px 7px #422b1726)}
+.bsp-d-honor::before{content:"";position:absolute;inset:0;z-index:-1;background:#f1ce84;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14px 50%)}
+.bsp-d-honor::after{content:"";position:absolute;right:0;top:100%;width:16.8px;height:14px;background:#a57839;clip-path:polygon(0 0,100% 0,0 100%)}
+.bsp-d-editorial{min-height:0;padding:43.2px 64.8px 32.4px}
+.bsp-d-title-space{min-height:0}
+.bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
+.bsp-d-footer{min-height:0;margin:0 64.8px;padding:43.2px 0 21.6px;border-top:1px solid #20303933;display:flex;gap:21.6px;align-items:center}
+.bsp-d-information{display:flex;align-items:flex-end;gap:21.6px;width:100%;min-width:0}
+.bsp-d-signature{min-width:0;flex:1}
+.bsp-d-author{display:flex;gap:15.12px;align-items:center;min-width:0;line-height:1.4;font-size:49.68px;font-weight:600;white-space:nowrap}
+.bsp-d-up{width:66.96px;height:66.96px;flex:0 0 66.96px}
+.bsp-d-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bsp-d-stats{display:flex;justify-content:space-between;gap:16.2px;align-items:center;margin-top:30.24px}
+.bsp-d-stat{flex:none;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bsp-d-stat-value{flex:none}
+.bsp-d-stat img,.bsp-d-stat svg{width:54px;height:54px;min-width:54px;max-width:54px;flex:0 0 54px}
+.bsp-d-qr{width:183.6px;flex:0 0 183.6px;text-align:center}
+.bsp-d-qr-frame{padding:12.96px 12.96px 0;background:transparent}
+.bsp-d-qr-image{width:157.68px;height:157.68px;display:block}
+.bsp-d-qr-caption{margin-top:0;height:54px;font-size:27px;line-height:54px}
+.bsp-d-link-footer{min-width:0;padding:10.8px 64.8px 32.4px;display:flex;align-items:center}
+.bsp-d-address{min-width:0;width:100%}
+.bsp-d-address-icon{display:none}
+.bsp-d-link{display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:27px;line-height:1.4;overflow-wrap:anywhere;word-break:break-all;white-space:normal}
+`;
+
+  // src/ui/default-poster.ts
+  function image(className, src, alt = "") {
+    return Object.assign(element("img", className), { src, alt });
+  }
+  function svg(className, markup) {
+    const parsed = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
+    parsed.setAttribute("class", className);
+    return document.importNode(parsed, true);
+  }
+  var appearances = /* @__PURE__ */ new WeakMap();
+  async function deriveCoverAppearance(src) {
+    const cover = image("", src);
+    await cover.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 240;
+    canvas.height = 320;
+    const context = canvas.getContext("2d");
+    context.filter = "blur(18px)";
+    const scale = Math.max(280 / cover.naturalWidth, 360 / cover.naturalHeight);
+    context.drawImage(cover, (240 - cover.naturalWidth * scale) / 2, (320 - cover.naturalHeight * scale) / 2, cover.naturalWidth * scale, cover.naturalHeight * scale);
+    context.filter = "none";
+    const pixels = context.getImageData(0, 0, 240, 320).data;
+    const average = [0, 0, 0];
+    for (let i = 0; i < pixels.length; i += 4) {
+      average.forEach((_, channel) => {
+        average[channel] += pixels[i + channel] / (240 * 320);
+      });
+    }
+    const ink = `rgb(${average.map((value, channel) => Math.round(value * 0.2 + [12, 16, 20][channel] * 0.8)).join(",")})`;
+    const light = context.createLinearGradient(0, 0, 240, 320);
+    light.addColorStop(0, "#ffffffc7");
+    light.addColorStop(0.52, "#ffffff88");
+    light.addColorStop(1, "#ffffffa8");
+    context.fillStyle = light;
+    context.fillRect(0, 0, 240, 320);
+    return { background: canvas.toDataURL(), ink };
+  }
+  function coverAppearance(snapshot) {
+    let result = appearances.get(snapshot);
+    if (!result) {
+      result = deriveCoverAppearance(snapshot.coverDataUrl);
+      appearances.set(snapshot, result);
+      void result.catch(() => appearances.delete(snapshot));
+    }
+    return result;
+  }
+  function ellipsizeToHeight(node, maxHeight) {
+    if (node.getBoundingClientRect().height <= maxHeight + 1) return;
+    const characters = Array.from(node.textContent ?? "");
+    let low = 0;
+    let high = characters.length;
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2);
+      node.textContent = characters.slice(0, middle).join("") + "\u2026";
+      if (node.getBoundingClientRect().height <= maxHeight + 1) low = middle;
+      else high = middle - 1;
+    }
+    node.textContent = characters.slice(0, low).join("") + "\u2026";
+  }
+  async function fitContent(poster, title) {
+    const host = element("div");
+    Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
+    host.append(poster);
+    document.body.append(host);
+    try {
+      await document.fonts.ready;
+      await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
+      const honor = poster.querySelector(".bsp-d-honor");
+      if (honor) {
+        const maxHeight = 520;
+        for (let size = 38; size >= 1; size--) {
+          honor.style.fontSize = `${size}px`;
+          if (honor.offsetHeight <= maxHeight) break;
+        }
+      }
+      const probe = title.cloneNode(true);
+      Object.assign(probe.style, { position: "absolute", width: `${title.getBoundingClientRect().width}px`, visibility: "hidden" });
+      title.parentElement.append(probe);
+      try {
+        const editorialStyle = getComputedStyle(poster.querySelector(".bsp-d-editorial"));
+        const available = poster.clientHeight * 0.26 - parseFloat(editorialStyle.paddingTop) - parseFloat(editorialStyle.paddingBottom);
+        for (const size of [64.8, 60.48, 56.16, 51.84, 47.52]) {
+          probe.style.fontSize = `${size}px`;
+          if (probe.scrollHeight <= available + 1) break;
+        }
+        ellipsizeToHeight(probe, available);
+        title.style.fontSize = probe.style.fontSize;
+        title.textContent = probe.textContent;
+      } finally {
+        probe.remove();
+      }
+      const stats = poster.querySelector(".bsp-d-stats");
+      const values = stats.querySelectorAll(".bsp-d-stat-value");
+      for (const size of [36.72, 34, 31, 28, 25]) {
+        values.forEach((value) => {
+          value.style.fontSize = `${size}px`;
+        });
+        if (stats.scrollWidth <= stats.clientWidth + 1) break;
+      }
+    } finally {
+      poster.remove();
+      host.remove();
+    }
+  }
+  async function createDefaultPoster(model, snapshot) {
+    if (model.coverUnavailable) throw new Error("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D");
+    const poster = element("article", "bsp-poster bsp-default-poster");
+    const appearance = await coverAppearance(snapshot);
+    poster.style.backgroundImage = `url("${appearance.background}")`;
+    poster.style.backgroundSize = "100% 100%";
+    poster.style.color = appearance.ink;
+    poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
+    const style = element("style", "", posterStyles);
+    const mast = element("header", "bsp-d-mast");
+    mast.append(image("bsp-d-brand", posterAssets.brand, "\u54D4\u54E9\u54D4\u54E9"));
+    const cover = image("bsp-d-cover", model.coverDataUrl, "\u539F\u89C6\u9891\u5B8C\u6574\u5C01\u9762");
+    const editorial = element("div", "bsp-d-editorial");
+    const titleSpace = element("div", "bsp-d-title-space");
+    const title = element("h4", "bsp-d-title", model.title);
+    titleSpace.append(title);
+    editorial.append(titleSpace);
+    const footer = element("footer", "bsp-d-footer");
+    const signature = element("div", "bsp-d-signature");
+    const author = element("div", "bsp-d-author");
+    const name = element("span", "bsp-d-name", model.uploader);
+    author.append(image("bsp-d-up", posterAssets.up, "UP \u4E3B"), name);
+    const stats = element("div", "bsp-d-stats");
+    const statIcons = [
+      svg("", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>'),
+      image("", posterAssets.like),
+      image("", posterAssets.coin),
+      image("", posterAssets.favorite)
+    ];
+    model.stats.forEach((statistic2, index) => {
+      const cell = element("span", "bsp-d-stat");
+      cell.setAttribute("aria-label", `${statistic2.label} ${statistic2.value}`);
+      cell.append(statIcons[index], element("span", "bsp-d-stat-value", statistic2.value));
+      stats.append(cell);
+    });
+    const ids = element("div", "bsp-d-ids");
+    const bv = element("span");
+    bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
+    const av = element("span");
+    av.append(element("b", "", "av"), document.createTextNode(String(model.aid)));
+    ids.append(bv, av);
+    mast.append(ids);
+    signature.append(author, stats);
+    const qr = element("div", "bsp-d-qr");
+    const frame = element("div", "bsp-d-qr-frame");
+    frame.append(await createPosterQr(model.shareTarget));
+    qr.append(frame, element("div", "bsp-d-qr-caption", "\u626B\u7801\u89C2\u770B"));
+    const information = element("div", "bsp-d-information");
+    information.append(signature, qr);
+    footer.append(information);
+    const linkFooter = element("div", "bsp-d-link-footer");
+    const address = element("div", "bsp-d-address");
+    address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
+    linkFooter.append(address);
+    poster.append(style, mast, cover, editorial, footer, linkFooter);
+    if (model.honor) poster.append(element("div", "bsp-d-honor", model.honor));
+    await fitContent(poster, title);
+    return poster;
+  }
+  async function createPosterQr(target) {
+    const markup = await import_qrcode.default.toString(target, { type: "svg", width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
+    return image("bsp-d-qr-image", `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
+  }
+  async function prepareDefaultPosterTarget(target) {
+    const qr = await createPosterQr(target);
+    await qr.decode();
+    return (poster) => {
+      poster.querySelector(".bsp-d-qr-frame").replaceChildren(qr);
+      poster.querySelector(".bsp-d-link").textContent = target;
+    };
+  }
+
+  // node_modules/html-to-image/es/util.js
   function resolveUrl(url, baseUrl) {
     if (url.match(/^[a-z]+:\/\//i)) {
       return url;
@@ -2972,7 +3238,7 @@ ${shareTarget}`;
     return nodePrototype.constructor.name === instance.name || isInstanceOfElement(nodePrototype, instance);
   };
 
-  // ../bilibili-share/node_modules/html-to-image/es/clone-pseudos.js
+  // node_modules/html-to-image/es/clone-pseudos.js
   function formatCSSText(style) {
     const content = style.getPropertyValue("content");
     return `${style.cssText} content: '${content.replace(/'|"/g, "")}';`;
@@ -3010,7 +3276,7 @@ ${shareTarget}`;
     clonePseudoElement(nativeNode, clonedNode, ":after", options);
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/mimes.js
+  // node_modules/html-to-image/es/mimes.js
   var WOFF = "application/font-woff";
   var JPEG = "image/jpeg";
   var mimes = {
@@ -3035,7 +3301,7 @@ ${shareTarget}`;
     return mimes[extension] || "";
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/dataurl.js
+  // node_modules/html-to-image/es/dataurl.js
   function getContentFromDataUrl(dataURL) {
     return dataURL.split(/,/)[1];
   }
@@ -3106,7 +3372,7 @@ ${shareTarget}`;
     return dataURL;
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/clone-node.js
+  // node_modules/html-to-image/es/clone-node.js
   async function cloneCanvasElement(canvas) {
     const dataURL = canvas.toDataURL();
     if (dataURL === "data:,") {
@@ -3271,7 +3537,7 @@ ${shareTarget}`;
     return Promise.resolve(node).then((clonedNode) => cloneSingleNode(clonedNode, options)).then((clonedNode) => cloneChildren(node, clonedNode, options)).then((clonedNode) => decorate(node, clonedNode, options)).then((clonedNode) => ensureSVGSymbols(clonedNode, options));
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/embed-resources.js
+  // node_modules/html-to-image/es/embed-resources.js
   var URL_REGEX = /url\((['"]?)([^'"]+?)\1\)/g;
   var URL_WITH_FORMAT_REGEX = /url\([^)]+\)\s*format\((["']?)([^"']+)\1\)/g;
   var FONT_SRC_REGEX = /src:\s*(?:url\([^)]+\)\s*format\([^)]+\)[,;]\s*)+/g;
@@ -3328,7 +3594,7 @@ ${shareTarget}`;
     return urls.reduce((deferred, url) => deferred.then((css) => embed(css, url, baseUrl, options)), Promise.resolve(filteredCSSText));
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/embed-images.js
+  // node_modules/html-to-image/es/embed-images.js
   async function embedProp(propName, node, options) {
     var _a;
     const propValue = (_a = node.style) === null || _a === void 0 ? void 0 : _a.getPropertyValue(propName);
@@ -3388,7 +3654,7 @@ ${shareTarget}`;
     }
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/apply-style.js
+  // node_modules/html-to-image/es/apply-style.js
   function applyStyle(node, options) {
     const { style } = node;
     if (options.backgroundColor) {
@@ -3409,7 +3675,7 @@ ${shareTarget}`;
     return node;
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/embed-webfonts.js
+  // node_modules/html-to-image/es/embed-webfonts.js
   var cssFetchCache = {};
   async function fetchCSS(url) {
     let cache2 = cssFetchCache[url];
@@ -3579,7 +3845,7 @@ ${shareTarget}`;
     }
   }
 
-  // ../bilibili-share/node_modules/html-to-image/es/index.js
+  // node_modules/html-to-image/es/index.js
   async function toSvg(node, options = {}) {
     const { width, height } = getImageSize(node, options);
     const clonedNode = await cloneNode(node, options, true);
@@ -3617,226 +3883,7 @@ ${shareTarget}`;
     return canvas.toDataURL();
   }
 
-  // src/ui/poster-assets.ts
-  var posterAssets = {
-    "brand": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%202240%201024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%2300AEEC%22%20d%3D%22M2079.810048%20913.566175c-10.01309%200-18.554608%200.799768-26.936172-0.159954-16.987063-1.951433-33.974126-1.567544-50.99318-2.079395-10.972811-0.287916-10.652904-0.287916-11.580634-10.90883-2.71921-32.406582-5.694345-64.781173-8.605499-97.155764-2.527266-28.439735-4.926568-56.91146-7.70976-85.319204-2.527266-26.040432-5.566382-52.016883-8.317583-78.025324-2.623238-24.440897-5.054531-48.913784-7.77374-73.322691a12681.114551%2012681.114551%200%200%200-10.684895-92.133223c-3.295042-27.128116-6.558094-54.320213-10.205034-81.416339a20559.272961%2020559.272961%200%200%200-17.530905-125.979387c-6.398141-44.723002-14.075909-89.22207-22.105576-133.657156-1.439582-7.965685-1.247637-8.253601%206.36615-9.533229%2031.670796-5.406429%2063.501545-10.01309%2095.716183-9.309295%203.486987%200.095972%207.005964%200.159954%2010.460959%200.607823%205.662354%200.703795%208.605499%203.454996%208.925406%2010.045081%201.119675%2022.969325%202.71921%2045.938649%204.414717%2068.875983%202.71921%2037.589076%205.662354%2075.178151%208.477537%20112.735236%201.791479%2024.184971%203.327033%2048.305961%205.150503%2072.426951%202.911154%2038.772732%205.982261%2077.513473%208.925406%20116.286205%201.791479%2023.705111%203.359024%2047.474203%205.182494%2071.179313%202.783191%2034.805885%205.822308%2069.579778%208.637489%20104.353672%201.791479%2022.137566%203.391014%2044.307123%205.278466%2066.44469%202.783191%2032.79047%205.790317%2065.580941%208.63749%2098.371411%202.143377%2025.592562%204.09481%2051.249106%206.270178%2077.673426zM853.670395%20114.918282c4.638652%200%2011.644616-0.511851%2018.554607%200.127963%208.797443%200.799768%2010.49295%203.071107%2011.036793%2011.900541%202.527266%2040.372267%204.894578%2080.776524%207.581796%20121.180782%202.943145%2043.571337%206.174206%2087.078693%209.405267%20130.586048%202.975135%2039.956388%205.950271%2079.912775%209.149341%20119.869163%203.486987%2043.891244%207.357862%2087.718507%2010.876839%20131.609751%202.655228%2033.622229%204.926568%2067.244457%207.677768%20100.898677%202.623238%2031.222926%205.694345%2062.38187%208.509527%2093.572805%202.399303%2026.8402%204.830596%2053.71239%207.165918%2080.58458%200.735786%208.509527%200.127963%209.053369-9.053369%208.829434-24.025018-0.575833-47.922073-3.391014-71.947091-2.71921-5.502401%200.159954-7.101936-2.367312-8.029666-7.581796-1.983424-11.356699-1.663517-22.905343-2.879163-34.390006-3.295042-30.359177-5.182494-60.846317-7.965685-91.269474-2.495275-27.639967-5.502401-55.215953-8.349574-82.82393-2.527266-25.240664-5.02254-50.481329-7.709759-75.753984-2.687219-24.792795-5.534392-49.61758-8.349573-74.442365-2.591247-22.841362-5.118512-45.682723-7.869713-68.524085-4.062819-33.462275-8.093648-66.92455-12.508365-100.322844-4.062819-30.647093-8.66948-61.198214-12.988225-91.813317-5.886289-41.587914-12.508365-83.079855-19.834236-124.411842a1393.96288%201393.96288%200%200%200-5.310457-28.023856c-0.959721-4.702633-0.095972-7.421843%205.278466-8.157629%2014.139891-1.887451%2028.24779-4.830596%2042.451663-6.206196%2014.203872-1.311619%2028.407744-3.966847%2045.106891-2.71921z%20m1006.075609%20403.33878c27.064134%200%2027.703949%200.191944%2032.054684%2024.536869%205.342447%2030.03927%209.08536%2060.334465%2012.636328%2090.62966%203.742912%2032.278619%207.517815%2064.557238%2010.972811%2096.867848%202.783191%2026.008441%205.118512%2052.080864%207.74175%2078.089305%202.7512%2027.256079%205.662354%2054.416185%208.509527%2081.640274%201.567544%2015.387528%203.039117%2030.775056%204.798605%2046.130593%200.511851%204.446708-0.831758%206.81402-5.214485%207.325871-9.245313%201.055693-18.426645%202.27134-27.639967%203.263052-16.891091%201.82347-33.814173%203.614949-50.737254%205.182493-8.733462%200.799768-9.309294%200.319907-10.940821-8.125638-14.843686-76.617733-29.719363-153.171485-44.435086-229.821208-9.789155-50.961189-19.322384-101.95437-28.919595-152.915559a805.525894%20805.525894%200%200%201-3.582959-21.081873c-0.639814-4.030829%200.44787-6.622075%205.022541-7.70976%2030.48714-7.133927%2061.294186-12.636328%2089.733921-14.011927z%20m-1137.077537%200c28.951586%200%2028.823623%200.095972%2033.302322%2026.360339%206.909992%2040.660183%2011.804569%2081.544301%2016.187295%20122.556382%204.286754%2039.796434%208.957397%2079.560878%2013.148179%20119.357311%202.847173%2027.224088%205.086522%2054.512157%207.74175%2081.704255%201.887451%2019.354375%204.126801%2038.644769%206.174206%2057.967153%200.255926%202.367312%200.383888%204.734624%200.543842%207.133927%200.415879%209.469248%200%2010.237025-9.117351%2011.164755-18.074747%201.887451-36.181485%203.454996-54.256232%205.246476-6.558094%200.639814-13.084197%201.599535-19.57831%202.239349-8.63749%200.799768-8.925406%200.767777-10.620913-7.965685-6.078234-30.679084-11.964523-61.422149-17.914793-92.101233-14.267853-73.898523-28.69566-147.733065-42.867542-221.631589-5.662354-29.559409-10.524941-59.246781-16.091323-88.838181-1.023702-5.406429-0.255926-7.933694%205.342447-9.245313%2030.199223-7.037955%2060.590391-12.540355%2088.006423-13.947946z%20m382.128944%20309.861946v124.027954c0%201.183656-0.127963%202.399303%200.03199%203.582959%200.607823%206.014252-1.599535%208.66948-7.805731%208.413555-8.157629-0.351898-16.251277-0.127963-24.408906%200.063981-17.019054%200.319907-34.070098-0.351898-51.057162%201.599535-9.405267%201.087684-9.213322%200.511851-10.141052-9.405266-2.783191-31.222926-5.822308-62.413861-8.669481-93.636787-2.623238-28.823623-4.99055-57.711228-7.677768-86.534851-2.71921-29.655381-5.758326-59.214791-8.509527-88.838181-1.887451-19.770254-3.550968-39.508518-5.214485-59.278772-2.175368-25.720525-4.190782-51.409059-6.462122-77.129585-0.959721-10.844848-0.159954-12.380402%2010.588923-13.500076a531.877423%20531.877423%200%200%201%2083.527724-2.591247c6.941982%200.383888%2013.851974%201.727498%2020.570022%203.359024%208.477536%202.015414%209.405267%203.263052%209.853137%2012.124476%200.92773%2017.850812%201.855461%2035.701624%202.335321%2053.584427%200.543842%2019.866226%200.095972%2039.764443%200.831758%2059.63067%201.855461%2054.800074%201.567544%20109.664129%202.207359%20164.528184z%20m1134.806197%205.630364v117.437869c0%201.983424-0.063981%203.966847%200.03199%205.982262%200.415879%205.150503-1.983424%206.973973-6.878001%206.941982-12.028504-0.095972-24.025018%200-36.021531%200.159954-13.564058%200.127963-27.096125%200.063981-40.628192%201.535553-8.925406%201.023702-8.989387%200.351898-9.789155-8.509527-3.678931-40.660183-7.549806-81.320366-11.260728-122.04453-3.391014-37.525094-6.526103-75.082179-9.981099-112.639265-3.550968-38.740741-7.421843-77.38551-10.90883-116.09426-1.727498-19.386366-3.16708-38.772732-4.606661-58.159097-0.575833-8.445546%200.351898-9.949109%209.885127-10.716886%2016.571184-1.311619%2033.078387-3.550968%2049.777534-3.263051%2016.635165%200.319907%2033.302322-0.607823%2049.841515%202.559256%2014.011928%202.687219%2014.715723%203.486987%2015.547481%2018.458635%202.399303%2044.051198%201.663517%2088.230358%203.231061%20132.281556%201.599535%2046.89837%200.479861%2093.79674%201.759489%20146.069549zM1831.498213%20305.135c9.789155%200.575833%2017.498914%200.095972%2025.176683%201.791479%204.894578%201.119675%207.357862%203.327033%207.837723%208.573509%202.303331%2025.240664%204.798605%2050.51332%207.32587%2075.785975%202.015414%2020.50604%204.158791%2041.012081%206.238188%2061.518121l0.191944%201.183656c1.663517%2012.924244%201.279628%2013.276142-11.292718%2013.979937-11.196746%200.607823-22.361501%201.599535-33.558247%202.27134-7.357862%200.44787-9.693183%201.695507-10.90883-9.021378-4.190782-37.813011-9.053369-75.530049-13.692021-113.311069a1185.0316%201185.0316%200%200%200-4.286754-31.798759c-0.92773-5.982261%201.407591-9.277304%207.005964-9.757164%207.357862-0.671805%2014.715723-0.863749%2019.962198-1.215647z%20m-1133.398606%200.159954c7.549806%200.415879%2015.323547-0.159954%2022.937334%201.599535%204.350736%200.991712%206.558094%202.815182%206.973973%207.773741%200.92773%2011.83656%202.7512%2023.641129%203.870875%2035.477689%203.550968%2036.309448%206.909992%2072.650886%2010.237025%20108.992324%200.703795%207.901704%200.543842%208.061657-6.84601%208.605499-13.116188%200.959721-26.264367%201.919442-39.412546%202.463284-7.645778%200.351898-8.605499-0.575833-9.56522-8.381564-3.327033-26.744227-6.462122-53.520446-9.661192-80.296664-2.591247-22.073585-4.766615-44.14717-7.901704-66.156773-0.863749-6.078234%201.119675-7.74175%205.982262-8.733462%207.709759-1.567544%2015.451509-1.055693%2023.385203-1.343609z%20m399.147998%20100.002936c0%2023.001315%200.063981%2045.97064-0.031991%2069.003946%200%2010.332997-0.127963%2010.396978-10.396978%2010.269016a324.289753%20324.289753%200%200%201-36.981252-1.919443c-7.933694-0.991712-8.093648-0.735786-8.317583-9.149341-0.799768-28.119828-1.631526-56.239655-2.207359-84.359483-0.415879-19.034468-0.639814-38.004955-1.791479-57.039422-0.607823-9.821146-0.063981-9.917118%209.373276-10.045081%2013.915956-0.159954%2027.799921%200.479861%2041.619904%202.591247%208.317583%201.279628%208.701471%201.279628%208.733462%2010.49295%200.063981%2023.385204%200.063981%2046.770407%200.063981%2070.187602h-0.063981z%20m1135.38203%200.607824c0%2023.033306%200.063981%2046.034621-0.031991%2069.035936%200%209.661192-0.159954%209.725174-9.853137%209.661192a505.32514%20505.32514%200%200%201-38.132917-1.791479c-6.302168-0.479861-8.157629-3.135089-7.74175-8.861425%200.063981-0.799768%200-1.599535%200-2.399302-0.959721-44.403095-1.919442-88.7742-2.815182-133.177296-0.031991-2.367312-0.159954-4.734624-0.063982-7.133926%200.127963-8.957397%200.159954-9.181332%209.149341-9.117351%2012.380402%200.063981%2024.664832%200.703795%2037.013243%201.919442%2015.067621%201.503563%2012.412393%203.359024%2012.476375%2015.259566%200.063981%2022.169557%200.031991%2044.403095%200%2066.604643z%20m-1565.593%2054.000306c0.287916%2012.636328%200.287916%2012.604337-11.804569%2015.547481-8.221611%202.015414-16.443221%204.222773-24.728813%206.046243-7.069945%201.599535-8.317583%200.703795-9.53323-6.238187-8.445546-47.090314-16.8591-94.212619-25.240664-141.334924-1.695507-9.757164-1.247637-10.364988%208.349573-12.060495%2011.804569-2.079396%2023.577148-4.126801%2035.381717-5.950271%207.517815-1.183656%208.477536-0.767777%209.9811%207.517815%202.975135%2016.731138%205.790317%2033.526256%207.997675%2050.385357%203.423005%2026.680246%206.238187%2053.456464%209.309295%2080.168701%200.255926%201.951433%200.191944%203.966847%200.287916%205.91828z%20m1064.138735-136.696273c15.451509-2.527266%2031.030982-5.086522%2046.610454-7.549806%205.598373-0.863749%207.29388%202.655228%208.029666%207.645778%202.655228%2018.426645%205.982261%2036.725327%208.157629%2055.183962%203.19907%2026.744227%207.581797%2053.360492%208.413555%2080.328655%200.063981%202.7512%200.031991%205.566382%200.095972%208.317583%200.159954%204.286754-1.983424%206.494113-5.950271%207.421843-10.556932%202.367312-21.113864%204.734624-31.638805%207.261889-5.054531%201.215647-6.750038-0.92773-7.581796-5.854298-3.16708-18.746552-6.81402-37.397131-10.045081-56.079702-5.47041-30.775056-10.780867-61.582103-16.091323-92.38915-0.127963-1.119675%200-2.303331%200-4.286754z%20m-710.64147%20108.032603c-0.44787%2016.37924%200.543842%2030.647093-1.695507%2044.914947-0.671805%204.510689-1.983424%207.421843-6.846011%207.837722-10.428969%200.863749-20.825947%201.695507-31.190935%202.7512-5.02254%200.543842-6.430131-1.631526-7.261889-6.558094-2.335321-14.55577-1.919442-29.303484-3.327033-43.923234-2.655228-27.607976-3.774903-55.407897-5.566383-83.111846-0.44787-6.750038-1.119675-13.436095-1.663516-20.186134-0.287916-3.774903%201.215647-5.886289%205.246475-6.046242%2013.500077-0.543842%2026.936172-3.007126%2040.50023-2.527266%207.933694%200.287916%208.605499%200.799768%209.181331%208.797443%200.351898%205.534392%200.255926%2011.132765%200.383889%2016.699147l2.239349%2081.352357z%20m1134.902169-15.867388c0%2019.066459%200.223935%2038.132918-0.031991%2057.199376-0.159954%209.917118-1.279628%2010.780867-10.652904%2011.644616-9.277304%200.863749-18.490626%201.567544-27.735939%202.559256-5.214485%200.543842-7.645778-0.991712-7.965685-6.973973-1.34361-25.336637-3.16708-50.673273-4.926568-75.977919-1.3756-20.985901-2.943145-41.939811-4.414717-62.893722-0.159954-2.399303-0.031991-4.798605-0.191944-7.165917-0.223935-4.190782%201.055693-6.654066%205.758326-6.81402%2013.116188-0.44787%2026.136404-2.975135%2039.348564-2.495274%208.061657%200.287916%208.18962%200.415879%208.797444%208.797443%201.951433%2027.32006%202.143377%2054.704102%202.015414%2082.120134zM628.295894%20756.171918c16.571184%2018.234701%2017.402942%2039.828425%2011.932532%2062.413861-5.502401%2022.585436-18.042756%2041.204025-33.23834%2057.903171-25.49659%2027.895893-56.303637%2048.497905-89.062116%2065.99682-56.399609%2030.135242-116.190232%2050.161422-178.572103%2061.997982-44.882956%208.477536-90.053828%2015.00364-135.704561%2017.498914-13.915956%200.767777-27.799921%201.407591-41.715876%201.311619-10.077071%200-20.186133%200.287916-30.231214-0.063981-8.541518-0.319907-9.789155-1.791479-10.49295-10.716886-2.591247-32.022693-4.798605-64.077378-7.645778-96.100071-3.327033-37.109215-7.229899-74.18644-10.812858-111.295654-2.623238-26.8402-4.894578-53.744381-7.773741-80.520599-3.327033-31.542833-7.069945-63.021684-10.716885-94.564517-3.327033-29.111539-6.526103-58.28706-10.045081-87.430591-3.934856-32.278619-7.997676-64.493257-12.31642-96.707894a8228.968456%208228.968456%200%200%200-13.212161-92.996973%205984.500754%205984.500754%200%200%200-24.312934-152.627642%203243.825263%203243.825263%200%200%200-23.67312-123.740038c-1.151665-5.502401%200.511851-7.709759%205.342448-9.725174C52.335283%2047.609843%2098.465876%2028.063524%20144.724432%208.77313c8.605499-3.582959%2017.434933-6.590085%2026.584274-8.285592%206.334159-1.183656%207.965685%200.127963%207.773741%206.494113-0.479861%2016.283268%200.191944%2032.630517-1.407591%2048.849803a161.393095%20161.393095%200%200%200-0.639814%2013.084197c-0.735786%2058.383032-1.439582%20116.798056%200.095972%20175.213079%201.34361%2051.185124%204.030829%20102.338258%207.005964%20153.491392%202.335321%2040.372267%205.694345%2080.744534%209.149341%20121.052819%203.391014%2039.508518%207.517815%2078.953054%2011.38869%20118.461572%200.735786%207.517815%201.407591%208.221611%209.949108%207.069945a381.329176%20381.329176%200%200%201%2050.833227-4.190782c52.880632-0.127963%20104.897514%207.133927%20156.338564%2019.322384%2045.010919%2010.684895%2088.806191%2024.920757%20130.777993%2044.818975%2020.793957%209.853136%2040.692174%2021.241827%2058.830902%2035.701624%206.174206%204.862587%2011.676606%2010.46096%2016.891091%2016.315259z%20m1126.840512-9.597211c20.47405%2017.946784%2027.927883%2039.924397%2022.105576%2067.116494-4.830596%2022.425483-15.771416%2041.268006-30.359177%2058.127107-23.417194%2027.096125-51.856929%2047.698138-82.631985%2064.909136-60.334465%2033.782182-124.603787%2055.727804-192.168151%2068.396122a1151.089465%201151.089465%200%200%201-111.455609%2015.547481c-21.177845%201.82347-42.451662%204.09481-66.220754%202.623238h-27.76793c-5.406429%200-8.477536-1.695507-8.925406-8.125638-2.047405-28.087837-4.414717-56.143683-6.941983-84.19953-2.687219-29.623391-5.662354-59.246781-8.477536-88.870172-2.559256-27.224088-4.926568-54.512157-7.709759-81.736245-2.559256-25.656544-5.502401-51.249106-8.285592-76.873659-2.591247-24.057008-5.086522-48.114017-7.933695-72.139035-3.423005-29.111539-7.037955-58.223079-10.652904-87.334618-3.391014-27.160107-6.750038-54.288222-10.364987-81.416338a6133.577429%206133.577429%200%200%200-12.156467-87.142675c-5.694345-37.653057-11.804569-75.178151-17.818822-112.767227a3259.14881%203259.14881%200%200%200-29.111539-158.993792c-0.44787-2.335321-0.671805-4.734624-1.3756-7.005964-1.663517-5.118512-0.063981-7.837722%204.958559-9.821146C1191.012355%2047.641834%201238.61452%2024.448575%201288.2321%206.149893c6.494113-2.431293%2013.052207-5.150503%2020.058171-5.854299%206.302168-0.639814%207.901704%200.383888%207.29388%207.101936-3.327033%2036.43741-1.407591%2073.066765-3.135089%20109.536166-1.407591%2029.751354-1.247637%2059.598679%200.255926%2089.382023%200.351898%207.549806%200.639814%2015.131602%200.575832%2022.649418-0.383888%2035.765606%201.503563%2071.499221%203.327033%20107.200845%202.335321%2047.186286%205.758326%2094.276601%209.245313%20141.398906%202.527266%2034.006117%205.822308%2067.948253%209.021379%20101.922379%201.695507%2018.586598%203.518977%2037.141206%205.822308%2055.631832%201.247637%2010.205034%201.759489%2010.301006%2011.772578%208.957396%2017.658868-2.399303%2035.349726-4.350736%2053.200539-4.09481%2062.637796%200.799768%20124.027954%2010.684895%20184.266447%2027.863902%2040.788146%2011.580634%2080.488608%2026.040432%20117.981712%2046.290547a253.55831%20253.55831%200%200%201%2047.218277%2032.438573zM308.676783%20922.811488c23.161269-11.068783%20135.608589-98.947243%20144.533995-113.279078-54.576139-23.513166-109.344222-45.362816-168.239105-63.24562l23.70511%20176.524698z%20m1277.196815-107.520752c2.879163-3.103098%202.559256-5.502401-1.343609-7.229899-7.773741-3.550968-15.4835-7.325871-23.353213-10.556932-42.003793-17.179007-84.19953-33.814173-127.482951-47.37823-3.774903-1.151665-7.645778-3.774903-12.476374-1.535554l23.321222%20173.45359c3.454996%200.767777%204.798605-0.831758%206.33416-1.919442%2039.316574-28.855614%2078.889073-57.35933%20116.638102-88.390312%206.36615-5.182494%2012.668318-10.396978%2018.362663-16.443221z%22%2F%3E%3C%2Fsvg%3E",
-    "up": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%23FB7299%22%20d%3D%22M1.33334%205.16669C1.33334%203.78597%202.45263%202.66669%203.83334%202.66669H12.1667C13.5474%202.66669%2014.6667%203.78597%2014.6667%205.16669V10.8334C14.6667%2012.2141%2013.5474%2013.3334%2012.1667%2013.3334H3.83334C2.45263%2013.3334%201.33334%2012.2141%201.33334%2010.8334V5.16669ZM3.83334%203.66669C3.00492%203.66669%202.33334%204.33826%202.33334%205.16669V10.8334C2.33334%2011.6618%203.00492%2012.3334%203.83334%2012.3334H12.1667C12.9951%2012.3334%2013.6667%2011.6618%2013.6667%2010.8334V5.16669C13.6667%204.33826%2012.9951%203.66669%2012.1667%203.66669H3.83334ZM4.33334%205.50002C4.60949%205.50002%204.83334%205.72388%204.83334%206.00002V8.50002C4.83334%209.05231%205.28106%209.50002%205.83334%209.50002C6.38563%209.50002%206.83334%209.05231%206.83334%208.50002V6.00002C6.83334%205.72388%207.0572%205.50002%207.33334%205.50002C7.60949%205.50002%207.83334%205.72388%207.83334%206.00002V8.50002C7.83334%209.60459%206.93791%2010.5%205.83334%2010.5C4.72877%2010.5%203.83334%209.60459%203.83334%208.50002V6.00002C3.83334%205.72388%204.0572%205.50002%204.33334%205.50002ZM9.00001%205.50002C8.72387%205.50002%208.50001%205.72388%208.50001%206.00002V10C8.50001%2010.2762%208.72387%2010.5%209.00001%2010.5C9.27615%2010.5%209.50001%2010.2762%209.50001%2010V9.33335H10.5833C11.6419%209.33335%2012.5%208.47523%2012.5%207.41669C12.5%206.35814%2011.6419%205.50002%2010.5833%205.50002H9.00001ZM10.5833%208.33335H9.50001V6.50002H10.5833C11.0896%206.50002%2011.5%206.91043%2011.5%207.41669C11.5%207.92295%2011.0896%208.33335%2010.5833%208.33335Z%22%2F%3E%3C%2Fsvg%3E",
-    "like": "data:image/svg+xml,%3Csvg%20width%3D%2236%22%20height%3D%2236%22%20viewBox%3D%220%200%2036%2036%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M9.77234%2030.8573V11.7471H7.54573C5.50932%2011.7471%203.85742%2013.3931%203.85742%2015.425V27.1794C3.85742%2029.2112%205.50932%2030.8573%207.54573%2030.8573H9.77234ZM11.9902%2030.8573V11.7054C14.9897%2010.627%2016.6942%207.8853%2017.1055%203.33591C17.2666%201.55463%2018.9633%200.814421%2020.5803%201.59505C22.1847%202.36964%2023.243%204.32583%2023.243%206.93947C23.243%208.50265%2023.0478%2010.1054%2022.6582%2011.7471H29.7324C31.7739%2011.7471%2033.4289%2013.402%2033.4289%2015.4435C33.4289%2015.7416%2033.3928%2016.0386%2033.3215%2016.328L30.9883%2025.7957C30.2558%2028.7683%2027.5894%2030.8573%2024.528%2030.8573H11.9911H11.9902Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
-    "coin": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M14.045%2025.5454C7.69377%2025.5454%202.54504%2020.3967%202.54504%2014.0454C2.54504%207.69413%207.69377%202.54541%2014.045%202.54541C20.3963%202.54541%2025.545%207.69413%2025.545%2014.0454C25.545%2017.0954%2024.3334%2020.0205%2022.1768%2022.1771C20.0201%2024.3338%2017.095%2025.5454%2014.045%2025.5454ZM9.66202%206.81624H18.2761C18.825%206.81624%2019.27%207.22183%2019.27%207.72216C19.27%208.22248%2018.825%208.62807%2018.2761%208.62807H14.95V10.2903C17.989%2010.4444%2020.3766%2012.9487%2020.3855%2015.9916V17.1995C20.3854%2017.6997%2019.9799%2018.1052%2019.4796%2018.1052C18.9793%2018.1052%2018.5738%2017.6997%2018.5737%2017.1995V15.9916C18.5667%2013.9478%2016.9882%2012.2535%2014.95%2012.1022V20.5574C14.95%2021.0577%2014.5444%2021.4633%2014.0441%2021.4633C13.5437%2021.4633%2013.1382%2021.0577%2013.1382%2020.5574V12.1022C11.1%2012.2535%209.52148%2013.9478%209.51448%2015.9916V17.1995C9.5144%2017.6997%209.10883%2018.1052%208.60856%2018.1052C8.1083%2018.1052%207.70273%2017.6997%207.70265%2017.1995V15.9916C7.71158%2012.9487%2010.0992%2010.4444%2013.1382%2010.2903V8.62807H9.66202C9.11309%208.62807%208.66809%208.22248%208.66809%207.72216C8.66809%207.22183%209.11309%206.81624%209.66202%206.81624Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
-    "favorite": "data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M19.8071%209.26152C18.7438%209.09915%2017.7624%208.36846%2017.3534%207.39421L15.4723%203.4972C14.8998%202.1982%2013.1004%202.1982%2012.4461%203.4972L10.6468%207.39421C10.1561%208.36846%209.25639%209.09915%208.19315%209.26152L3.94016%209.91102C2.63155%2010.0734%202.05904%2011.6972%203.04049%2012.6714L6.23023%2015.9189C6.96632%2016.6496%207.29348%2017.705%207.1299%2018.7605L6.39381%2023.307C6.14844%2024.6872%207.62063%2025.6614%208.84745%2025.0119L12.4461%2023.0634C13.4276%2022.4951%2014.6544%2022.4951%2015.6359%2023.0634L19.2345%2025.0119C20.4614%2025.6614%2021.8518%2024.6872%2021.6882%2023.307L20.8703%2018.7605C20.7051%2017.705%2021.0339%2016.6496%2021.77%2015.9189L24.9597%2012.6714C25.9412%2011.6972%2025.3687%2010.0734%2024.06%209.91102L19.8071%209.26152Z%22%20fill%3D%22%23405e65%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E"
-  };
-
-  // src/ui/poster-styles.ts
-  var posterStyles = `
-.bsp-poster.bsp-default-poster{all:initial;box-sizing:border-box;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:144px 547.2px auto minmax(0,1fr) 100.8px;flex:none;width:1080px;height:1440px;overflow:hidden;background:#e8eded;color:#203039;font-family:"PingFang SC","Microsoft YaHei",sans-serif;transform-origin:top left;-webkit-text-stroke:0;text-shadow:none}
-.bsp-default-poster::after{display:none}
-.bsp-default-poster *{box-sizing:border-box}
-.bsp-d-mast{display:flex;justify-content:space-between;align-items:center;padding:32.4px 64.8px;gap:21.6px;min-height:0}
-.bsp-d-brand{width:151.2px;height:75.6px;object-fit:contain}
-.bsp-d-ids{display:grid;gap:6.48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:25.92px;letter-spacing:.3px;white-space:nowrap}
-.bsp-d-ids b{font-weight:inherit}
-.bsp-d-cover{display:block;width:950.4px;height:547.2px;object-fit:contain;object-position:center;justify-self:center}
-.bsp-d-honor{position:absolute;right:48px;top:116px;z-index:1;isolation:isolate;max-width:950.4px;font-size:38px;font-weight:600;line-height:1.3;letter-spacing:.3px;padding:10px 22px 10px 34px;color:#583b16;overflow-wrap:anywhere;white-space:pre-wrap;filter:drop-shadow(0 5px 7px #422b1726)}
-.bsp-d-honor::before{content:"";position:absolute;inset:0;z-index:-1;background:#f1ce84;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14px 50%)}
-.bsp-d-honor::after{content:"";position:absolute;right:0;top:100%;width:16.8px;height:14px;background:#a57839;clip-path:polygon(0 0,100% 0,0 100%)}
-.bsp-d-editorial{min-height:0;padding:43.2px 64.8px 32.4px}
-.bsp-d-title-space{min-height:0}
-.bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
-.bsp-d-footer{min-height:0;margin:0 64.8px;padding:43.2px 0 21.6px;border-top:1px solid #20303933;display:flex;gap:21.6px;align-items:center}
-.bsp-d-information{display:flex;align-items:flex-end;gap:21.6px;width:100%;min-width:0}
-.bsp-d-signature{min-width:0;flex:1}
-.bsp-d-author{display:flex;gap:15.12px;align-items:center;min-width:0;line-height:1.4;font-size:49.68px;font-weight:600;white-space:nowrap}
-.bsp-d-up{width:66.96px;height:66.96px;flex:0 0 66.96px}
-.bsp-d-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bsp-d-stats{display:flex;justify-content:space-between;gap:16.2px;align-items:center;margin-top:30.24px}
-.bsp-d-stat{flex:none;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.bsp-d-stat-value{flex:none}
-.bsp-d-stat img,.bsp-d-stat svg{width:54px;height:54px;min-width:54px;max-width:54px;flex:0 0 54px}
-.bsp-d-qr{width:183.6px;flex:0 0 183.6px;text-align:center}
-.bsp-d-qr-frame{padding:12.96px 12.96px 0;background:transparent}
-.bsp-d-qr-image{width:157.68px;height:157.68px;display:block}
-.bsp-d-qr-caption{margin-top:0;height:54px;font-size:27px;line-height:54px}
-.bsp-d-link-footer{min-width:0;padding:10.8px 64.8px 32.4px;display:flex;align-items:center}
-.bsp-d-address{min-width:0;width:100%}
-.bsp-d-address-icon{display:none}
-.bsp-d-link{display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:27px;line-height:1.4;overflow-wrap:anywhere;word-break:break-all;white-space:normal}
-`;
-
-  // src/ui/posters.ts
-  function image(className, src, alt = "") {
-    return Object.assign(element("img", className), { src, alt });
-  }
-  function svg(className, markup) {
-    const parsed = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
-    parsed.setAttribute("class", className);
-    return document.importNode(parsed, true);
-  }
-  var appearances = /* @__PURE__ */ new WeakMap();
-  async function deriveCoverAppearance(src) {
-    const cover = image("", src);
-    await cover.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = 240;
-    canvas.height = 320;
-    const context = canvas.getContext("2d");
-    context.filter = "blur(18px)";
-    const scale = Math.max(280 / cover.naturalWidth, 360 / cover.naturalHeight);
-    context.drawImage(cover, (240 - cover.naturalWidth * scale) / 2, (320 - cover.naturalHeight * scale) / 2, cover.naturalWidth * scale, cover.naturalHeight * scale);
-    context.filter = "none";
-    const pixels = context.getImageData(0, 0, 240, 320).data;
-    const average = [0, 0, 0];
-    for (let i = 0; i < pixels.length; i += 4) {
-      average.forEach((_, channel) => {
-        average[channel] += pixels[i + channel] / (240 * 320);
-      });
-    }
-    const ink = `rgb(${average.map((value, channel) => Math.round(value * 0.2 + [12, 16, 20][channel] * 0.8)).join(",")})`;
-    const light = context.createLinearGradient(0, 0, 240, 320);
-    light.addColorStop(0, "#ffffffc7");
-    light.addColorStop(0.52, "#ffffff88");
-    light.addColorStop(1, "#ffffffa8");
-    context.fillStyle = light;
-    context.fillRect(0, 0, 240, 320);
-    return { background: canvas.toDataURL(), ink };
-  }
-  function coverAppearance(snapshot) {
-    let result = appearances.get(snapshot);
-    if (!result) {
-      result = deriveCoverAppearance(snapshot.coverDataUrl);
-      appearances.set(snapshot, result);
-      void result.catch(() => appearances.delete(snapshot));
-    }
-    return result;
-  }
-  function ellipsizeToHeight(node, maxHeight) {
-    if (node.getBoundingClientRect().height <= maxHeight + 1) return;
-    const characters = Array.from(node.textContent ?? "");
-    let low = 0;
-    let high = characters.length;
-    while (low < high) {
-      const middle = Math.ceil((low + high) / 2);
-      node.textContent = characters.slice(0, middle).join("") + "\u2026";
-      if (node.getBoundingClientRect().height <= maxHeight + 1) low = middle;
-      else high = middle - 1;
-    }
-    node.textContent = characters.slice(0, low).join("") + "\u2026";
-  }
-  async function fitContent(poster, title) {
-    const host = element("div");
-    Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
-    host.append(poster);
-    document.body.append(host);
-    try {
-      await document.fonts.ready;
-      await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
-      const honor = poster.querySelector(".bsp-d-honor");
-      if (honor) {
-        const maxHeight = 520;
-        for (let size = 38; size >= 1; size--) {
-          honor.style.fontSize = `${size}px`;
-          if (honor.offsetHeight <= maxHeight) break;
-        }
-      }
-      const probe = title.cloneNode(true);
-      Object.assign(probe.style, { position: "absolute", width: `${title.getBoundingClientRect().width}px`, visibility: "hidden" });
-      title.parentElement.append(probe);
-      try {
-        const editorialStyle = getComputedStyle(poster.querySelector(".bsp-d-editorial"));
-        const available = poster.clientHeight * 0.26 - parseFloat(editorialStyle.paddingTop) - parseFloat(editorialStyle.paddingBottom);
-        for (const size of [64.8, 60.48, 56.16, 51.84, 47.52]) {
-          probe.style.fontSize = `${size}px`;
-          if (probe.scrollHeight <= available + 1) break;
-        }
-        ellipsizeToHeight(probe, available);
-        title.style.fontSize = probe.style.fontSize;
-        title.textContent = probe.textContent;
-      } finally {
-        probe.remove();
-      }
-      const stats = poster.querySelector(".bsp-d-stats");
-      const values = stats.querySelectorAll(".bsp-d-stat-value");
-      for (const size of [36.72, 34, 31, 28, 25]) {
-        values.forEach((value) => {
-          value.style.fontSize = `${size}px`;
-        });
-        if (stats.scrollWidth <= stats.clientWidth + 1) break;
-      }
-    } finally {
-      poster.remove();
-      host.remove();
-    }
-  }
-  async function createPoster(model, snapshot) {
-    if (model.coverUnavailable) throw new Error("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D");
-    const poster = element("article", "bsp-poster bsp-default-poster");
-    const appearance = await coverAppearance(snapshot);
-    poster.style.backgroundImage = `url("${appearance.background}")`;
-    poster.style.backgroundSize = "100% 100%";
-    poster.style.color = appearance.ink;
-    poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
-    const style = element("style", "", posterStyles);
-    const mast = element("header", "bsp-d-mast");
-    mast.append(image("bsp-d-brand", posterAssets.brand, "\u54D4\u54E9\u54D4\u54E9"));
-    const cover = image("bsp-d-cover", model.coverDataUrl, "\u539F\u89C6\u9891\u5B8C\u6574\u5C01\u9762");
-    const editorial = element("div", "bsp-d-editorial");
-    const titleSpace = element("div", "bsp-d-title-space");
-    const title = element("h4", "bsp-d-title", model.title);
-    titleSpace.append(title);
-    editorial.append(titleSpace);
-    const footer = element("footer", "bsp-d-footer");
-    const signature = element("div", "bsp-d-signature");
-    const author = element("div", "bsp-d-author");
-    const name = element("span", "bsp-d-name", model.uploader);
-    author.append(image("bsp-d-up", posterAssets.up, "UP \u4E3B"), name);
-    const stats = element("div", "bsp-d-stats");
-    const statIcons = [
-      svg("", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>'),
-      image("", posterAssets.like),
-      image("", posterAssets.coin),
-      image("", posterAssets.favorite)
-    ];
-    model.stats.forEach((statistic2, index) => {
-      const cell = element("span", "bsp-d-stat");
-      cell.setAttribute("aria-label", `${statistic2.label} ${statistic2.value}`);
-      cell.append(statIcons[index], element("span", "bsp-d-stat-value", statistic2.value));
-      stats.append(cell);
-    });
-    const ids = element("div", "bsp-d-ids");
-    const bv = element("span");
-    bv.append(element("b", "", "BV"), document.createTextNode(model.bvid.slice(2)));
-    const av = element("span");
-    av.append(element("b", "", "av"), document.createTextNode(String(model.aid)));
-    ids.append(bv, av);
-    mast.append(ids);
-    signature.append(author, stats);
-    const qr = element("div", "bsp-d-qr");
-    const frame = element("div", "bsp-d-qr-frame");
-    frame.append(await createPosterQr(model.shareTarget));
-    qr.append(frame, element("div", "bsp-d-qr-caption", "\u626B\u7801\u89C2\u770B"));
-    const information = element("div", "bsp-d-information");
-    information.append(signature, qr);
-    footer.append(information);
-    const linkFooter = element("div", "bsp-d-link-footer");
-    const address = element("div", "bsp-d-address");
-    address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
-    linkFooter.append(address);
-    poster.append(style, mast, cover, editorial, footer, linkFooter);
-    if (model.honor) poster.append(element("div", "bsp-d-honor", model.honor));
-    await fitContent(poster, title);
-    return poster;
-  }
-  async function createPosterQr(target) {
-    const markup = await import_qrcode.default.toString(target, { type: "svg", width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
-    return image("bsp-d-qr-image", `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
-  }
-  async function updatePosterTarget(poster, target, isCurrent) {
-    const qr = await createPosterQr(target);
-    await qr.decode();
-    if (!isCurrent()) return;
-    poster.querySelector(".bsp-d-qr-frame").replaceChildren(qr);
-    poster.querySelector(".bsp-d-link").textContent = target;
-    exports.delete(poster);
-  }
+  // src/ui/poster-png.ts
   var fontVersion = 0;
   document.fonts.addEventListener("loadingdone", () => {
     fontVersion++;
@@ -3845,6 +3892,9 @@ ${shareTarget}`;
     fontVersion++;
   });
   var exports = /* @__PURE__ */ new WeakMap();
+  function invalidatePosterPng(poster) {
+    exports.delete(poster);
+  }
   async function exportPosterPng(poster) {
     await document.fonts.ready;
     let cached = exports.get(poster);
@@ -3858,6 +3908,14 @@ ${shareTarget}`;
       });
     }
     return cached.png;
+  }
+
+  // src/ui/posters.ts
+  async function updatePosterTarget(poster, target, isCurrent) {
+    const commit = await prepareDefaultPosterTarget(target);
+    if (!isCurrent()) return;
+    commit(poster);
+    invalidatePosterPng(poster);
   }
 
   // src/ui/panel.ts
@@ -4027,7 +4085,7 @@ ${shareTarget}`;
         const snapshot = await fetchGenerationSnapshot(this.capture);
         const shareTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
         const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, shareTarget);
-        const poster = model ? await createPoster(model, snapshot) : null;
+        const poster = model ? await createDefaultPoster(model, snapshot) : null;
         if (!this.ensureCurrentContext()) return;
         this.snapshot = snapshot;
         this.model = model;
@@ -4060,9 +4118,9 @@ ${shareTarget}`;
       clearTimeout(this.statusTimer);
       if (!this.snapshot) return;
       const snapshot = this.snapshot;
-      const shareText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: false });
+      const shareText = this.buildText(snapshot, shareTarget, false);
       this.shareText = shareText;
-      this.markdownText = buildShareText(snapshot, shareTarget, { ...this.options, markdownText: true });
+      this.markdownText = this.buildText(snapshot, shareTarget, true);
       const status = element("p", "bsp-status");
       status.setAttribute("role", "status");
       status.setAttribute("aria-live", "polite");
@@ -4100,14 +4158,10 @@ ${shareTarget}`;
     }
     refreshText() {
       if (!this.snapshot || !this.shareTarget) return;
-      this.shareText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: false });
-      this.markdownText = buildShareText(this.snapshot, this.shareTarget, { ...this.options, markdownText: true });
-      const lines = this.shareText.split("\n");
-      const link = lines.pop() ?? "";
-      const body = this.controls.querySelector(".bsp-text-card-body");
-      const address = this.controls.querySelector(".bsp-text-card-link");
-      if (body) body.textContent = lines.join("\n") + (lines.length ? "\n" : "");
-      if (address) address.textContent = link;
+      this.shareText = this.buildText(this.snapshot, this.shareTarget, false);
+      this.markdownText = this.buildText(this.snapshot, this.shareTarget, true);
+      const content = this.controls.querySelector(".bsp-text-content");
+      if (content) this.fillTextPreview(content, this.shareText);
       this.controls.querySelector(".bsp-manual-copy")?.remove();
     }
     refreshOptionControls() {
@@ -4121,18 +4175,31 @@ ${shareTarget}`;
         button.disabled = this.exporting || !allowed[index];
       });
     }
+    buildText(snapshot, target, markdownText) {
+      const options = { ...this.options, markdownText };
+      try {
+        return buildShareText(snapshot, target, options, shareTextTemplates);
+      } catch (error) {
+        if (!(error instanceof ShareTextTemplateError)) throw error;
+        console.warn("[Bilibili Share] Invalid share-text template; using built-in preset", error.message);
+        return buildShareText(snapshot, target, options);
+      }
+    }
+    fillTextPreview(content, text) {
+      const target = this.shareTarget ?? "";
+      const segments = target ? text.split(target) : [text];
+      content.replaceChildren();
+      segments.forEach((segment, index) => {
+        if (index) content.append(element("span", "bsp-text-card-link", target));
+        if (segment) content.append(element("span", "bsp-text-card-body", segment));
+      });
+    }
     renderTextPreview(shareText) {
-      const lines = shareText.split("\n");
-      const link = lines.pop() ?? "";
-      const body = lines.join("\n");
       const card = element("div", "bsp-text-card");
       const content = element("div", "bsp-text-content");
       content.setAttribute("aria-label", "\u5206\u4EAB\u6587\u6848\u9884\u89C8");
       content.tabIndex = 0;
-      content.append(
-        element("span", "bsp-text-card-body", body + (lines.length ? "\n" : "")),
-        element("span", "bsp-text-card-link", link)
-      );
+      this.fillTextPreview(content, shareText);
       const preview = element("div", "bsp-text-preview");
       preview.append(content);
       card.append(preview);
@@ -4456,7 +4523,7 @@ ${MOTION_STYLES}
 .bsp-text-copy-actions{display:flex;gap:14px;align-items:center}.bsp-panel .bsp-text-copy-actions button{border:0;padding:3px 0;background:transparent;color:var(--bsp-blue);font-size:12px;white-space:nowrap}
 .bsp-panel .bsp-text-copy-actions button:hover:not(:disabled){color:#40c5f1}
 .bsp-text-content{color:var(--bsp-text);border:0;background:var(--bsp-soft);border-radius:6px;padding:16px;font-size:13px;line-height:1.85;max-height:310px;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-.bsp-text-card-link{display:inline-block;vertical-align:top;width:100%;margin:0;color:var(--bsp-blue)}
+.bsp-text-card-link{color:var(--bsp-blue)}
 .bsp-text-options{display:flex;margin-top:12px}.bsp-text-options label{font-size:12px;color:var(--bsp-muted);display:flex;gap:7px;align-items:center;cursor:pointer}
 .bsp-text-options input{accent-color:var(--bsp-blue);width:14px;height:14px;margin:0}
 .bsp-action-group{position:relative;margin:0}
