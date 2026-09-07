@@ -39,6 +39,17 @@ describe("detailed and markdown share text", () => {
   } as const;
   const target = "https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723";
 
+  it("places the original honor after detailed statistics, escapes Markdown and excludes it from compact text", () => {
+    const honored = { ...snapshot, honor: "第389期每周必看 [特别*篇]" };
+    for (const markdownText of [false, true]) {
+      const options = { partShare: true, timestampShare: true, detailedText: true, markdownText };
+      const lines = buildShareText(honored, target, options).split("\n");
+      const statsIndex = lines.findIndex(line => line.includes("播放："));
+      expect(lines[statsIndex + 1]).toBe(markdownText ? "- 第389期每周必看 \\[特别\\*篇\\]" : honored.honor);
+      expect(buildShareText(honored, target, { ...options, detailedText: false })).not.toContain("第389期");
+    }
+  });
+
   it("formats exact statistics with thousands separators and keeps --", () => {
     expect(formatExactStat(12_345_678)).toBe("12,345,678");
     expect(formatExactStat(null)).toBe("--");
@@ -93,4 +104,3 @@ describe("detailed and markdown share text", () => {
     expect(text).not.toContain("时间：");
   });
 });
-

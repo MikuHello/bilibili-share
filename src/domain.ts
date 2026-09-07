@@ -4,6 +4,7 @@ import { parseCanonicalVideoIdentity } from "./share-target";
 export type StatisticValue = number | null;
 
 export interface GenerationSnapshot {
+  honor?: string;
   bvid: string;
   aid: number;
   coverDataUrl: string;
@@ -24,6 +25,7 @@ export interface GenerationSnapshot {
 }
 
 export interface SharePoster {
+  honor?: string;
   dimensions: { width: 1080; height: 1440 };
   coverDataUrl: string;
   coverUnavailable: boolean;
@@ -107,6 +109,7 @@ export function buildSharePoster(snapshot: GenerationSnapshot, shareTarget: stri
   const validatedShareTarget = validateShareTarget(shareTarget, bvid);
   return {
     dimensions: { width: 1080, height: 1440 },
+    honor: snapshot.honor,
     coverDataUrl,
     coverUnavailable: snapshot.coverUnavailable,
     title,

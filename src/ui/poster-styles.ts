@@ -8,6 +8,9 @@ export const posterStyles = `
 .bsp-d-ids{display:grid;gap:6.48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:25.92px;letter-spacing:.3px;white-space:nowrap}
 .bsp-d-ids b{font-weight:inherit}
 .bsp-d-cover{display:block;width:950.4px;height:547.2px;object-fit:contain;object-position:center;justify-self:center}
+.bsp-d-honor{position:absolute;right:48px;top:116px;z-index:1;isolation:isolate;max-width:950.4px;font-size:38px;font-weight:600;line-height:1.3;letter-spacing:.3px;padding:10px 22px 10px 34px;color:#583b16;overflow-wrap:anywhere;white-space:pre-wrap;filter:drop-shadow(0 5px 7px #422b1726)}
+.bsp-d-honor::before{content:"";position:absolute;inset:0;z-index:-1;background:#f1ce84;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,14px 50%)}
+.bsp-d-honor::after{content:"";position:absolute;right:0;top:100%;width:16.8px;height:14px;background:#a57839;clip-path:polygon(0 0,100% 0,0 100%)}
 .bsp-d-editorial{min-height:0;padding:43.2px 64.8px 32.4px}
 .bsp-d-title-space{min-height:0}
 .bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}

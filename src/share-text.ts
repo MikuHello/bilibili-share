@@ -17,6 +17,7 @@ function plainDetailedText(snapshot: GenerationSnapshot, shareTarget: string, op
     `UP主：${snapshot.uploader}`,
     `播放：${formatExactStat(snapshot.stats.views)}　点赞：${formatExactStat(snapshot.stats.likes)}　投币：${formatExactStat(snapshot.stats.coins)}　收藏：${formatExactStat(snapshot.stats.favorites)}`,
   ];
+  if (snapshot.honor) lines.push(snapshot.honor);
   const partLabel = buildPartLabel(snapshot, options);
   if (partLabel) lines.push(`分P：${partLabel}`);
   if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
@@ -38,6 +39,7 @@ function markdownDetailedText(snapshot: GenerationSnapshot, shareTarget: string,
     `- UP主：${escapeMarkdown(snapshot.uploader)}`,
     `- 播放：${formatExactStat(snapshot.stats.views)} · 点赞：${formatExactStat(snapshot.stats.likes)} · 投币：${formatExactStat(snapshot.stats.coins)} · 收藏：${formatExactStat(snapshot.stats.favorites)}`,
   ];
+  if (snapshot.honor) lines.push(`- ${escapeMarkdown(snapshot.honor)}`);
   const partLabel = buildPartLabel(snapshot, options);
   if (partLabel) lines.push(`- 分P：${escapeMarkdown(partLabel)}`);
   if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {

@@ -81,6 +81,15 @@ async function fitContent(poster: HTMLElement, title: HTMLElement): Promise<void
   try {
     await document.fonts.ready;
     await Promise.all(Array.from(poster.querySelectorAll("img"), img => img.decode()));
+    const honor = poster.querySelector<HTMLElement>(".bsp-d-honor");
+    if (honor) {
+      // Preserve the full label; long labels wrap and shrink within the cover area.
+      const maxHeight = 520;
+      for (let size = 38; size >= 1; size--) {
+        honor.style.fontSize = `${size}px`;
+        if (honor.offsetHeight <= maxHeight) break;
+      }
+    }
     const probe = title.cloneNode(true) as HTMLElement;
     Object.assign(probe.style, { position: "absolute", width: `${title.getBoundingClientRect().width}px`, visibility: "hidden" });
     title.parentElement!.append(probe);
@@ -161,6 +170,7 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
   address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
   linkFooter.append(address);
   poster.append(style, mast, cover, editorial, footer, linkFooter);
+  if (model.honor) poster.append(element("div", "bsp-d-honor", model.honor));
   await fitContent(poster, title);
   return poster;
 }

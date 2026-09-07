@@ -10,6 +10,8 @@ interface CapturedPlayback {
 }
 
 interface VideoApiData {
+  honor_reply?: { honor?: Array<{ type?: unknown; desc?: unknown }> };
+  argue_info?: { argue_type?: unknown };
   aid?: unknown;
   bvid?: unknown;
   title?: unknown;
@@ -26,6 +28,7 @@ interface VideoApiResponse {
 }
 
 interface PublicVideoInformation {
+  honor?: string;
   aid: number;
   bvid: string;
   title: string;
@@ -141,6 +144,16 @@ function statistic(value: unknown): StatisticValue {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
 }
 
+function primaryHonor(data: VideoApiData): string | undefined {
+  // Match the current video page: suppress negative marks, then map only the first item.
+  const numericType = (value: unknown) => typeof value === "string" || typeof value === "number" ? Number(value) : NaN;
+  if ([1, 2].includes(numericType(data.argue_info?.argue_type))) return undefined;
+  const honors = data.honor_reply?.honor;
+  const first = Array.isArray(honors) ? honors[0] : undefined;
+  if (![1, 2, 3].includes(numericType(first?.type))) return undefined;
+  return typeof first?.desc === "string" && first.desc.trim() ? first.desc : undefined;
+}
+
 function parsePartInformation(
   pages: unknown,
   expectedPartNumber: number,
@@ -178,6 +191,7 @@ export function parseVideoApiResponse(
     uploader: requiredText(data.owner?.name, "UP 主"),
     partTitle: partInformation.partTitle,
     partIdentified: partInformation.partIdentified,
+    honor: primaryHonor(data),
     stats: {
       views: statistic(data.stat?.view),
       likes: statistic(data.stat?.like),
@@ -242,6 +256,7 @@ export async function fetchGenerationSnapshot(capture: PlaybackCapture): Promise
     coverDataUrl: cover.dataUrl,
     coverUnavailable: cover.unavailable,
     title: video.title,
+    honor: video.honor,
     uploader: video.uploader,
     partNumber: capture.partNumber,
     partTitle: video.partTitle,

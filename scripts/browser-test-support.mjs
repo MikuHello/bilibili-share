@@ -59,6 +59,7 @@ export async function openFixture(browser, bundle, overrides = {}) {
             bvid: url.searchParams.get("bvid"), aid: 116422017488201,
             title: f.title, pic: "https://i0.hdslb.com/bfs/archive/fixture.jpg", owner: { name: f.uploader }, stat: f.stats,
             pages: f.unknownPart ? [] : [{ page: 1, part: "正片" }, { page: 2, part: "优化版" }],
+            honor_reply: f.honorReply, argue_info: f.argueInfo,
           } }) });
         } else if (url.hostname.endsWith("hdslb.com")) {
           if (f.coverFailed) { details.onerror({ error: "Controlled cover failure" }); return; }
