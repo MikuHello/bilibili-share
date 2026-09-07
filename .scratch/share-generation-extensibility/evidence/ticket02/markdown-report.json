@@ -1,0 +1,105 @@
+[
+  {
+    "broken": null,
+    "mode": "compact",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/) 尾声",
+    "warnings": []
+  },
+  {
+    "broken": null,
+    "mode": "detailed",
+    "plain": "详细 猫 [片]* & <新>\n|\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n[观看](https://www.bilibili.com/video/BV1TXoWBsEGc/)\n结束",
+    "warnings": []
+  },
+  {
+    "broken": null,
+    "mode": "markers",
+    "plain": "详细 猫 [片]* & <新>\nP2 · 优化版|01:23\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n[观看](https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83)\nP2 · 优化版\n01:23\n结束",
+    "warnings": []
+  },
+  {
+    "broken": null,
+    "mode": "compact-markers",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83) 尾声",
+    "warnings": []
+  },
+  {
+    "broken": "compact",
+    "mode": "compact",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/)（UP主：UP\\_甲）\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.compact at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "compact",
+    "mode": "detailed",
+    "plain": "详细 猫 [片]* & <新>\n|\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n[观看](https://www.bilibili.com/video/BV1TXoWBsEGc/)\n结束",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.compact at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "compact",
+    "mode": "markers",
+    "plain": "详细 猫 [片]* & <新>\nP2 · 优化版|01:23\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n[观看](https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83)\nP2 · 优化版\n01:23\n结束",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.compact at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "compact",
+    "mode": "compact-markers",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83)（UP主：UP\\_甲）\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.compact at line 1, column 14: Unknown variable \"unknown\"",
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.compact at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "detailed",
+    "mode": "compact",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/) 尾声",
+    "warnings": []
+  },
+  {
+    "broken": "detailed",
+    "mode": "detailed",
+    "plain": "详细 猫 [片]* & <新>\n|\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n\n- UP主：UP\\_甲\n- 播放：178,000 · 点赞：2,664 · 投币：1,285 · 收藏：6,657\n- BV1TXoWBsEGc · av116422017488201\n- 链接：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "detailed",
+    "mode": "markers",
+    "plain": "详细 猫 [片]* & <新>\nP2 · 优化版|01:23\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "**猫 \\[片\\]\\* &amp; &lt;新&gt;**\n\n- UP主：UP\\_甲\n- 播放：178,000 · 点赞：2,664 · 投币：1,285 · 收藏：6,657\n- 分P：P2 · 优化版\n- 时间：01:23\n- BV1TXoWBsEGc · av116422017488201\n- 链接：https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\"",
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\"",
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  },
+  {
+    "broken": "detailed",
+    "mode": "compact-markers",
+    "plain": "普通 猫 [片]* & <新>\nhttps://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+    "markdown": "[猫 \\[片\\]\\* &amp; &lt;新&gt;](https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83) 尾声",
+    "warnings": [
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\"",
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\"",
+      "[Bilibili Share] Invalid share-text template; using built-in preset markdown.detailed at line 1, column 14: Unknown variable \"unknown\""
+    ]
+  }
+]
