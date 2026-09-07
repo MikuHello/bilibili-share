@@ -2650,8 +2650,8 @@
   // src/domain.ts
   function formatCompactStat(value) {
     if (value === null || !Number.isFinite(value)) return "--";
-    if (value >= 1e12) return value.toExponential(1).replace("+", "");
-    if (value >= 1e8) return `${(value / 1e8).toFixed(1)}\u4EBF`;
+    if (value >= 999995e6) return value.toExponential(1).replace("+", "");
+    if (value >= 99999500) return `${(value / 1e8).toFixed(1)}\u4EBF`;
     if (value >= 1e4) return `${(value / 1e4).toFixed(1)}\u4E07`;
     return Math.max(0, Math.trunc(value)).toString();
   }
@@ -3771,10 +3771,11 @@ ${shareTarget}`;
       await document.fonts.ready;
       await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
       const probe = title.cloneNode(true);
-      Object.assign(probe.style, { position: "absolute", width: "950.4px", visibility: "hidden" });
+      Object.assign(probe.style, { position: "absolute", width: `${title.getBoundingClientRect().width}px`, visibility: "hidden" });
       title.parentElement.append(probe);
       try {
-        const available = 298.8;
+        const editorialStyle = getComputedStyle(poster.querySelector(".bsp-d-editorial"));
+        const available = poster.clientHeight * 0.26 - parseFloat(editorialStyle.paddingTop) - parseFloat(editorialStyle.paddingBottom);
         for (const size of [64.8, 60.48, 56.16, 51.84, 47.52]) {
           probe.style.fontSize = `${size}px`;
           if (probe.scrollHeight <= available + 1) break;

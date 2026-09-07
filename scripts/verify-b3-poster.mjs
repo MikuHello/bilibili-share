@@ -83,6 +83,7 @@ try {
     }
     await verifyPoster(`${shape}-${name}`,{title,...coverOverrides});
   }
+  await verifyPoster('unit-boundaries',{title:titles.long,stats:{view:99999999,like:999999999999,coin:Number.MAX_VALUE,favorite:99999999999}});
   await verifyPoster('missing-and-zero',{stats:{view:0,like:null,coin:null,favorite:9999}});
   await verifyPoster('long-target',{markers:true,time:123456789,title:titles.extreme});
   for(const source of JSON.parse(await readFile(`${output}/covers/sources.json`,'utf8'))) {
