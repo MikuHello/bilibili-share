@@ -15,7 +15,6 @@ function plainDetailedText(snapshot: GenerationSnapshot, shareTarget: string, op
   const lines = [
     snapshot.title,
     `UP主：${snapshot.uploader}`,
-    `BV/av：${snapshot.bvid} · av${snapshot.aid}`,
     `播放：${formatExactStat(snapshot.stats.views)}　点赞：${formatExactStat(snapshot.stats.likes)}　投币：${formatExactStat(snapshot.stats.coins)}　收藏：${formatExactStat(snapshot.stats.favorites)}`,
   ];
   const partLabel = buildPartLabel(snapshot, options);
@@ -23,7 +22,7 @@ function plainDetailedText(snapshot: GenerationSnapshot, shareTarget: string, op
   if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
     lines.push(`时间：${formatTimestamp(snapshot.playbackSeconds)}`);
   }
-  lines.push(shareTarget);
+  lines.push(`${snapshot.bvid} · av${snapshot.aid}`, shareTarget);
   return lines.join("\n");
 }
 
@@ -37,7 +36,6 @@ function markdownDetailedText(snapshot: GenerationSnapshot, shareTarget: string,
     `**${escapeMarkdown(snapshot.title)}**`,
     "",
     `- UP主：${escapeMarkdown(snapshot.uploader)}`,
-    `- BV/av：${snapshot.bvid} · av${snapshot.aid}`,
     `- 播放：${formatExactStat(snapshot.stats.views)} · 点赞：${formatExactStat(snapshot.stats.likes)} · 投币：${formatExactStat(snapshot.stats.coins)} · 收藏：${formatExactStat(snapshot.stats.favorites)}`,
   ];
   const partLabel = buildPartLabel(snapshot, options);
@@ -45,7 +43,7 @@ function markdownDetailedText(snapshot: GenerationSnapshot, shareTarget: string,
   if (options.timestampShare && Math.floor(snapshot.playbackSeconds) >= 1) {
     lines.push(`- 时间：${formatTimestamp(snapshot.playbackSeconds)}`);
   }
-  lines.push(`- 链接：${shareTarget}`);
+  lines.push(`- ${snapshot.bvid} · av${snapshot.aid}`, `- 链接：${shareTarget}`);
   return lines.join("\n");
 }
 

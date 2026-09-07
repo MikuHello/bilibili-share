@@ -53,7 +53,7 @@ describe("detailed and markdown share text", () => {
         markdownText: false,
       }),
     ).toBe(
-      "【测试】详细文案标题\nUP主：UP 主甲\nBV/av：BV1xx411c7mD · av170001\n播放：12,345,678　点赞：98,765　投币：0　收藏：--\n分P：P2 · 第二集\n时间：01:02:03\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
+      "【测试】详细文案标题\nUP主：UP 主甲\n播放：12,345,678　点赞：98,765　投币：0　收藏：--\n分P：P2 · 第二集\n时间：01:02:03\nBV1xx411c7mD · av170001\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
     );
   });
 
@@ -77,7 +77,7 @@ describe("detailed and markdown share text", () => {
         markdownText: true,
       }),
     ).toBe(
-      "**【测试】详细文案标题**\n\n- UP主：UP 主甲\n- BV/av：BV1xx411c7mD · av170001\n- 播放：12,345,678 · 点赞：98,765 · 投币：0 · 收藏：--\n- 分P：P2 · 第二集\n- 时间：01:02:03\n- 链接：https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
+      "**【测试】详细文案标题**\n\n- UP主：UP 主甲\n- 播放：12,345,678 · 点赞：98,765 · 投币：0 · 收藏：--\n- 分P：P2 · 第二集\n- 时间：01:02:03\n- BV1xx411c7mD · av170001\n- 链接：https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723",
     );
   });
 
