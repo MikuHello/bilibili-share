@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 分享海报
 // @namespace    https://github.com/mikuhello/bilibili-share
-// @version      0.3.0
+// @version      0.3.1
 // @description  在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -3614,18 +3614,19 @@ ${shareTarget}`;
 .bsp-d-title-space{min-height:0}
 .bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
 .bsp-d-footer{min-height:0;margin:0 64.8px;padding:43.2px 0 21.6px;border-top:1px solid #20303933;display:flex;gap:21.6px;align-items:center}
+.bsp-d-information{display:flex;align-items:flex-end;gap:21.6px;width:100%;min-width:0}
 .bsp-d-signature{min-width:0;flex:1}
 .bsp-d-author{display:flex;gap:15.12px;align-items:center;min-width:0;line-height:1.4;font-size:49.68px;font-weight:600;white-space:nowrap}
 .bsp-d-up{width:66.96px;height:66.96px;flex:0 0 66.96px}
 .bsp-d-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bsp-d-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16.2px;align-items:center;margin-top:30.24px}
-.bsp-d-stat{min-width:0;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.bsp-d-stat-value{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bsp-d-stats{display:flex;justify-content:space-between;gap:16.2px;align-items:center;margin-top:30.24px}
+.bsp-d-stat{flex:none;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bsp-d-stat-value{flex:none}
 .bsp-d-stat img,.bsp-d-stat svg{width:54px;height:54px;min-width:54px;max-width:54px;flex:0 0 54px}
 .bsp-d-qr{width:183.6px;flex:0 0 183.6px;text-align:center}
-.bsp-d-qr-frame{padding:12.96px;border-radius:10.8px;background:#fff}
+.bsp-d-qr-frame{padding:12.96px 12.96px 0;background:transparent}
 .bsp-d-qr-image{width:157.68px;height:157.68px;display:block}
-.bsp-d-qr-caption{margin-top:10.8px;font-size:27px;line-height:1.4}
+.bsp-d-qr-caption{margin-top:0;height:54px;font-size:27px;line-height:54px}
 .bsp-d-link-footer{min-width:0;padding:10.8px 64.8px 32.4px;display:flex;align-items:center}
 .bsp-d-address{min-width:0;width:100%}
 .bsp-d-address-icon{display:none}
@@ -3715,11 +3716,13 @@ ${shareTarget}`;
       } finally {
         probe.remove();
       }
-      for (const value of poster.querySelectorAll(".bsp-d-stat-value")) {
-        for (const size of [36.72, 34, 31, 28, 25]) {
+      const stats = poster.querySelector(".bsp-d-stats");
+      const values = stats.querySelectorAll(".bsp-d-stat-value");
+      for (const size of [36.72, 34, 31, 28, 25]) {
+        values.forEach((value) => {
           value.style.fontSize = `${size}px`;
-          if (value.scrollWidth <= value.clientWidth + 1) break;
-        }
+        });
+        if (stats.scrollWidth <= stats.clientWidth + 1) break;
       }
     } finally {
       poster.remove();
@@ -3773,7 +3776,9 @@ ${shareTarget}`;
     const frame = element("div", "bsp-d-qr-frame");
     frame.append(await createPosterQr(model.shareTarget));
     qr.append(frame, element("div", "bsp-d-qr-caption", "\u626B\u7801\u89C2\u770B"));
-    footer.append(signature, qr);
+    const information = element("div", "bsp-d-information");
+    information.append(signature, qr);
+    footer.append(information);
     const linkFooter = element("div", "bsp-d-link-footer");
     const address = element("div", "bsp-d-address");
     address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
@@ -3783,7 +3788,7 @@ ${shareTarget}`;
     return poster;
   }
   async function createPosterQr(target) {
-    const data = await import_qrcode.default.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+    const data = await import_qrcode.default.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
     return image("bsp-d-qr-image", data, `\u4E8C\u7EF4\u7801\uFF1A${target}`);
   }
   async function updatePosterTarget(poster, target, isCurrent) {
@@ -4097,7 +4102,7 @@ ${shareTarget}`;
       const status = this.controls.querySelector(".bsp-status");
       if (!status) return;
       clearTimeout(this.statusTimer);
-      status.textContent = message;
+      status.textContent = message.replace(/。$/u, "");
       status.classList.toggle("is-error", error);
       status.classList.add("is-show");
       const delay = statusDismissDelay(error);

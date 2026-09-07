@@ -12,18 +12,19 @@ export const posterStyles = `
 .bsp-d-title-space{min-height:0}
 .bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
 .bsp-d-footer{min-height:0;margin:0 64.8px;padding:43.2px 0 21.6px;border-top:1px solid #20303933;display:flex;gap:21.6px;align-items:center}
+.bsp-d-information{display:flex;align-items:flex-end;gap:21.6px;width:100%;min-width:0}
 .bsp-d-signature{min-width:0;flex:1}
 .bsp-d-author{display:flex;gap:15.12px;align-items:center;min-width:0;line-height:1.4;font-size:49.68px;font-weight:600;white-space:nowrap}
 .bsp-d-up{width:66.96px;height:66.96px;flex:0 0 66.96px}
 .bsp-d-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bsp-d-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16.2px;align-items:center;margin-top:30.24px}
-.bsp-d-stat{min-width:0;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.bsp-d-stat-value{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bsp-d-stats{display:flex;justify-content:space-between;gap:16.2px;align-items:center;margin-top:30.24px}
+.bsp-d-stat{flex:none;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bsp-d-stat-value{flex:none}
 .bsp-d-stat img,.bsp-d-stat svg{width:54px;height:54px;min-width:54px;max-width:54px;flex:0 0 54px}
 .bsp-d-qr{width:183.6px;flex:0 0 183.6px;text-align:center}
-.bsp-d-qr-frame{padding:12.96px;border-radius:10.8px;background:#fff}
+.bsp-d-qr-frame{padding:12.96px 12.96px 0;background:transparent}
 .bsp-d-qr-image{width:157.68px;height:157.68px;display:block}
-.bsp-d-qr-caption{margin-top:10.8px;font-size:27px;line-height:1.4}
+.bsp-d-qr-caption{margin-top:0;height:54px;font-size:27px;line-height:54px}
 .bsp-d-link-footer{min-width:0;padding:10.8px 64.8px 32.4px;display:flex;align-items:center}
 .bsp-d-address{min-width:0;width:100%}
 .bsp-d-address-icon{display:none}

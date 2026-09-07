@@ -96,12 +96,12 @@ async function fitContent(poster: HTMLElement, title: HTMLElement): Promise<void
       title.style.fontSize = probe.style.fontSize;
       title.textContent = probe.textContent;
     } finally { probe.remove(); }
-    // Fit numbers independently so neither the icons nor the row can shrink.
-    for (const value of poster.querySelectorAll<HTMLElement>(".bsp-d-stat-value")) {
-      for (const size of [36.72, 34, 31, 28, 25]) {
-        value.style.fontSize = `${size}px`;
-        if (value.scrollWidth <= value.clientWidth + 1) break;
-      }
+    // Fit the whole row uniformly; content widths determine the space between groups.
+    const stats = poster.querySelector<HTMLElement>(".bsp-d-stats")!;
+    const values = stats.querySelectorAll<HTMLElement>(".bsp-d-stat-value");
+    for (const size of [36.72, 34, 31, 28, 25]) {
+      values.forEach(value => { value.style.fontSize = `${size}px`; });
+      if (stats.scrollWidth <= stats.clientWidth + 1) break;
     }
   } finally {
     poster.remove();
@@ -153,7 +153,9 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
   const frame = element("div", "bsp-d-qr-frame");
   frame.append(await createPosterQr(model.shareTarget));
   qr.append(frame, element("div", "bsp-d-qr-caption", "扫码观看"));
-  footer.append(signature, qr);
+  const information = element("div", "bsp-d-information");
+  information.append(signature, qr);
+  footer.append(information);
   const linkFooter = element("div", "bsp-d-link-footer");
   const address = element("div", "bsp-d-address");
   address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
@@ -164,7 +166,7 @@ export async function createPoster(model: SharePoster, snapshot: GenerationSnaps
 }
 
 async function createPosterQr(target: string): Promise<HTMLImageElement> {
-  const data = await QRCode.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
+  const data = await QRCode.toDataURL(target, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#111820ff", light: "#00000000" } });
   return image("bsp-d-qr-image", data, `二维码：${target}`);
 }
 
