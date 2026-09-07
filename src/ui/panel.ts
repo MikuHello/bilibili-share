@@ -185,7 +185,7 @@ export class SharePanel {
       const snapshot = await fetchGenerationSnapshot(this.capture);
       const shareTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
       const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, shareTarget);
-      const poster = model ? await createPoster(model) : null;
+      const poster = model ? await createPoster(model, snapshot) : null;
       if (!this.ensureCurrentContext()) return;
       this.snapshot = snapshot;
       this.model = model;
@@ -398,7 +398,7 @@ export class SharePanel {
     try {
       const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
       const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
-      const poster = model ? await createPoster(model) : null;
+      const poster = model ? await createPoster(model, this.snapshot) : null;
       if (!this.ensureCurrentContext()) return;
       this.model = model;
       this.poster = poster;

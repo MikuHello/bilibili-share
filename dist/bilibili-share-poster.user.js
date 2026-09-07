@@ -2650,6 +2650,7 @@
   // src/domain.ts
   function formatCompactStat(value) {
     if (value === null || !Number.isFinite(value)) return "--";
+    if (value >= 1e12) return value.toExponential(1).replace("+", "");
     if (value >= 1e8) return `${(value / 1e8).toFixed(1)}\u4EBF`;
     if (value >= 1e4) return `${(value / 1e4).toFixed(1)}\u4E07`;
     return Math.max(0, Math.trunc(value)).toString();
@@ -3672,34 +3673,34 @@ ${shareTarget}`;
 
   // src/ui/poster-styles.ts
   var posterStyles = `
-.bsp-poster.bsp-default-poster{all:initial;box-sizing:border-box;position:relative;display:flex;flex-direction:column;flex:none;width:1080px;height:1440px;overflow:hidden;background:#dce8e7;color:#233b41;font-family:"PingFang SC","Microsoft YaHei",sans-serif;transform-origin:top left;-webkit-text-stroke:0;text-shadow:none}
+.bsp-poster.bsp-default-poster{all:initial;box-sizing:border-box;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:144px 547.2px auto minmax(0,1fr) 100.8px;flex:none;width:1080px;height:1440px;overflow:hidden;background:#e8eded;color:#203039;font-family:"PingFang SC","Microsoft YaHei",sans-serif;transform-origin:top left;-webkit-text-stroke:0;text-shadow:none}
 .bsp-default-poster::after{display:none}
 .bsp-default-poster *{box-sizing:border-box}
-.bsp-d-mast{height:104px;flex:none;padding:0 56px;display:flex;align-items:center}
-.bsp-d-brand{width:110px;height:51px;object-fit:contain}
-.bsp-d-cover{display:block;width:1080px;height:608px;flex:none;object-fit:contain;object-position:center;background:#dce8e7;border-radius:22px}
-.bsp-d-editorial{min-height:0;overflow:hidden;flex:1;padding:26px 56px 22px;display:flex;flex-direction:column}
-.bsp-d-title-space{height:100%;min-height:0}
-.bsp-d-title{margin:0;font-weight:500;letter-spacing:-1px;line-height:1.28;overflow-wrap:anywhere;word-break:normal}
-.bsp-d-footer{height:310px;flex:none;padding:32px 56px;background:#eef4f1;display:grid;grid-template-columns:minmax(0,1fr) 204px;gap:40px;align-items:center;position:relative}
-.bsp-d-footer::before,.bsp-d-link-footer::before{content:'';position:absolute;top:0;left:56px;right:56px;border-top:1px solid #a9bdbc}
-.bsp-d-signature{min-width:0;align-self:center}
-.bsp-d-author{display:flex;gap:16px;height:85px;margin:0 0 18px;align-items:center;min-width:0;line-height:1.25;font-size:34px;font-weight:500;letter-spacing:.1px}
-.bsp-d-up{width:44px;height:44px;flex:none}
-.bsp-d-name{min-width:0;overflow-wrap:anywhere}
-.bsp-d-stats{display:flex;gap:24px;align-items:center;margin-bottom:24px;color:#405e65}
-.bsp-d-stat{display:flex;gap:10px;align-items:center;font-size:30px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.bsp-d-stat img,.bsp-d-stat svg{width:32px;height:32px;flex:none}
-.bsp-d-ids{display:flex;gap:24px;font-size:24px;white-space:nowrap;letter-spacing:.5px;color:#5f777b}
-.bsp-d-ids b{font-weight:550;letter-spacing:1px}
-.bsp-d-qr{width:204px;align-self:center}
-.bsp-d-qr-frame{padding:7px;border:1px solid #a9bdbc;border-radius:20px;background:#fff}
-.bsp-d-qr-image{width:188px;height:188px;display:block}
-.bsp-d-qr-caption{text-align:center;margin-top:14px;font-size:24px;line-height:1.4;letter-spacing:2px}
-.bsp-d-link-footer{position:relative;min-height:116px;padding:16px 56px;flex:none;display:flex;align-items:center;background:#eef4f1}
-.bsp-d-address{display:flex;align-items:center;gap:14px;min-width:0;width:100%;min-height:72px;padding:14px 24px;border:1px solid #adc2c2;border-radius:24px;background:#f9fbfa;box-shadow:inset 0 1px 2px #233b4108}
-.bsp-d-address-icon{width:28px;height:28px;flex:none;fill:none;stroke:#6b8589;stroke-width:1.4;stroke-linecap:round}
-.bsp-d-link{flex:1;min-width:0;font-size:24px;line-height:1.4;letter-spacing:.25px;overflow-wrap:anywhere;word-break:break-all;white-space:normal;color:#405e65}
+.bsp-d-mast{display:flex;justify-content:space-between;align-items:center;padding:32.4px 64.8px;gap:21.6px;min-height:0}
+.bsp-d-brand{width:151.2px;height:75.6px;object-fit:contain}
+.bsp-d-ids{display:grid;gap:6.48px;text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:25.92px;letter-spacing:.3px;white-space:nowrap}
+.bsp-d-ids b{font-weight:inherit}
+.bsp-d-cover{display:block;width:950.4px;height:547.2px;object-fit:contain;object-position:center;justify-self:center}
+.bsp-d-editorial{min-height:0;padding:43.2px 64.8px 32.4px}
+.bsp-d-title-space{min-height:0}
+.bsp-d-title{margin:0;font-family:"Songti SC","STSong","SimSun",serif;font-weight:600;letter-spacing:0;line-height:1.38;overflow-wrap:anywhere;word-break:normal;color:inherit}
+.bsp-d-footer{min-height:0;margin:0 64.8px;padding:43.2px 0 21.6px;border-top:1px solid #20303933;display:flex;gap:21.6px;align-items:center}
+.bsp-d-signature{min-width:0;flex:1}
+.bsp-d-author{display:flex;gap:15.12px;align-items:center;min-width:0;line-height:1.4;font-size:49.68px;font-weight:600;white-space:nowrap}
+.bsp-d-up{width:66.96px;height:66.96px;flex:0 0 66.96px}
+.bsp-d-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bsp-d-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16.2px;align-items:center;margin-top:30.24px}
+.bsp-d-stat{min-width:0;display:flex;gap:7.56px;align-items:center;font-size:36.72px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bsp-d-stat-value{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bsp-d-stat img,.bsp-d-stat svg{width:54px;height:54px;min-width:54px;max-width:54px;flex:0 0 54px}
+.bsp-d-qr{width:183.6px;flex:0 0 183.6px;text-align:center}
+.bsp-d-qr-frame{padding:12.96px;border-radius:10.8px;background:#fff}
+.bsp-d-qr-image{width:157.68px;height:157.68px;display:block}
+.bsp-d-qr-caption{margin-top:10.8px;font-size:27px;line-height:1.4}
+.bsp-d-link-footer{min-width:0;padding:10.8px 64.8px 32.4px;display:flex;align-items:center}
+.bsp-d-address{min-width:0;width:100%}
+.bsp-d-address-icon{display:none}
+.bsp-d-link{display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:27px;line-height:1.4;overflow-wrap:anywhere;word-break:break-all;white-space:normal}
 `;
 
   // src/ui/posters.ts
@@ -3710,6 +3711,43 @@ ${shareTarget}`;
     const parsed = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
     parsed.setAttribute("class", className);
     return document.importNode(parsed, true);
+  }
+  var appearances = /* @__PURE__ */ new WeakMap();
+  async function deriveCoverAppearance(src) {
+    const cover = image("", src);
+    await cover.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 240;
+    canvas.height = 320;
+    const context = canvas.getContext("2d");
+    context.filter = "blur(18px)";
+    const scale = Math.max(280 / cover.naturalWidth, 360 / cover.naturalHeight);
+    context.drawImage(cover, (240 - cover.naturalWidth * scale) / 2, (320 - cover.naturalHeight * scale) / 2, cover.naturalWidth * scale, cover.naturalHeight * scale);
+    context.filter = "none";
+    const pixels = context.getImageData(0, 0, 240, 320).data;
+    const average = [0, 0, 0];
+    for (let i = 0; i < pixels.length; i += 4) {
+      average.forEach((_, channel) => {
+        average[channel] += pixels[i + channel] / (240 * 320);
+      });
+    }
+    const ink = `rgb(${average.map((value, channel) => Math.round(value * 0.2 + [12, 16, 20][channel] * 0.8)).join(",")})`;
+    const light = context.createLinearGradient(0, 0, 240, 320);
+    light.addColorStop(0, "#ffffffc7");
+    light.addColorStop(0.52, "#ffffff88");
+    light.addColorStop(1, "#ffffffa8");
+    context.fillStyle = light;
+    context.fillRect(0, 0, 240, 320);
+    return { background: canvas.toDataURL(), ink };
+  }
+  function coverAppearance(snapshot) {
+    let result = appearances.get(snapshot);
+    if (!result) {
+      result = deriveCoverAppearance(snapshot.coverDataUrl);
+      appearances.set(snapshot, result);
+      void result.catch(() => appearances.delete(snapshot));
+    }
+    return result;
   }
   function ellipsizeToHeight(node, maxHeight) {
     if (node.getBoundingClientRect().height <= maxHeight + 1) return;
@@ -3724,7 +3762,7 @@ ${shareTarget}`;
     }
     node.textContent = characters.slice(0, low).join("") + "\u2026";
   }
-  async function fitContent(poster, title, name, stats) {
+  async function fitContent(poster, title) {
     const host = element("div");
     Object.assign(host.style, { position: "fixed", left: "-12000px", top: "0", visibility: "hidden", width: "1080px" });
     host.append(poster);
@@ -3732,33 +3770,39 @@ ${shareTarget}`;
     try {
       await document.fonts.ready;
       await Promise.all(Array.from(poster.querySelectorAll("img"), (img) => img.decode()));
-      const available = title.parentElement.clientHeight;
-      let titleSize = 48;
-      for (const size of [64, 60, 56, 52, 48]) {
-        title.style.fontSize = `${size}px`;
-        titleSize = size;
-        if (title.scrollHeight <= available + 1) break;
+      const probe = title.cloneNode(true);
+      Object.assign(probe.style, { position: "absolute", width: "950.4px", visibility: "hidden" });
+      title.parentElement.append(probe);
+      try {
+        const available = 298.8;
+        for (const size of [64.8, 60.48, 56.16, 51.84, 47.52]) {
+          probe.style.fontSize = `${size}px`;
+          if (probe.scrollHeight <= available + 1) break;
+        }
+        ellipsizeToHeight(probe, available);
+        title.style.fontSize = probe.style.fontSize;
+        title.textContent = probe.textContent;
+      } finally {
+        probe.remove();
       }
-      ellipsizeToHeight(title, Math.floor(available / (titleSize * 1.28)) * titleSize * 1.28);
-      let nameSize = 30;
-      for (const size of [34, 32, 30]) {
-        name.style.fontSize = `${size}px`;
-        nameSize = size;
-        if (name.getBoundingClientRect().height <= size * 1.25 * 2 + 1) break;
-      }
-      ellipsizeToHeight(name, nameSize * 1.25 * 2);
-      if (stats.scrollWidth > stats.clientWidth) {
-        stats.style.transformOrigin = "left center";
-        stats.style.transform = `scale(${stats.clientWidth / stats.scrollWidth})`;
+      for (const value of poster.querySelectorAll(".bsp-d-stat-value")) {
+        for (const size of [36.72, 34, 31, 28, 25]) {
+          value.style.fontSize = `${size}px`;
+          if (value.scrollWidth <= value.clientWidth + 1) break;
+        }
       }
     } finally {
       poster.remove();
       host.remove();
     }
   }
-  async function createPoster(model) {
+  async function createPoster(model, snapshot) {
     if (model.coverUnavailable) throw new Error("\u5C01\u9762\u6682\u65F6\u65E0\u6CD5\u52A0\u8F7D");
     const poster = element("article", "bsp-poster bsp-default-poster");
+    const appearance = await coverAppearance(snapshot);
+    poster.style.backgroundImage = `url("${appearance.background}")`;
+    poster.style.backgroundSize = "100% 100%";
+    poster.style.color = appearance.ink;
     poster.setAttribute("aria-label", `${model.title} \u5206\u4EAB\u6D77\u62A5`);
     const style = element("style", "", posterStyles);
     const mast = element("header", "bsp-d-mast");
@@ -3784,7 +3828,7 @@ ${shareTarget}`;
     model.stats.forEach((statistic2, index) => {
       const cell = element("span", "bsp-d-stat");
       cell.setAttribute("aria-label", `${statistic2.label} ${statistic2.value}`);
-      cell.append(statIcons[index], document.createTextNode(statistic2.value));
+      cell.append(statIcons[index], element("span", "bsp-d-stat-value", statistic2.value));
       stats.append(cell);
     });
     const ids = element("div", "bsp-d-ids");
@@ -3793,7 +3837,8 @@ ${shareTarget}`;
     const av = element("span");
     av.append(element("b", "", "av"), document.createTextNode(String(model.aid)));
     ids.append(bv, av);
-    signature.append(author, stats, ids);
+    mast.append(ids);
+    signature.append(author, stats);
     const qr = element("div", "bsp-d-qr");
     const frame = element("div", "bsp-d-qr-frame");
     const qrData = await import_qrcode.default.toDataURL(model.shareTarget, { width: 564, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
@@ -3805,11 +3850,11 @@ ${shareTarget}`;
     address.append(svg("bsp-d-address-icon", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.3 7.5h15.4M4.3 16.5h15.4"/></svg>'), element("span", "bsp-d-link", model.shareTarget));
     linkFooter.append(address);
     poster.append(style, mast, cover, editorial, footer, linkFooter);
-    await fitContent(poster, title, name, stats);
+    await fitContent(poster, title);
     return poster;
   }
   function exportPosterPng(poster) {
-    return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, backgroundColor: "#dce8e7", style: { transform: "none" } });
+    return toPng(poster, { width: 1080, height: 1440, pixelRatio: 1, cacheBust: false, style: { transform: "none" } });
   }
 
   // src/ui/panel.ts
@@ -3957,7 +4002,7 @@ ${shareTarget}`;
         const snapshot = await fetchGenerationSnapshot(this.capture);
         const shareTarget = buildCanonicalShareTarget(snapshot.bvid, snapshot, this.options);
         const model = snapshot.coverUnavailable ? null : buildSharePoster(snapshot, shareTarget);
-        const poster = model ? await createPoster(model) : null;
+        const poster = model ? await createPoster(model, snapshot) : null;
         if (!this.ensureCurrentContext()) return;
         this.snapshot = snapshot;
         this.model = model;
@@ -4142,7 +4187,7 @@ ${shareTarget}`;
       try {
         const shareTarget = buildCanonicalShareTarget(this.snapshot.bvid, this.snapshot, this.options);
         const model = this.snapshot.coverUnavailable ? null : buildSharePoster(this.snapshot, shareTarget);
-        const poster = model ? await createPoster(model) : null;
+        const poster = model ? await createPoster(model, this.snapshot) : null;
         if (!this.ensureCurrentContext()) return;
         this.model = model;
         this.poster = poster;

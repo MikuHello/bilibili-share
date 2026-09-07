@@ -40,6 +40,7 @@ export type DefaultPoster = SharePoster;
 
 export function formatCompactStat(value: StatisticValue): string {
   if (value === null || !Number.isFinite(value)) return "--";
+  if (value >= 1_000_000_000_000) return value.toExponential(1).replace("+", "");
   if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}亿`;
   if (value >= 10_000) return `${(value / 10_000).toFixed(1)}万`;
   return Math.max(0, Math.trunc(value)).toString();

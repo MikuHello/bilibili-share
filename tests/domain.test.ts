@@ -36,6 +36,8 @@ describe("default poster domain", () => {
     [10_000, "1.0万"],
     [12_345_678, "1234.6万"],
     [100_000_000, "1.0亿"],
+    [1_000_000_000_000, "1.0e12"],
+    [Number.MAX_VALUE, "1.8e308"],
     [null, "--"],
   ])("formats snapshot statistic %s as %s", (value, expected) => {
     expect(formatCompactStat(value)).toBe(expected);

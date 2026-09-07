@@ -61,8 +61,8 @@ export async function openFixture(browser, bundle, overrides = {}) {
           } }) });
         } else if (url.hostname.endsWith("hdslb.com")) {
           if (f.coverFailed) { details.onerror({ error: "Controlled cover failure" }); return; }
-          const bytes = Uint8Array.from(atob(coverBase64), c => c.charCodeAt(0));
-          details.onload({ status: 200, response: new Blob([bytes], { type: "image/jpeg" }) });
+          const bytes = Uint8Array.from(atob(f.coverBase64 ?? coverBase64), c => c.charCodeAt(0));
+          details.onload({ status: 200, response: new Blob([bytes], { type: f.coverMime ?? "image/jpeg" }) });
         } else if (url.pathname === "/x/share/click") {
           details.onload({ status: 200, responseText: JSON.stringify(f.shortLink ? { code: 0, data: { content: "https://b23.tv/BspDemo" } } : { code: -1 }) });
         } else if (url.hostname === "b23.tv") {
