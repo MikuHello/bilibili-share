@@ -1,0 +1,99 @@
+{
+  "browser": "151.0.7922.34",
+  "results": [
+    {
+      "case": "desktop-layout",
+      "layout": {
+        "panel": {
+          "x": 180,
+          "y": 145.84896850585938,
+          "width": 920,
+          "height": 608.65625,
+          "top": 145.84896850585938,
+          "right": 1100,
+          "bottom": 754.5052185058594,
+          "left": 180
+        },
+        "preview": {
+          "x": 229.0625,
+          "y": 221.84896850585938,
+          "width": 380,
+          "height": 506.6562805175781,
+          "top": 221.84896850585938,
+          "right": 609.0625,
+          "bottom": 728.5052490234375,
+          "left": 229.0625
+        },
+        "download": {
+          "x": 662.140625,
+          "y": 624.5052490234375,
+          "width": 40,
+          "height": 40,
+          "top": 624.5052490234375,
+          "right": 702.140625,
+          "bottom": 664.5052490234375,
+          "left": 662.140625
+        },
+        "copy": {
+          "x": 714.140625,
+          "y": 624.5052490234375,
+          "width": 357.859375,
+          "height": 40,
+          "top": 624.5052490234375,
+          "right": 1072,
+          "bottom": 664.5052490234375,
+          "left": 714.140625
+        },
+        "heading": {
+          "x": 608,
+          "y": 169.84896850585938,
+          "width": 64,
+          "height": 24,
+          "top": 169.84896850585938,
+          "right": 672,
+          "bottom": 193.84896850585938,
+          "left": 608
+        },
+        "headingSize": "16px"
+      }
+    },
+    {
+      "case": "keyboard-and-three-close-paths",
+      "passed": true
+    },
+    {
+      "case": "floating-feedback-stable-layout-replacement-dismiss-reduced-motion",
+      "passed": true
+    },
+    {
+      "case": "image-failure-download-recovery",
+      "passed": true
+    },
+    {
+      "case": "narrow-390",
+      "passed": true
+    },
+    {
+      "case": "narrow-320",
+      "passed": true
+    },
+    {
+      "case": "real-user-gesture-clipboard-download",
+      "png": {
+        "width": 1080,
+        "height": 1440,
+        "size": 871380
+      },
+      "types": [
+        "image/png"
+      ],
+      "downloadName": "bilibili_BV1TXoWBsEGc_20260907-213714.png",
+      "sha256": "0fadf7279054bb4c8b12647e3a0347987ef0c9c70acde513af4365cbaad18f31",
+      "receiver": "Chromium contenteditable",
+      "pasted": {
+        "width": 1080,
+        "height": 1440
+      }
+    }
+  ]
+}

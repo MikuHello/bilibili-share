@@ -37,4 +37,4 @@ npm run build
 
 Install Playwright separately in the test environment, or set `BSP_PLAYWRIGHT_MODULE` to an existing Playwright module entry point, then run `npm run test:browser`. The runner builds and exercises the exact distributable bundle with controlled GM/network and player boundaries; clipboard success checks additionally use the actual Chromium clipboard. They do not substitute for Tampermonkey installation verification. On macOS, the QR checks use the native Vision decoder.
 
-Release 0.3.0: [changes, checksum, verification and pending manual installation](.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/verification.md).
+Release 0.3.1: [B3 polish, checksum and verified delivery](.scratch/bilibili-share-poster/usage-refinement/polish/evidence/verification.md).
