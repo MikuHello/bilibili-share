@@ -245,7 +245,7 @@ export class SharePanel {
     const textSection = this.renderTextPreview(shareText);
     const textHeading = element("div", "bsp-section-heading");
     const textActions = element("div", "bsp-text-copy-actions");
-    textActions.append(copyText, copyMarkdown);
+    textActions.append(copyMarkdown);
     textHeading.append(element("h3", "", "分享文案"), textActions);
     textSection.prepend(textHeading);
     const detail = element("input");
@@ -260,7 +260,7 @@ export class SharePanel {
     textSection.append(textOptions);
 
     const actions = element("div", "bsp-actions");
-    actions.append(download, copy);
+    actions.append(download, copy, copyText);
     const actionGroup = element("div", "bsp-action-group");
     actionGroup.append(actions, status);
     this.controls.replaceChildren(this.renderShareOptions(), textSection, actionGroup);

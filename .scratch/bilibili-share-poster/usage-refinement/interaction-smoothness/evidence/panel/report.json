@@ -1,0 +1,123 @@
+{
+  "browser": "151.0.7922.34",
+  "results": [
+    {
+      "case": "desktop-layout",
+      "layout": {
+        "panel": {
+          "x": 180,
+          "y": 148.55633544921875,
+          "width": 920,
+          "height": 608.65625,
+          "top": 148.55633544921875,
+          "right": 1100,
+          "bottom": 757.2125854492188,
+          "left": 180
+        },
+        "preview": {
+          "x": 229.0625,
+          "y": 224.55633544921875,
+          "width": 380,
+          "height": 506.65625,
+          "top": 224.55633544921875,
+          "right": 609.0625,
+          "bottom": 731.2125854492188,
+          "left": 229.0625
+        },
+        "download": {
+          "x": 662.140625,
+          "y": 581.9469604492188,
+          "width": 40,
+          "height": 40,
+          "top": 581.9469604492188,
+          "right": 702.140625,
+          "bottom": 621.9469604492188,
+          "left": 662.140625
+        },
+        "copy": {
+          "x": 714.140625,
+          "y": 581.9469604492188,
+          "width": 172.921875,
+          "height": 40,
+          "top": 581.9469604492188,
+          "right": 887.0625,
+          "bottom": 621.9469604492188,
+          "left": 714.140625
+        },
+        "plain": {
+          "x": 899.0625,
+          "y": 581.9469604492188,
+          "width": 172.9375,
+          "height": 40,
+          "top": 581.9469604492188,
+          "right": 1072,
+          "bottom": 621.9469604492188,
+          "left": 899.0625
+        },
+        "markdown": {
+          "x": 986.140625,
+          "y": 391.80633544921875,
+          "width": 85.859375,
+          "height": 24,
+          "top": 391.80633544921875,
+          "right": 1072,
+          "bottom": 415.80633544921875,
+          "left": 986.140625
+        },
+        "heading": {
+          "x": 608,
+          "y": 172.55633544921875,
+          "width": 64,
+          "height": 24,
+          "top": 172.55633544921875,
+          "right": 672,
+          "bottom": 196.55633544921875,
+          "left": 608
+        },
+        "headingSize": "16px"
+      }
+    },
+    {
+      "case": "keyboard-and-three-close-paths",
+      "passed": true
+    },
+    {
+      "case": "floating-feedback-stable-layout-replacement-dismiss-reduced-motion",
+      "passed": true
+    },
+    {
+      "case": "image-failure-download-recovery",
+      "passed": true
+    },
+    {
+      "case": "narrow-390",
+      "passed": true
+    },
+    {
+      "case": "narrow-320",
+      "passed": true
+    },
+    {
+      "case": "long-text-capped-scrollable",
+      "passed": true
+    },
+    {
+      "case": "real-user-gesture-clipboard-download",
+      "png": {
+        "width": 1080,
+        "height": 1440,
+        "size": 866746
+      },
+      "types": [
+        "image/png"
+      ],
+      "downloadName": "bilibili_BV1TXoWBsEGc_20260907-233554.png",
+      "sha256": "50b716a3e8740b789978330946276cf8b110fe67ce6c67ee731f28c886bdd9a4",
+      "receiver": "Chromium contenteditable",
+      "pasted": {
+        "width": 1080,
+        "height": 1440
+      }
+    }
+  ]
+}

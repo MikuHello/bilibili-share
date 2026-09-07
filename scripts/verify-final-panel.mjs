@@ -25,12 +25,17 @@ try {
   const layout = await page.evaluate(() => {
     const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
     const byName = name => [...document.querySelectorAll('button')].find(n=>n.getAttribute('aria-label')===name||n.textContent===name).getBoundingClientRect().toJSON();
-    return {panel:rect('.bsp-panel'),preview:rect('.bsp-preview-frame'),download:byName('下载海报 PNG'),copy:byName('复制海报'),heading:rect('#bsp-dialog-title'),headingSize:getComputedStyle(document.querySelector('#bsp-dialog-title')).fontSize};
+    return {panel:rect('.bsp-panel'),preview:rect('.bsp-preview-frame'),download:byName('下载海报 PNG'),copy:byName('复制海报'),plain:byName('复制文案'),markdown:byName('复制 Markdown'),heading:rect('#bsp-dialog-title'),headingSize:getComputedStyle(document.querySelector('#bsp-dialog-title')).fontSize};
   });
   assert.equal(layout.headingSize,'16px');
   assert.ok(Math.abs(layout.heading.x+layout.heading.width/2-(layout.panel.x+layout.panel.width/2))<1);
   assert.ok(layout.download.right < layout.copy.left);
   assert.ok(Math.abs(layout.download.top-layout.copy.top)<1);
+  assert.ok(Math.abs(layout.copy.top-layout.plain.top)<1, 'plain copy shares the bottom action row');
+  assert.ok(Math.abs(layout.copy.width-layout.plain.width)<1, 'copy actions split remaining width equally');
+  assert.ok(Math.abs(layout.plain.left-layout.copy.right-12)<1);
+  assert.equal(layout.plain.height,40);
+  assert.ok(layout.markdown.bottom < layout.plain.top);
   await page.waitForTimeout(300);
   const compact = await page.evaluate(() => {
     const box = s => document.querySelector(s).getBoundingClientRect().toJSON();
@@ -54,7 +59,7 @@ try {
   // Focus stays inside the dialog, then all close paths return to the entry.
   await dialog.focus();
   await page.keyboard.press('Shift+Tab');
-  assert.equal(await copy.evaluate(n=>document.activeElement===n),true);
+  assert.equal(await plain.evaluate(n=>document.activeElement===n),true);
   await page.keyboard.press('Tab');
   assert.equal(await page.getByRole('button',{name:'关闭分享面板'}).evaluate(n=>document.activeElement===n),true);
   for(let index=0;index<14;index++) { await page.keyboard.press('Tab'); assert.equal(await dialog.evaluate(n=>n.contains(document.activeElement)),true); }
@@ -102,6 +107,9 @@ try {
   for (const width of [390,320]) {
     await page.setViewportSize({width,height:740});
     for(const control of [download,plain,markdown,detail,copy]) { await control.scrollIntoViewIfNeeded(); assert.equal(await control.isVisible(),true); }
+    const row = await Promise.all([download,copy,plain].map(control=>control.boundingBox()));
+    assert.ok(row.every(box=>Math.abs(box.y-row[0].y)<1 && box.height===40));
+    assert.ok(Math.abs(row[1].width-row[2].width)<1);
     await copy.click();
     await page.getByRole('status').filter({hasText:'海报已复制'}).waitFor();
     await page.waitForTimeout(150);
