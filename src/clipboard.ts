@@ -87,18 +87,26 @@ export function describeTextCopyResult(outcome: TextCopyOutcome): TextCopyFeedba
 }
 
 export async function copyShareTextToClipboard(text: string): Promise<TextCopyOutcome> {
+  // Page extensions can rewrite navigator.clipboard.writeText (for example, link cleaners).
+  // Keep the full share text inside the userscript clipboard boundary when available.
+  if (typeof GM_setClipboard === "function") {
+    return copyText(text, {
+      write: value => new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("文本剪贴板写入未完成，请重试")), 5000);
+        try {
+          GM_setClipboard(value, "text", () => { clearTimeout(timer); resolve(); });
+        } catch (error) {
+          clearTimeout(timer);
+          reject(error);
+        }
+      }),
+    });
+  }
   const clipboard = browserClipboard();
   if (clipboard && typeof clipboard.writeText === "function") {
     return copyText(text, {
       async write(value) {
         await clipboard.writeText(value);
-      },
-    });
-  }
-  if (typeof GM_setClipboard === "function") {
-    return copyText(text, {
-      async write(value) {
-        GM_setClipboard(value, "text");
       },
     });
   }

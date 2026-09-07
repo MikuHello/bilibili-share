@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   copyPng,
   copyText,
+  copyShareTextToClipboard,
   describePosterCopyResult,
   describeTextCopyResult,
 } from "../src/clipboard";
@@ -63,4 +64,48 @@ describe("poster clipboard adapter", () => {
     });
   });
 
+});
+
+
+describe("userscript text clipboard boundary", () => {
+  afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+  it("keeps all text outside a page link cleaner and waits for completion", async () => {
+    const text = "标题（UP主：甲）\nhttps://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=83";
+    let stored = "";
+    let complete = () => {};
+    vi.stubGlobal("navigator", { clipboard: { write() {}, async writeText(value: string) { stored = value.split("\n").at(-1)!; } } });
+    vi.stubGlobal("GM_setClipboard", (value: string, _type: string, done: () => void) => { stored = value; complete = done; });
+    let settled = false;
+    const result = copyShareTextToClipboard(text).then(value => { settled = true; return value; });
+    await Promise.resolve();
+    expect(stored).toBe(text);
+    expect(settled).toBe(false);
+    complete();
+    expect(await result).toEqual({ status: "copied" });
+  });
+
+  it("reports a missing completion callback as failure instead of success", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("GM_setClipboard", () => {});
+    const result = copyShareTextToClipboard("完整文案");
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(await result).toEqual({ status: "failed", reason: "文本剪贴板写入未完成，请重试" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("preserves the manual-copy failure path when the userscript writer throws", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("GM_setClipboard", () => { throw new Error("写入被拒绝"); });
+    expect(await copyShareTextToClipboard("完整文案")).toEqual({ status: "failed", reason: "写入被拒绝" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("supports the browser writer when no userscript clipboard API is available", async () => {
+    let stored = "";
+    vi.stubGlobal("GM_setClipboard", undefined);
+    vi.stubGlobal("navigator", { clipboard: { write() {}, async writeText(value: string) { stored = value; } } });
+    expect(await copyShareTextToClipboard("完整文案")).toEqual({ status: "copied" });
+    expect(stored).toBe("完整文案");
+  });
 });
