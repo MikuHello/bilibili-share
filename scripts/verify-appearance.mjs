@@ -11,6 +11,7 @@ try {
   const {page,context,errors} = await openFixture(browser, bundle);
   await page.addStyleTag({content:'h2,h3,p{color:#18191c}'});
   await page.evaluate(() => document.documentElement.classList.add('dark'));
+  await page.locator('#bsp-entry').screenshot({path:`${output}/entry-dark.png`});
   await page.getByRole('button',{name:'生成海报',exact:true}).click();
   await page.getByRole('button',{name:'复制文案',exact:true}).waitFor();
   const dialog = page.getByRole('dialog');
@@ -57,6 +58,10 @@ try {
   await page.setViewportSize({width:1280,height:900});
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>document.activeElement?.id==='bsp-entry');
+  await page.evaluate(()=>{document.body.style.background='white';});
+  await page.waitForFunction(()=>!document.querySelector('#bsp-entry.bsp-entry-dark'));
+  await page.locator('#bsp-entry').screenshot({path:`${output}/entry-light.png`});
+  await page.evaluate(()=>{document.body.style.background='rgb(28,30,34)';});
   await page.evaluate(() => { document.querySelector('#bsp-entry').remove(); });
   await page.waitForFunction(()=>document.querySelector('#bsp-entry.bsp-entry-dark'));
   assert.equal(await page.locator('.video-share-wrap').count(),1);
