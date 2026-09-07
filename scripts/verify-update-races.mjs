@@ -142,7 +142,7 @@ try {
   await p.waitForFunction(() => window.pendingQr.length === 1);
   await p.evaluate(() => window.pendingQr[0].reject(Error('Controlled QR failure')));
   await p.getByRole('button', { name: '重试', exact: true }).waitFor();
-  // Restore browser decode boundary before retrying resource generation.
+  // Verify the resource retry can recover into text-only sharing.
   await p.evaluate(() => { window.pendingQr = []; window.fixture.coverFailed = true; });
   await p.getByRole('button', { name: '重试', exact: true }).click();
   await p.getByText('封面暂时无法加载', { exact: true }).waitFor();

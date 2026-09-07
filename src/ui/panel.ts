@@ -404,7 +404,7 @@ export class SharePanel {
     this.refreshOptionControls();
     if (textChanged) this.persistPreferences();
     if (targetChanged) {
-      void this.rebuildPosterForOptions();
+      void this.updateShareTargetForOptions();
       return;
     }
     if (textChanged && this.shareTarget) {
@@ -419,7 +419,7 @@ export class SharePanel {
     });
   }
 
-  private async rebuildPosterForOptions(): Promise<void> {
+  private async updateShareTargetForOptions(): Promise<void> {
     if (!this.snapshot) return;
     const version = ++this.targetVersion;
     const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;

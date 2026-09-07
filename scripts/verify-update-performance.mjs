@@ -56,6 +56,7 @@ try {
     if (!baseline) {
       assert.equal(stages.find(s => s.name === 'details').canvases, 0);
       assert.equal(stages.find(s => s.name === 'details').decodes, 0);
+      assert.equal(stages.find(s => s.name === 'details').requests, 0);
       assert.equal(stages.find(s => s.name === 'marker').requests, 0);
       assert.equal(stages.find(s => s.name === 'repeat-export').canvases, 0, 'same poster reuses PNG');
     }

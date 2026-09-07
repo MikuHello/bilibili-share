@@ -4228,7 +4228,7 @@ ${shareTarget}`;
       this.refreshOptionControls();
       if (textChanged) this.persistPreferences();
       if (targetChanged) {
-        void this.rebuildPosterForOptions();
+        void this.updateShareTargetForOptions();
         return;
       }
       if (textChanged && this.shareTarget) {
@@ -4241,7 +4241,7 @@ ${shareTarget}`;
         detailedText: this.options.detailedText
       });
     }
-    async rebuildPosterForOptions() {
+    async updateShareTargetForOptions() {
       if (!this.snapshot) return;
       const version = ++this.targetVersion;
       const isCurrent = () => this.ensureCurrentContext() && version === this.targetVersion;

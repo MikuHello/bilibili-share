@@ -7,35 +7,35 @@
       "stages": [
         {
           "name": "open",
-          "durationMs": 200.19999998807907,
+          "durationMs": 179.19999998807907,
           "canvases": 2,
-          "decodes": 10,
+          "decodes": 9,
           "requests": 2
         },
         {
           "name": "details",
-          "durationMs": 231.5,
+          "durationMs": 231.1000000089407,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
         },
         {
           "name": "marker",
-          "durationMs": 35.80000001192093,
+          "durationMs": 33.70000000298023,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "first-export",
-          "durationMs": 105.5,
+          "durationMs": 103.70000000298023,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "repeat-export",
-          "durationMs": 24.899999991059303,
+          "durationMs": 25.5,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
@@ -65,7 +65,6 @@
         "decodes": [
           "",
           "",
-          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
           "哔哩哔哩",
           "原视频完整封面",
           "UP 主",
@@ -79,19 +78,19 @@
         "longTasks": [],
         "shifts": [
           {
-            "start": 521.4000000059605,
+            "start": 475.79999999701977,
             "duration": 0,
             "value": 0.0008876678466796875,
             "recentInput": true
           },
           {
-            "start": 568,
+            "start": 520.2999999970198,
             "duration": 0,
             "value": 0.0010238708496093751,
             "recentInput": true
           },
           {
-            "start": 663.0999999940395,
+            "start": 614.5999999940395,
             "duration": 0,
             "value": 0.0005424041748046876,
             "recentInput": true
@@ -104,35 +103,35 @@
       "stages": [
         {
           "name": "open",
-          "durationMs": 174.20000000298023,
+          "durationMs": 164.20000000298023,
           "canvases": 2,
-          "decodes": 10,
+          "decodes": 9,
           "requests": 2
         },
         {
           "name": "details",
-          "durationMs": 234.69999998807907,
+          "durationMs": 231.20000000298023,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
         },
         {
           "name": "marker",
-          "durationMs": 35.70000000298023,
+          "durationMs": 35.29999999701977,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "first-export",
-          "durationMs": 103.90000000596046,
+          "durationMs": 103.59999999403954,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "repeat-export",
-          "durationMs": 25.69999998807907,
+          "durationMs": 26.599999994039536,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
@@ -162,7 +161,6 @@
         "decodes": [
           "",
           "",
-          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
           "哔哩哔哩",
           "原视频完整封面",
           "UP 主",
@@ -176,19 +174,19 @@
         "longTasks": [],
         "shifts": [
           {
-            "start": 447.5,
+            "start": 433.1000000089407,
             "duration": 0,
             "value": 0.0008876678466796875,
             "recentInput": true
           },
           {
-            "start": 495,
+            "start": 480.70000000298023,
             "duration": 0,
             "value": 0.0010238708496093751,
             "recentInput": true
           },
           {
-            "start": 589.9000000059605,
+            "start": 574.7999999970198,
             "duration": 0,
             "value": 0.0005424041748046876,
             "recentInput": true
@@ -201,35 +199,35 @@
       "stages": [
         {
           "name": "open",
-          "durationMs": 173.6000000089407,
+          "durationMs": 161.20000000298023,
           "canvases": 2,
-          "decodes": 10,
+          "decodes": 9,
           "requests": 2
         },
         {
           "name": "details",
-          "durationMs": 234.3999999910593,
+          "durationMs": 230.40000000596046,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
         },
         {
           "name": "marker",
-          "durationMs": 36.6000000089407,
+          "durationMs": 37,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "first-export",
-          "durationMs": 104.20000000298023,
+          "durationMs": 103.29999999701977,
           "canvases": 1,
           "decodes": 1,
           "requests": 0
         },
         {
           "name": "repeat-export",
-          "durationMs": 26.399999991059303,
+          "durationMs": 26.80000001192093,
           "canvases": 0,
           "decodes": 0,
           "requests": 0
@@ -259,7 +257,6 @@
         "decodes": [
           "",
           "",
-          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
           "哔哩哔哩",
           "原视频完整封面",
           "UP 主",
@@ -273,19 +270,19 @@
         "longTasks": [],
         "shifts": [
           {
-            "start": 448.19999998807907,
+            "start": 431.79999999701977,
             "duration": 0,
             "value": 0.0008876678466796875,
             "recentInput": true
           },
           {
-            "start": 495.69999998807907,
+            "start": 479.59999999403954,
             "duration": 0,
             "value": 0.0010238708496093751,
             "recentInput": true
           },
           {
-            "start": 590.2999999970198,
+            "start": 573.7999999970198,
             "duration": 0,
             "value": 0.0005424041748046876,
             "recentInput": true
