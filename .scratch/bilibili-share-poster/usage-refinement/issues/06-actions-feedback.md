@@ -4,7 +4,7 @@
 
 **Blocked by:** 04、05
 
-**Status:** in-review — 0.3.4 approved three-button follow-up
+**Status:** complete — 0.3.4 approved three-button follow-up
 
 - [x] 下载PNG图标在蓝色复制海报左侧；根据05实际组合动作去留自然布局，不保留空槽或原型演示说明。
 - [x] 操作反馈使用不占布局浮层，约120ms短过渡且不阻塞动作；支持减少动态效果，不遮挡关键控件。
@@ -37,4 +37,4 @@
 
 - [x] Bottom row now contains download, primary poster copy and secondary plain-text copy with equal copy widths; Markdown remains above.
 - [x] Existing browser seam red on same-row assertion, then green: desktop, 320/390px, keyboard, feedback, cover failure, clipboard and PNG download. Typecheck passed.
-- [ ] Dual-axis review before unified delivery.
+- [x] Dual-axis review 31685d1...42863fa: Standards 0 hard violations / 0 actionable smells; Spec 0 findings.
