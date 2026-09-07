@@ -51,6 +51,39 @@ describe("detailed and markdown share text", () => {
       .toBe(buildShareText(snapshot, target, { ...options, markdownText: true }));
   });
 
+  it("uses independent Markdown presets while preserving omitted plain and detailed defaults", () => {
+    const options = { partShare: true, timestampShare: true, detailedText: false, markdownText: true };
+    const templates = { markdown: { compact: "**{{title}}**\n[观看]({{url}})\n{{#if coins}}投币 {{coins}}{{/if}}" } };
+    expect(buildShareText(snapshot, target, options, templates)).toBe(
+      "**【测试】详细文案标题**\n[观看](https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723)\n投币 0",
+    );
+    for (const changed of [{ markdownText: false }, { detailedText: true }]) {
+      expect(buildShareText(snapshot, target, { ...options, ...changed }, templates))
+        .toBe(buildShareText(snapshot, target, { ...options, ...changed }));
+    }
+  });
+
+  it("escapes Markdown text once, preserves authored syntax and canonical URLs, and shares availability rules", () => {
+    const options = { partShare: true, timestampShare: true, detailedText: true, markdownText: true };
+    const special = { ...snapshot, title: "猫 [x]*_`\\ & <tag> {{title}}", uploader: "UP!(甲)", honor: "#荣耀", partTitle: "[第二集]" };
+    const templates = { markdown: { detailed: "**{{title}}**\n[{{uploader}}]({{url}})\n{{#if honor}}{{honor}}{{/if}}|{{part}}|{{timestamp}}|{{coins}}|{{favorites}}{{#if favorites}}BAD{{/if}}" } };
+    expect(buildShareText(special, target, options, templates)).toBe(
+      "**猫 \\[x\\]\\*\\_\\`\\\\ &amp; &lt;tag&gt; \\{\\{title\\}\\}**\n[UP\\!\\(甲\\)](https://www.bilibili.com/video/BV1xx411c7mD/?p=2&t=3723)\n\\#荣耀|P2 · \\[第二集\\]|01:02:03|0|--",
+    );
+    expect(buildShareText({ ...special, honor: "  " }, target, { ...options, partShare: false, timestampShare: false },
+      { markdown: { detailed: " {{honor}}{{part}}{{timestamp}}{{#if honor}}H{{/if}}{{#if part}}P{{/if}}{{#if timestamp}}T{{/if}} " } })).toBe("  ");
+  });
+
+  it("validates only the selected Markdown preset with contextual diagnostics", () => {
+    const options = { partShare: false, timestampShare: false, detailedText: false, markdownText: true };
+    const templates = { plain: { compact: "ordinary" }, markdown: { compact: "ok", detailed: "first\n{{#if honor}}{{typo}}{{/if}}" } };
+    expect(buildShareText(snapshot, target, options, templates)).toBe("ok");
+    expect(buildShareText(snapshot, target, { ...options, markdownText: false }, templates)).toBe("ordinary");
+    expect(() => buildShareText(snapshot, target, { ...options, detailedText: true }, templates))
+      .toThrow(/markdown\.detailed at line 2, column 14: Unknown variable "typo"/);
+    expect(buildShareText(snapshot, target, options, { markdown: { compact: "" } })).toBe("");
+  });
+
   it("renders available conditions, zero statistics and missing placeholders without trimming whitespace", () => {
     const options = { partShare: true, timestampShare: true, detailedText: true, markdownText: false };
     const templates = { plain: { detailed: " {{bvid}} av{{aid}} {{views}} {{likes}} {{coins}} {{favorites}}\n{{#if coins}}zero={{coins}}\n{{/if}}{{#if favorites}}missing\n{{/if}}{{#if honor}}honor={{honor}}\n{{/if}}{{#if part}}{{part}}\n{{/if}}{{#if timestamp}}{{timestamp}}{{/if}} {{honor}} " } };

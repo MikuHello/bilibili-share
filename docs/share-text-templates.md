@@ -10,12 +10,16 @@ export const shareTextTemplates: ShareTextTemplates = {
     compact: "{{url}}\n{{title}}（UP主：{{uploader}}）\n推荐观看",
     detailed: "{{title}}\n{{#if honor}}荣誉：{{honor}}\n{{/if}}播放：{{views}}\n{{url}}",
   },
+  markdown: {
+    compact: "[{{title}}]({{url}}) — {{uploader}}",
+    detailed: "**{{title}}**\n{{#if honor}}{{honor}}\n{{/if}}[观看视频]({{url}})",
+  },
 };
 ```
 
 The same public, DOM-free `buildShareText(snapshot, shareTarget, options, templates?)` interface accepts explicit overrides. Omitting `templates` uses built-ins, not the panel configuration. Direct callers receive `ShareTextTemplateError` (from `src/share-text-template.ts`) for invalid selected presets. The panel catches that error separately for each format, logs the preset plus one-based line/column, and regenerates the affected preset with the built-in template. No DOM, storage or clipboard is needed to reuse generation.
 
-Markdown retains its existing independent output in ticket 01; Markdown template configuration follows in ticket 02. `detailedText` chooses compact or detailed; `markdownText` chooses the copy format.
+Four independent presets are available: `plain.compact`, `plain.detailed`, `markdown.compact`, and `markdown.detailed`. Any subset can be overridden. `detailedText` chooses compact or detailed; `markdownText` chooses the copy format. The panel preview shows ordinary text; its dedicated Markdown copy action uses the corresponding Markdown preset. A future settings UI can pass the same typed configuration to `buildShareText` and display caught `ShareTextTemplateError` diagnostics without changing the generator. This module neither saves settings nor adds a settings UI.
 
 | Variable | Meaning / missing value |
 | --- | --- |
@@ -38,3 +42,7 @@ Names and syntax are exact and case-sensitive. Unknown variables, unmatched deli
 The preview preserves the entire generated string, including trailing text/newlines, repeated links, or no link. Only exact occurrences of the current canonical share target receive link color; no link is appended automatically.
 
 Run `npm test -- tests/share-text.test.ts` and `BSP_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/verify-share-text-templates.mjs` for generation and real Chromium panel/clipboard-boundary checks. The browser script builds production entry points with alternate contents of the actual configuration module and mocks only external page/GM/clipboard boundaries. It does not claim live userscript-manager validation.
+
+Markdown uses the same variables and availability conditions as ordinary text. Text variables escape backslashes and Markdown punctuation, and encode `&`, `<`, `>` as entities; template-authored Markdown remains intact. The `url` variable stays exactly as supplied by the unified share target, including `?p=2&t=83`, so `[{{title}}]({{url}})` has a usable destination. Use `url` for link destinations and text variables for labels. Numeric identifiers, formatted statistics (including `--`) and generated timestamps retain their display forms. Substituted text is escaped once and never parsed as another template.
+
+Run `BSP_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/verify-markdown-templates.mjs` for all four production presets, Markdown escaping and option changes, independent compact/detailed fallback, and PNG clipboard export with broken Markdown configuration. The same controlled-browser limitations apply.
