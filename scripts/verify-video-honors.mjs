@@ -20,6 +20,7 @@ try {
     try {
       await page.getByRole('button', { name: '分享海报', exact: true }).click();
       await page.getByRole('article').waitFor();
+      await page.getByRole('dialog').screenshot({ path: `${output}/initial-${index}.png` });
       if (honor) assert.equal(await page.getByRole('article').getByText(honor, { exact: true }).count(), 1);
       else assert.equal(await page.locator('.bsp-d-honor').count(), 0);
       await page.getByRole('checkbox', { name: '详细信息' }).check();
