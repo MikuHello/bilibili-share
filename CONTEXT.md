@@ -28,6 +28,10 @@ _Avoid_: Poster text, debug data
 An alternative share-text representation containing Markdown syntax for Markdown-aware destinations, selected through a dedicated copy action. Its format is independent from the selected detail level.
 _Avoid_: Rich-text clipboard, styled poster
 
+**Share-text template**:
+A reusable definition of share-text wording containing placeholders for video information and the share target. Built-in templates provide the default wording; custom templates provide alternative wording.
+_Avoid_: Poster layout, share text itself
+
 **Share target**:
 The single video destination represented by both the poster's QR code and its visible link, optionally including a playback position.
 _Avoid_: QR target, link target
