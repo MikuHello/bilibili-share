@@ -1,0 +1,276 @@
+{
+  "browser": "151.0.7922.34",
+  "environment": "Headless Chromium; production bundle; GM fixtures with 40ms per metadata/cover request; clipboard recorder; Playwright action/wait overhead included; not installed-script or live-network latency.",
+  "samples": [
+    {
+      "sample": 0,
+      "stages": [
+        {
+          "name": "open",
+          "durationMs": 171.90000000596046,
+          "canvases": 2,
+          "decodes": 9,
+          "requests": 2
+        },
+        {
+          "name": "details",
+          "durationMs": 229.79999999701977,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        },
+        {
+          "name": "marker",
+          "durationMs": 36.5,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "first-export",
+          "durationMs": 102.8999999910593,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "repeat-export",
+          "durationMs": 26.700000002980232,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        }
+      ],
+      "stableDetails": true,
+      "stableMarker": true,
+      "metrics": {
+        "canvases": [
+          [
+            240,
+            320
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            1080,
+            1440
+          ]
+        ],
+        "decodes": [
+          "",
+          "",
+          "哔哩哔哩",
+          "原视频完整封面",
+          "UP 主",
+          "",
+          "",
+          "",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+          ""
+        ],
+        "longTasks": [],
+        "shifts": [
+          {
+            "start": 446.79999999701977,
+            "duration": 0,
+            "value": 0.0072211074829101555,
+            "recentInput": true
+          },
+          {
+            "start": 493.79999999701977,
+            "duration": 0,
+            "value": 0.005455947875976562,
+            "recentInput": true
+          }
+        ]
+      }
+    },
+    {
+      "sample": 1,
+      "stages": [
+        {
+          "name": "open",
+          "durationMs": 173.70000000298023,
+          "canvases": 2,
+          "decodes": 9,
+          "requests": 2
+        },
+        {
+          "name": "details",
+          "durationMs": 230.90000000596046,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        },
+        {
+          "name": "marker",
+          "durationMs": 35.79999999701977,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "first-export",
+          "durationMs": 103.1000000089407,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "repeat-export",
+          "durationMs": 27.299999997019768,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        }
+      ],
+      "stableDetails": true,
+      "stableMarker": true,
+      "metrics": {
+        "canvases": [
+          [
+            240,
+            320
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            1080,
+            1440
+          ]
+        ],
+        "decodes": [
+          "",
+          "",
+          "哔哩哔哩",
+          "原视频完整封面",
+          "UP 主",
+          "",
+          "",
+          "",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+          ""
+        ],
+        "longTasks": [],
+        "shifts": [
+          {
+            "start": 447.29999999701977,
+            "duration": 0,
+            "value": 0.0072211074829101555,
+            "recentInput": true
+          },
+          {
+            "start": 494.79999999701977,
+            "duration": 0,
+            "value": 0.005455947875976562,
+            "recentInput": true
+          }
+        ]
+      }
+    },
+    {
+      "sample": 2,
+      "stages": [
+        {
+          "name": "open",
+          "durationMs": 173.8999999910593,
+          "canvases": 2,
+          "decodes": 9,
+          "requests": 2
+        },
+        {
+          "name": "details",
+          "durationMs": 229,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        },
+        {
+          "name": "marker",
+          "durationMs": 37.5,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "first-export",
+          "durationMs": 102.19999998807907,
+          "canvases": 1,
+          "decodes": 1,
+          "requests": 0
+        },
+        {
+          "name": "repeat-export",
+          "durationMs": 28,
+          "canvases": 0,
+          "decodes": 0,
+          "requests": 0
+        }
+      ],
+      "stableDetails": true,
+      "stableMarker": true,
+      "metrics": {
+        "canvases": [
+          [
+            240,
+            320
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            564,
+            564
+          ],
+          [
+            1080,
+            1440
+          ]
+        ],
+        "decodes": [
+          "",
+          "",
+          "哔哩哔哩",
+          "原视频完整封面",
+          "UP 主",
+          "",
+          "",
+          "",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/",
+          "二维码：https://www.bilibili.com/video/BV1TXoWBsEGc/?p=2&t=83",
+          ""
+        ],
+        "longTasks": [],
+        "shifts": [
+          {
+            "start": 445.70000000298023,
+            "duration": 0,
+            "value": 0.0072211074829101555,
+            "recentInput": true
+          },
+          {
+            "start": 493.29999999701977,
+            "duration": 0,
+            "value": 0.005455947875976562,
+            "recentInput": true
+          }
+        ]
+      }
+    }
+  ]
+}
