@@ -15,7 +15,7 @@ async function verifyPoster(name, overrides) {
   try {
     await page.getByRole('button',{name:'生成海报',exact:true}).click();
     await page.getByRole('article').waitFor();
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), `${name}: viewport contained`);
+    assert.ok(await page.getByRole('dialog').evaluate(panel=>{const r=panel.getBoundingClientRect();return panel.scrollWidth<=panel.clientWidth+1 && r.left>=0 && r.right<=innerWidth;}), `${name}: panel contained in viewport`);
     if(overrides.markers) {
       await page.getByRole('button',{name:'标记当前时间',exact:true}).click();
       await page.waitForFunction(()=>!document.querySelector('[aria-label="复制海报"]').disabled);
