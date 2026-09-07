@@ -27,6 +27,7 @@ npm run build
 ```
 
 - Maintained TypeScript source: [`src/`](src/)
+- Poster ownership and cache rules: [`docs/poster-maintenance.md`](docs/poster-maintenance.md)
 - Node behavior tests: [`tests/`](tests/)
 - Directly installable build: [`dist/bilibili-share-poster.user.js`](dist/bilibili-share-poster.user.js)
 - Product source: [refinement idea](.scratch/bilibili-share-poster/usage-refinement/idea.md)
