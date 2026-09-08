@@ -2,6 +2,8 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 
 const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const license = await readFile(new URL("../LICENSE", import.meta.url), "utf8");
+const thirdPartyNotices = await readFile(new URL("../THIRD_PARTY_NOTICES.md", import.meta.url), "utf8");
 
 const args = process.argv.slice(2);
 const development = args[0] === "--dev";
@@ -18,6 +20,7 @@ const header = `// ==UserScript==
 // @name         Bilibili 分享海报${development ? " · 开发调试" : ""}
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      ${scriptVersion}
+// @license      MIT
 // @description  ${development ? `开发构建 ${scriptVersion} · ` : ""}在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
@@ -39,7 +42,7 @@ await build({
   platform: "browser",
   target: ["chrome120", "edge120"],
   legalComments: "none",
-  banner: { js: header },
+  banner: { js: `${header}\n/*!\n${license.trim()}\n\n${thirdPartyNotices.trim()}\n*/` },
   minify: false,
   sourcemap: false,
 });
