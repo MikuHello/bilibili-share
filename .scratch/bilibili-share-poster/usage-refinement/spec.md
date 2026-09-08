@@ -119,7 +119,7 @@ Status: approved — implementation spec and ticket breakdown approved; tickets 
 
 ## Further Notes
 
-- 输入：[需求及逐轮决定](idea.md)，共11项需求；最新版视觉：[B3说明](prototype-b3/README.md)。早期固定页脚/标题区及A/B2布局仅作历史，不再约束实现。
+- 输入：[需求及逐轮决定](idea.md)，共11项需求；最新版视觉：[B3说明](prototype-b3/NOTES.md)。早期固定页脚/标题区及A/B2布局仅作历史，不再约束实现。
 - 技术证据：[调查记录](technical-findings.md)、[隔离渲染计时](evidence/render-baseline.md)、[最终统计排列](evidence/final-counter-layout.json)。
 - 旧产品边界继承自[原始idea](../idea.md)及[上一轮实现规格](../redesign/spec.md)，冲突时本规格优先。
 - 当前实际安装版未与候选构建逐字核对；真实剪贴板粘贴仍未验证。上述缺口不得被规格文档掩盖。

@@ -22,7 +22,7 @@
 - [目标一致性](final/share-targets/report.json)、[竞态缓存](final/update-races/races.json)、[最终面板](final/final-panel/report.json)、[外观](final/appearance/browser-verification.md)、[更新性能](final/update-performance/after.json)通过。其余文本恢复、独立导出、生命周期套件结果见日志和对应目录。继续验证目标失效、重复PNG复用、字体/快照失效、关闭导航拒绝回写、失败重试、普通文案/Markdown/独立PNG复制和下载。
 - 人工查看了[真实封面导出](final/b3-poster/real-user-default.png)、[深色长目标导出](final/b3-poster/contrast-dark.png)及窄屏截图：二维码无白块、说明与统计同排，长目标完整保留。
 
-真实封面只作为配色及画幅输入；浏览器夹具保留受控视频身份/链接，截图数字不是实时数据。来源见[封面说明](../covers/README.md)。未声称穷尽封面、平台字体或扫码设备；QQ组合复制结论仍为既有通用方案未可靠满足实测macOS QQ，非所有方案都不可能。
+真实封面只作为配色及画幅输入；浏览器夹具保留受控视频身份/链接，截图数字不是实时数据。来源见[封面说明](../covers/NOTES.md)。未声称穷尽封面、平台字体或扫码设备；QQ组合复制结论仍为既有通用方案未可靠满足实测macOS QQ，非所有方案都不可能。
 
 ## TDD记录
 

@@ -41,7 +41,7 @@ npm run build:dev -- --revision 2
 - 行为变更按 TDD 在已约定的公共接口验证输入、结果和错误，不测试文件拆分或内部调用细节。
 - 常规检查：`npm run check`、`npm test`、`npm run build`。
 - 构建/版本规则变更：额外运行 `npm run test:build`，验证正式/开发头信息、产物隔离与错误参数。
-- 面板、海报、剪贴板或导航行为变更：运行相关浏览器用例；整批交付运行 `npm run test:browser`。Playwright 和 macOS QR 解码等现有环境要求见 README 与验证脚本。
+- 面板、海报、剪贴板或导航行为变更：运行相关浏览器用例；整批交付运行 `npm run test:browser`。使用 `BSP_PLAYWRIGHT_MODULE` 指定已安装的 Playwright 入口；macOS QR 解码等环境要求见验证脚本。
 - `BSP_EVIDENCE_DIR` 指向当前工作项的证据目录。报告区分受控浏览器、真实剪贴板、真实脚本管理器安装与线上网络结果。
 - 纯文档/技能同步不需要重跑产品浏览器矩阵；验证本地链接、技能来源锁和实际改动范围。只改 userscript 版本头时可比较正文是否完全相同。
 - 每票开始提交为该票审查基准；整批审查以整批实施开始提交为基准。记录具体 SHA 并运行 Standards / Spec 两项独立审查。

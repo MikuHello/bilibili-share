@@ -22,7 +22,7 @@ Tampermonkey 是浏览器中的脚本管理器；Greasy Fork 是脚本托管网�
 
 1. 维护者确定正式版本并完成验收，从相应提交的 Actions 运行下载候选产物，核对版本和提交号。也可对同一提交本地构建。
 2. 在 Greasy Fork 登录账户，建立脚本页面，填写说明并提交完整、可读的 `.user.js`。按平台规则检查打包依赖和许可证；不要仅上传一个从别处加载主要代码的入口。
-3. 确认脚本页面和安装按钮可用，将实际页面 URL 写入 README。通过该页面在真实 Tampermonkey 中检查安装与更新行为。
+3. 确认脚本页面和安装按钮可用，将实际页面 URL 写入本发行文档及 GitHub 仓库 About 信息。首版不创建 README。通过该页面在真实 Tampermonkey 中检查安装与更新行为。
 4. 之后用户只从 Greasy Fork 安装和更新。不要把 Actions artifact 或 GitHub Release 附件写成 `@updateURL` / `@downloadURL`。
 
 Greasy Fork 提供只读 API；代码预填接口仍需要在网页审核并提交。当前没有用脚本模拟一个不存在的公开写入 API，也没有自动发布。

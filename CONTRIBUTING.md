@@ -6,7 +6,6 @@
 
 | 文档 | 职责 |
 | --- | --- |
-| [README.md](README.md) | 产品介绍、安装和快速开始 |
 | 本指南 | 贡献入口与文档导航 |
 | [AGENTS.md](AGENTS.md) | Agent 的唯一项目入口，按任务指向相应规范 |
 | [开发规范](docs/development.md) | 版本、开发构建、验证、发布与工作目录管理 |
@@ -19,6 +18,8 @@
 | [海报维护](docs/poster-maintenance.md) | 海报布局、目标更新及 PNG 缓存职责 |
 
 已有规则只在对应文档维护，本指南和 AGENTS 保留链接，避免复制成多套规范。`docs/adr/` 在出现需要长期记录的架构决定时再创建。
+
+首版 GitHub 仓库按拥有者要求不包含任何 README 文件；贡献与 agent 导航分别使用本指南和 AGENTS。历史原型说明保留为 NOTES.md。
 
 ## 开始贡献
 
