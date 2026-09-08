@@ -1,5 +1,7 @@
 # 0.3.5 delivery verification
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/video-honors/evidence/final)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 Both approved tickets are complete. Ticket01 implementation/review commits: 55b09b7 / b04b94a. Ticket02 implementation: d3f9b3f. Each ticket received separate Standards and Spec reviews: zero actionable findings on both axes. Reviewers inspected code and evidence; they did not independently rerun tests.
 
 ## Changes

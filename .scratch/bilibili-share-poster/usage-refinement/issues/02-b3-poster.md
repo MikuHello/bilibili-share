@@ -24,4 +24,4 @@
 
 ## 验证
 
-生产B3已完成；18组实际PNG布局与二维码解码通过，完整目标回归10场景通过。全量66项测试通过，进位边界跟进后领域24项通过，类型检查与构建通过。规范轴1项维护建议已解决，规格轴0项；详见[记录](../evidence/ticket02/verification.md)。
+生产B3已完成；18组实际PNG布局与二维码解码通过，完整目标回归10场景通过。全量66项测试通过，进位边界跟进后领域24项通过，类型检查与构建通过。规范轴1项维护建议已解决，规格轴0项；详见[记录](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02/verification.md)。

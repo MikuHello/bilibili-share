@@ -1,5 +1,7 @@
 # 0.3.4 统一验收
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/interaction-smoothness/evidence/final)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 构建提交：8f7a114；生产实现：fa3ba84（流畅度）、1c3fa4b（入口名称）、42863fa（三按钮），后续移除无用遮罩动效配置。
 
 安装产物：dist/bilibili-share-poster.user.js，版本0.3.4。SHA256 `7dc4226a1ffbfb4413af58a2a6bf4ca1d0f9df375ad6afc4b80f3ca0020765bd`，校验通过。来源为codex/usage-refinement隔离集成分支；原型未合入生产。

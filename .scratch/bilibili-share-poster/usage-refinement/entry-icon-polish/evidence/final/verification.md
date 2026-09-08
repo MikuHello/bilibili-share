@@ -1,5 +1,7 @@
 # 0.3.3 统一验收
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/entry-icon-polish/evidence/final)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 构建提交：a6217c4；实现 c786835（剪贴板）、9d6258f（入口B）。2026-09-07。
 
 交付文件：dist/bilibili-share-poster.user.js；版本0.3.3；SHA256 `190e272a367214c96cbe0261a848892113369f87b1be5b23b3ff4876d190e0c1`，校验通过。

@@ -5,7 +5,7 @@ import { browserRuntime, productionBundle, openFixture } from './browser-test-su
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
-const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/video-honors/evidence/02';
+const output = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/floating-feedback';
 await mkdir(output, { recursive: true });
 try {
   const { page, context, errors } = await openFixture(browser, bundle, { time: 0.4, title: '长文案滚动后的手动复制仍然可用。'.repeat(35) });

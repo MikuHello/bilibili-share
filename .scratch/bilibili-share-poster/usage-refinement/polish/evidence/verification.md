@@ -1,5 +1,7 @@
 # 0.3.1 B3局部收尾验收
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 日期：2026-09-07。Status: done — approved ticket implemented and distributable verified。
 
 ## 交付
@@ -15,14 +17,14 @@
 
 ## 验证
 
-`npm run check`通过；`npm test`为7文件64测试通过。`npm run test:browser`重新构建0.3.1，并让9套件读取相同的dist安装包，全部退出成功，见[运行日志](browser-run.txt)。运行于macOS、受控Chromium/GM/播放器边界；不等同于在主人浏览器中实际升级后的全部站点兼容验证。
+`npm run check`通过；`npm test`为7文件64测试通过。`npm run test:browser`重新构建0.3.1，并让9套件读取相同的dist安装包，全部退出成功，见[运行日志](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/browser-run.txt)。运行于macOS、受控Chromium/GM/播放器边界；不等同于在主人浏览器中实际升级后的全部站点兼容验证。
 
-- [B3报告](final/b3-poster/report.json)：28张1080×1440实际PNG均由Apple Vision解码到预期目标。覆盖4标题×3画幅、截图/等宽/混合/零缺失/极端统计、长UP名、三张真实封面、纯黑/纯白/黑白条纹高对比图、长分P时间目标、320/390px。透明静区和无白色底块同时检查首次及标记更新。两个实际导出像素对照继续确认背景随封面变化。
+- [B3报告](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/b3-poster/report.json)：28张1080×1440实际PNG均由Apple Vision解码到预期目标。覆盖4标题×3画幅、截图/等宽/混合/零缺失/极端统计、长UP名、三张真实封面、纯黑/纯白/黑白条纹高对比图、长分P时间目标、320/390px。透明静区和无白色底块同时检查首次及标记更新。两个实际导出像素对照继续确认背景随封面变化。
 - 截图数字7969/170/34/313的空白为84.38/84.38/84.38px；4数字同为36.72px。单位边界压力用例全行为34px，空白21.59px。28组均同排、不碰二维码、无数值溢出，扫码说明中心线误差小于0.15px。手机面板实际边界及内部水平溢出均通过。
-- [目标一致性](final/share-targets/report.json)、[竞态缓存](final/update-races/races.json)、[最终面板](final/final-panel/report.json)、[外观](final/appearance/browser-verification.md)、[更新性能](final/update-performance/after.json)通过。其余文本恢复、独立导出、生命周期套件结果见日志和对应目录。继续验证目标失效、重复PNG复用、字体/快照失效、关闭导航拒绝回写、失败重试、普通文案/Markdown/独立PNG复制和下载。
-- 人工查看了[真实封面导出](final/b3-poster/real-user-default.png)、[深色长目标导出](final/b3-poster/contrast-dark.png)及窄屏截图：二维码无白块、说明与统计同排，长目标完整保留。
+- [目标一致性](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/share-targets/report.json)、[竞态缓存](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/update-races/races.json)、[最终面板](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/final-panel/report.json)、[外观](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/appearance/browser-verification.md)、[更新性能](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/update-performance/after.json)通过。其余文本恢复、独立导出、生命周期套件结果见日志和对应目录。继续验证目标失效、重复PNG复用、字体/快照失效、关闭导航拒绝回写、失败重试、普通文案/Markdown/独立PNG复制和下载。
+- 人工查看了[真实封面导出](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/b3-poster/real-user-default.png)、[深色长目标导出](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/evidence/final/b3-poster/contrast-dark.png)及窄屏截图：二维码无白块、说明与统计同排，长目标完整保留。
 
-真实封面只作为配色及画幅输入；浏览器夹具保留受控视频身份/链接，截图数字不是实时数据。来源见[封面说明](../covers/NOTES.md)。未声称穷尽封面、平台字体或扫码设备；QQ组合复制结论仍为既有通用方案未可靠满足实测macOS QQ，非所有方案都不可能。
+真实封面只作为配色及画幅输入；浏览器夹具保留受控视频身份/链接，截图数字不是实时数据。来源见[封面说明](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/polish/covers/NOTES.md)。未声称穷尽封面、平台字体或扫码设备；QQ组合复制结论仍为既有通用方案未可靠满足实测macOS QQ，非所有方案都不可能。
 
 ## TDD记录
 

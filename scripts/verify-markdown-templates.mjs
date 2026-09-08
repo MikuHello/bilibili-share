@@ -5,7 +5,7 @@ import { browserRuntime, openFixture } from './browser-test-support.mjs';
 
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
-const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/share-generation-extensibility/evidence/ticket02';
+const out = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/markdown-templates';
 const results = [];
 const templates = {
   plain: { compact: '普通 {{title}}\n{{url}}', detailed: '详细 {{title}}\n{{part}}|{{timestamp}}\n{{url}}' },

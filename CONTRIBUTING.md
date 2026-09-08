@@ -19,7 +19,7 @@
 
 已有规则只在对应文档维护，本指南和 AGENTS 保留链接，避免复制成多套规范。`docs/adr/` 在出现需要长期记录的架构决定时再创建。
 
-项目介绍、安装入口与运行截图见 [README](README.md)；贡献与 agent 导航分别使用本指南和 AGENTS。历史原型说明保留为 NOTES.md。
+项目介绍、安装入口与运行截图见 [README](README.md)；贡献与 agent 导航分别使用本指南和 AGENTS。历史原型和验收产物的查阅入口见 [归档索引](.scratch/ARCHIVE.md)。
 
 ## 开始贡献
 

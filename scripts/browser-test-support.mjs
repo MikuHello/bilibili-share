@@ -22,7 +22,7 @@ export async function productionBundle() {
 }
 
 export async function openFixture(browser, bundle, overrides = {}) {
-  const cover = await readFile(".scratch/bilibili-share-poster/redesign/prototype/cover.jpg");
+  const cover = await readFile("tests/fixtures/covers/default.jpg");
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...overrides.context });
   const page = await context.newPage();
   const errors = [];

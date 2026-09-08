@@ -7,7 +7,7 @@ import { browserRuntime, productionBundle, openFixture } from "./browser-test-su
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
 const browser = await chromium.launch({ headless: true });
-const output = process.env.BSP_EVIDENCE_DIR ?? ".scratch/bilibili-share-poster/usage-refinement/evidence/ticket01";
+const output = process.env.BSP_EVIDENCE_DIR ?? "artifacts/browser/share-targets";
 await mkdir(output, { recursive: true });
 const results = [];
 const canonical = "https://www.bilibili.com/video/BV1TXoWBsEGc/";

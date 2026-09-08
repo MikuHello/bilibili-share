@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { browserRuntime, productionBundle, openFixture } from './browser-test-support.mjs';
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
-const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket06/panel';
+const out = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/final-panel';
 await mkdir(out,{recursive:true});
 const browser = await chromium.launch({headless:true});
 const results = [];

@@ -6,7 +6,7 @@ import { browserRuntime, productionBundle, openFixture } from './browser-test-su
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
-const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/video-honors/evidence/01';
+const output = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/video-honors';
 await mkdir(output, { recursive: true });
 const results = [];
 try {

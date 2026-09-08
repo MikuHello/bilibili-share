@@ -6,8 +6,8 @@ const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
 const backgrounds = [];
-const covers = '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02/covers';
-const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket02';
+const covers = 'tests/fixtures/covers';
+const output = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/b3-poster';
 await mkdir(output, { recursive:true });
 const results = [];
 async function verifyPoster(name, overrides) {
@@ -113,7 +113,7 @@ try {
   }
   await verifyPoster('equal-stats',{stats:{view:8888,like:8888,coin:8888,favorite:8888}});
   await verifyPoster('mixed-stats',{stats:{view:0,like:12000,coin:9999,favorite:null}});
-  const actualCover = await readFile('.scratch/bilibili-share-poster/usage-refinement/polish/covers/BV1QGbD6MEDg.jpg');
+  const actualCover = await readFile('tests/fixtures/covers/BV1QGbD6MEDg.jpg');
   for (const markers of [false,true]) await verifyPoster(`real-user-${markers?'long':'default'}`, {coverBase64:actualCover.toString('base64'),title:'deepseek harness插件：dsh-smooth-stream无级丝滑流式渲染',uploader:'嗑唠的香农',stats:{view:7969,like:170,coin:34,favorite:313},markers,time:123456789});
   for (const [name,fill] of [['dark','#000'],['light','#fff'],['boundary','url(#stripes)']]) {
     const coverBase64=Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><defs><pattern id="stripes" width="80" height="80" patternUnits="userSpaceOnUse"><rect width="40" height="80" fill="black"/><rect x="40" width="40" height="80" fill="white"/></pattern></defs><rect width="100%" height="100%" fill="${fill}"/></svg>`).toString('base64');

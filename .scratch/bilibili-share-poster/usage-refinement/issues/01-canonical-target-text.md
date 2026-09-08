@@ -22,4 +22,4 @@
 
 ## 验证
 
-64项单元测试、TypeScript、生产构建通过。浏览器10场景与6张PNG解码通过；详见[记录](../evidence/ticket01/verification.md)。双轴审查：Standards 0，Spec 0；无阻塞项。
+64项单元测试、TypeScript、生产构建通过。浏览器10场景与6张PNG解码通过；详见[记录](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket01/verification.md)。双轴审查：Standards 0，Spec 0；无阻塞项。

@@ -12,7 +12,7 @@
 
 独立探针：`clipboard-probe.html`。只在真实按钮点击事件中写入一个多格式项；PNG 来自预生成的合成 canvas，没有外部资源。无主动剪贴板读取，无自动写入，无软件检测，无专用适配。手动粘贴区不拦截或改造粘贴，仅读取该用户粘贴事件的格式名称并观察随后 DOM 中是否出现图文。原生图片数是辅助观察，不是通用接收端断言。
 
-探针当前状态：已创建并通过 JavaScript 语法检查。隔离 headless 浏览器中用 mock writer 替换 navigator.clipboard 后点击按钮，确认初始写入次数为 0、点击后为 1、包含三个 MIME 类型且 HTML 内含 PNG 和独立文案（[验证记录](evidence/clipboard-probe-check.json)）。未写入真实系统剪贴板，未验证实际粘贴或 QQ。可通过 localhost/HTTPS 打开，手动点击复制后粘贴。对照记录应分别填写“API 是否接受写入”“粘贴后是否有图片”“是否有独立文字”。
+探针当前状态：已创建并通过 JavaScript 语法检查。隔离 headless 浏览器中用 mock writer 替换 navigator.clipboard 后点击按钮，确认初始写入次数为 0、点击后为 1、包含三个 MIME 类型且 HTML 内含 PNG 和独立文案（[验证记录](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/clipboard-probe-check.json)）。未写入真实系统剪贴板，未验证实际粘贴或 QQ。可通过 localhost/HTTPS 打开，手动点击复制后粘贴。对照记录应分别填写“API 是否接受写入”“粘贴后是否有图片”“是否有独立文字”。
 
 建议：此时不能声称已修复，也没有充分证据断言所有标准方案不可用。保留为短期验证项；若同一标准路线仍不能达成预期，则依据用户授权移除组合入口，不扩展成平台适配项目。独立复制图片、文案与下载继续存在。
 
@@ -32,4 +32,4 @@
 
 建议的局部职责边界：同步的分享目标/文案推导；封面派生颜色（按封面缓存）；海报呈现与测量；按版本导出；面板交互与临时反馈。先看现有函数能否承担这些边界，目录重排本身不算收益。页面深浅模式 token 与封面衍生海报 palette 分开管理，海报导出必须使用与预览相同的显式颜色及字体。
 
-已完成隔离 headless 的实际 delivery 渲染基线（[条件与结果](evidence/render-baseline.md)、[原始记录](evidence/render-baseline.json)）：首轮 createPoster 39.5ms、PNG 75.2ms；后续 createPoster 3.4–4.9ms、PNG 46.7–48.9ms。该样本不包含实际网络、宿主页面竞争或真实安装脚本，不能代表用户总等待或 p95。下一步仍需测视频 API、封面读取/解码和短链链路，并观察标记切换的布局与控件冻结。取消短链后再对照，决定是否需要更深重构。
+已完成隔离 headless 的实际 delivery 渲染基线（[条件与结果](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/render-baseline.md)、[原始记录](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/render-baseline.json)）：首轮 createPoster 39.5ms、PNG 75.2ms；后续 createPoster 3.4–4.9ms、PNG 46.7–48.9ms。该样本不包含实际网络、宿主页面竞争或真实安装脚本，不能代表用户总等待或 p95。下一步仍需测视频 API、封面读取/解码和短链链路，并观察标记切换的布局与控件冻结。取消短链后再对照，决定是否需要更深重构。

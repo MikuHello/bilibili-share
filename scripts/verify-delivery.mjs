@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 const build = spawnSync(process.execPath, ["scripts/build.mjs"], { stdio: "inherit" });
 if (build.error) throw build.error;
 if (build.status !== 0) process.exit(build.status ?? 1);
-const output = process.env.BSP_EVIDENCE_DIR ?? ".scratch/bilibili-share-poster/usage-refinement/evidence/ticket07";
+const output = process.env.BSP_EVIDENCE_DIR ?? "artifacts/browser/delivery";
 // Template suites additionally compile developer-config variants of the production entry point.
 for (const suite of ["b3-poster", "text-recovery", "text-isolation", "share-targets", "update-races", "marker-smoothness", "independent-exports", "final-panel", "appearance", "lifecycle", "update-performance", "video-honors", "floating-feedback", "share-text-templates", "markdown-templates"]) {
   const result = spawnSync(process.execPath, [`scripts/verify-${suite}.mjs`], {

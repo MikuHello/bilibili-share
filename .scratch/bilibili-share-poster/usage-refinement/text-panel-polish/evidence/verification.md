@@ -1,5 +1,7 @@
 # 0.3.2 面板B与详细文案收尾验收
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/text-panel-polish/evidence)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 2026-09-07。生产实现38ced25，文案实现79664a7。沿用既有06工单，主人明确确认B方案后实施。
 
 ## 交付
@@ -13,11 +15,11 @@ SHA256：`6d4cfff846aec93c60d04d3d73bb048762a5f9dd5c064e93cd601a5645598632`。�
 
 ## 验证
 
-`npm run check`通过；7文件64个单元测试通过。`npm run test:browser`构建并以相同0.3.2安装包运行9套浏览器验收，全套退出0：[运行日志](browser-run.txt)。
+`npm run check`通过；7文件64个单元测试通过。`npm run test:browser`构建并以相同0.3.2安装包运行9套浏览器验收，全套退出0：[运行日志](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/text-panel-polish/evidence/browser-run.txt)。
 
-[面板报告](final/final-panel/report.json)验证短文案自然高度、详细信息展开、右侧居中、20px动作间距、长文案310px上限及内部滚动、320/390px控件可达与浮层避让。成功/失败反馈前后几何不变，覆盖连续替换、自动消失、失败保留、减少动态效果、键盘焦点与三条关闭路径。
+[面板报告](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/text-panel-polish/evidence/final/final-panel/report.json)验证短文案自然高度、详细信息展开、右侧居中、20px动作间距、长文案310px上限及内部滚动、320/390px控件可达与浮层避让。成功/失败反馈前后几何不变，覆盖连续替换、自动消失、失败保留、减少动态效果、键盘焦点与三条关闭路径。
 
-[B3报告](final/b3-poster/report.json)28张1080×1440 PNG全部通过几何与Apple Vision扫码验证；其余套件覆盖目标一致、竞态缓存、浅深外观、失败恢复、独立导出、导航生命周期及更新性能。人工查看桌面、320px和极长文案截图，布局与批准B方向一致。
+[B3报告](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/text-panel-polish/evidence/final/b3-poster/report.json)28张1080×1440 PNG全部通过几何与Apple Vision扫码验证；其余套件覆盖目标一致、竞态缓存、浅深外观、失败恢复、独立导出、导航生命周期及更新性能。人工查看桌面、320px和极长文案截图，布局与批准B方向一致。
 
 TDD：自然高度断言先在旧布局失败，落实B样式后通过；浮层避让断言复现320/390px遮住下载和复制按钮，加入位置避让后通过。新增极长文案上限回归随后纳入最终包全套检查。
 

@@ -21,7 +21,7 @@
 - 每票独立验证，不把本票测试推迟到最终集成；不逐票向主人交付中间安装包，全部完成后统一交付。
 - 遇到已授权的常规实现选择继续推进；新的产品取舍或不能自行解决的外部阻塞明确记录，不擅自扩展范围。
 
-Evidence: [ticket03 verification](../evidence/ticket03/verification.md).
+Evidence: [ticket03 verification](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket03/verification.md).
 
 ## 0.3.4 follow-up
 

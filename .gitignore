@@ -2,5 +2,7 @@
 .reasonix/
 node_modules/
 coverage/
+/artifacts/
+.scratch/**/evidence/
 
 dist/bilibili-share-poster.dev.user.js

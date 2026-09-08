@@ -20,7 +20,7 @@
 - 每票独立验证，不把本票测试推迟到最终集成；不逐票向主人交付中间安装包，全部完成后统一交付。
 - 遇到已授权的常规实现选择继续推进；新的产品取舍或不能自行解决的外部阻塞明确记录，不擅自扩展范围。
 
-Verification: [controlled browser + live CSS observations](../evidence/ticket04/verification.md). Code commit `86f2d2e`; full installed-candidate verification remains ticket07.
+Verification: [controlled browser + live CSS observations](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket04/verification.md). Code commit `86f2d2e`; full installed-candidate verification remains ticket07.
 
 ## 实心入口B收尾
 
@@ -35,6 +35,6 @@ Verification: [controlled browser + live CSS observations](../evidence/ticket04/
 
 - [x] Apply approved entry label correction from spec.md final appendix: 分享海报. Existing appearance browser suite and typecheck pass; review before unified delivery.
 
-Entry keeps its approved icon and geometry. Existing browser action selectors now use the visible 分享海报 label. Evidence: [entry](../interaction-smoothness/evidence/entry/browser-verification.md).
+Entry keeps its approved icon and geometry. Existing browser action selectors now use the visible 分享海报 label. Evidence: [entry](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/interaction-smoothness/evidence/entry/browser-verification.md).
 
 0.3.4 entry review `971a087...1c3fa4b`: Spec 0 findings; Standards 0 hard violations and 0 actionable smells. Unified release remains pending ticket 06.

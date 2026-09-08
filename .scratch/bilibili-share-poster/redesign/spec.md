@@ -192,7 +192,7 @@ Plan: bilibili-share-poster/redesign
 
 - 最终批准：[approval.md](./approval.md)。前沿关闭和逐轮变更记录：[discovery记录](./discovery-frontier-2026-09-05.md)。本规格覆盖相冲突的旧视觉/格式决定，未被替代的运行边界由父idea提供来源。
 - 已批准最终原型归档：分支 `codex/share-panel-prototype-v4`，提交 `587b5c07a4e1e9a47a3ae1f4d52cd82da480b1d1`。第五版海报历史归档：`4787d9fcfacae53ed63118577969d92a4d0ea0d5`。归档不得整体合并生产。
-- 可查看 [最终原型说明](./validation-prototype/NOTES.md) 和 [面板检查结果](./validation-prototype/evidence/panel-v4/report.json)。预览仍为本机8768服务，不作为唯一持久来源。
+- 可查看 [最终原型说明](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/redesign/validation-prototype/NOTES.md) 和 [面板检查结果](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/redesign/validation-prototype/evidence/panel-v4/report.json)。预览仍为本机8768服务，不作为唯一持久来源。
 - 事实证据：[运行时续查](./runtime-followup.md)、[主题源码调查](./discovery-theme-2026-09-05.md)、[原生面板参考](./native-panel-reference.md)。封面许可层已定位；真实修复、设置切换及完整安装验收仍未完成。
 - 旧规格的接缝确认见父spec“测试seam（已与所有者确认）”。本轮继续同一边界；测试内容替换旧A/B类名或字符长度假设，不增加另一套测试治理。
 - 后续顺序：本spec已批准 → 提出并批准拆票方案 → to-tickets生成独立新工单 → 每票fresh implement+tdd → code-review → commit与实际验收。当前不创建或执行工单。

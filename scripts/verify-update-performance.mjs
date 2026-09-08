@@ -5,7 +5,7 @@ const baseline = process.argv.includes('--baseline');
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
 const bundle = await productionBundle();
-const output = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/evidence/ticket03';
+const output = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/update-performance';
 await mkdir(output, { recursive: true });
 const samples = [];
 async function ready(page) {

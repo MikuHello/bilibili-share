@@ -11,6 +11,12 @@ Issues and specs for this repository live as Markdown files in `.scratch/`.
 - Record workflow state as a `Status:` line near the top of each issue file.
 - Append later discussion under a `## Comments` heading instead of rewriting its history.
 
+## Generated artifacts and completed work
+
+- Keep idea/spec/approval/issue records and one final acceptance summary per delivery. Put test inputs in `tests/fixtures/` with provenance; product documentation images belong in `docs/images/`.
+- Write screenshots, temporary bundles, measurements and raw logs to ignored `artifacts/`. Do not keep multiple copies under historical tickets. Existing `.scratch/**/evidence/` output paths are also ignored; new acceptance summaries belong outside generated-output directories.
+- On completion, retain resolved decisions and the final summary, then remove superseded prototypes, per-step reports and duplicate outputs from the working tree. Before removing a referenced file, migrate required fixtures and replace navigable historical references with links to a fixed Git commit. Keep the archive entry point in `.scratch/ARCHIVE.md`; do not rewrite Git history to perform routine cleanup.
+
 ## Skill operations
 
 When a skill says "publish to the issue tracker", create or update the corresponding file under `.scratch/<feature-slug>/`.

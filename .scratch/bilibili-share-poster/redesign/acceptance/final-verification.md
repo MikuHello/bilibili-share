@@ -1,5 +1,7 @@
 # Final integrated verification — 2026-09-05
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/redesign/acceptance)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 Production source and distribution baseline: fb79f0c. Version 0.2.0.
 
 - `npm test`: 7 files, 66 behavior tests PASS. Four retired A/B surface-only tests removed along with unused theme/token API; legacy stored settings are still tested as ignored.

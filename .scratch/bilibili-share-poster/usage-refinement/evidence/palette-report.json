@@ -1,6 +1,0 @@
-{
-  "changed": true,
-  "before": "<i title=\"rgb(56,55,50)\" style=\"background:rgb(56,55,50)\"></i><i title=\"rgb(234,240,240)\" style=\"background:rgb(234,240,240)\"></i><i title=\"rgb(230,211,171)\" style=\"background:rgb(230,211,171)\"></i><i title=\"rgb(215,227,227)\" style=\"background:rgb(215,227,227)\"></i>",
-  "after": "<i title=\"rgb(55,47,34)\" style=\"background:rgb(55,47,34)\"></i><i title=\"rgb(205,171,162)\" style=\"background:rgb(205,171,162)\"></i><i title=\"rgb(227,173,88)\" style=\"background:rgb(227,173,88)\"></i><i title=\"rgb(162,98,80)\" style=\"background:rgb(162,98,80)\"></i>",
-  "scope": "Synthetic warm fixture; no external image upload, visual sample metadata remains unchanged"
-}

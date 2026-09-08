@@ -20,7 +20,7 @@
 - 每票独立验证，不把本票测试推迟到最终集成；不逐票向主人交付中间安装包，全部完成后统一交付。
 - 遇到已授权的常规实现选择继续推进；新的产品取舍或不能自行解决的外部阻塞明确记录，不擅自扩展范围。
 
-证据：[验证与两轴审阅](../evidence/ticket06/verification.md)。实现a3cdec9，审阅修复a9b9e68。
+证据：[验证与两轴审阅](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket06/verification.md)。实现a3cdec9，审阅修复a9b9e68。
 
 
 ## B局部收尾（主人已确认）

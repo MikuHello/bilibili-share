@@ -1,5 +1,7 @@
 # 0.3.0 统一交付验收记录
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 日期：2026-09-07。Status: implementation verified; awaiting manual Tampermonkey installation verification。
 
 ## 产物与基线
@@ -23,22 +25,22 @@
 
 `npm test`：7文件、64测试通过。`npm run check`及`npm run build`通过。
 
-`npm run test:browser`现在先构建，再让9个套件直接读取同一个`dist/bilibili-share-poster.user.js`。运行环境macOS、Chromium151.0.7922.34，GM网络/播放器边界受控。完整日志：[browser-run.txt](browser-run.txt)。
+`npm run test:browser`现在先构建，再让9个套件直接读取同一个`dist/bilibili-share-poster.user.js`。运行环境macOS、Chromium151.0.7922.34，GM网络/播放器边界受控。完整日志：[browser-run.txt](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/browser-run.txt)。
 
 | 验证 | 结果与证据 |
 | --- | --- |
-| B3 | [18组实际PNG及几何报告](b3-poster/report.json)通过，包括4种标题×3画幅、极端统计/昵称、缺失与零、长目标、真实深色桌搭与暖色MV封面；2个导出背景像素对照确认配色随封面变化。18个PNG均由Apple Vision解码二维码。 |
-| 目标 | [10场景](share-targets/report.json)通过，6个PNG解码与完整目标一致，无短链请求，包含分P/时间联动及重开重置。 |
-| 竞态/缓存 | [9组](update-races/races.json)通过：乱序QR、关闭/导航、重复导出、失败重试、真实字体加载及目标/快照失效；2个实际PNG再次扫码。 |
-| 面板 | [7组](final-panel/report.json)通过：320/390px、下载与复制同排、键盘焦点/3种关闭、浮层稳定及减少动态效果、失败恢复、原生Chromium独立剪贴板与1080×1440下载。已人工查看320px动作截图与实际PNG。 |
-| 外观 | [受控浅深初始化和切换](appearance/browser-verification.md)通过，包含宿主h2/h3干扰、unknown/oklab、入口重挂、海报及PNG缓存不随模式改变。 |
+| B3 | [18组实际PNG及几何报告](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/b3-poster/report.json)通过，包括4种标题×3画幅、极端统计/昵称、缺失与零、长目标、真实深色桌搭与暖色MV封面；2个导出背景像素对照确认配色随封面变化。18个PNG均由Apple Vision解码二维码。 |
+| 目标 | [10场景](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/share-targets/report.json)通过，6个PNG解码与完整目标一致，无短链请求，包含分P/时间联动及重开重置。 |
+| 竞态/缓存 | [9组](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/update-races/races.json)通过：乱序QR、关闭/导航、重复导出、失败重试、真实字体加载及目标/快照失效；2个实际PNG再次扫码。 |
+| 面板 | [7组](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/final-panel/report.json)通过：320/390px、下载与复制同排、键盘焦点/3种关闭、浮层稳定及减少动态效果、失败恢复、原生Chromium独立剪贴板与1080×1440下载。已人工查看320px动作截图与实际PNG。 |
+| 外观 | [受控浅深初始化和切换](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/appearance/browser-verification.md)通过，包含宿主h2/h3干扰、unknown/oklab、入口重挂、海报及PNG缓存不随模式改变。 |
 | 生命周期及恢复 | 9组生命周期和3组文本恢复通过；初始/重试/目标请求中导航、未派发导航事件时操作、替换播放器、原播放状态恢复均覆盖。 |
 
 真实封面样例仍使用明确的集成夹具身份/UP/统计；不是这些视频实时元数据的海报。方/竖图为合成边界样例。真实桌搭封面具有大面积暗部与高亮屏幕，暖色MV封面整体较低饱和；未声称穷尽所有封面或跨系统字体表现。Windows QQ未覆盖。
 
 ## 性能复核
 
-同机同浏览器、1280×900、GM元数据和封面各固定40ms、每版3样本。旧版为ticket02 `92dc0dd`，对照数据见[ticket03](../ticket03/verification.md)；最终版见[after.json](update-performance/after.json)。这些时间包含Playwright动作及等待开销，不能视为真实网络或已安装Tampermonkey的速度保证，不计算p95。
+同机同浏览器、1280×900、GM元数据和封面各固定40ms、每版3样本。旧版为ticket02 `92dc0dd`，对照数据见[ticket03](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket03/verification.md)；最终版见[after.json](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket07/update-performance/after.json)。这些时间包含Playwright动作及等待开销，不能视为真实网络或已安装Tampermonkey的速度保证，不计算p95。
 
 | 阶段 | 优化前ms（3样本） | 最终0.3.0 ms（3样本） |
 | --- | --- | --- |
@@ -52,7 +54,7 @@
 
 ## 真实剪贴板决定
 
-见[ticket05真实粘贴证据](../ticket05/verification.md)：标准PNG/text/plain/text/html在Edge默认contenteditable与macOS TextEdit可粘贴图片和独立文字，但macOS QQ只有图片；移除PNG表示仍未使QQ得到可编辑文字。依据批准规格的条件授权移除组合入口，没有增加平台专用代码。未发送任何消息，测试草稿已清理。
+见[ticket05真实粘贴证据](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/ticket05/verification.md)：标准PNG/text/plain/text/html在Edge默认contenteditable与macOS TextEdit可粘贴图片和独立文字，但macOS QQ只有图片；移除PNG表示仍未使QQ得到可编辑文字。依据批准规格的条件授权移除组合入口，没有增加平台专用代码。未发送任何消息，测试草稿已清理。
 
 ## Standards
 

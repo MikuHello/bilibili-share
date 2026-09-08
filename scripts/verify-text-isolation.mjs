@@ -4,7 +4,7 @@ import { browserRuntime, productionBundle, openFixture } from './browser-test-su
 const { chromium } = await browserRuntime();
 const bundle = await productionBundle();
 const browser = await chromium.launch({headless:true});
-const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/bilibili-share-poster/usage-refinement/clipboard-isolation/evidence';
+const out = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/text-isolation';
 await mkdir(out,{recursive:true});
 const results=[];
 try {

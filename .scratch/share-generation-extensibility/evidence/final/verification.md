@@ -1,5 +1,7 @@
 # Bilibili Share 0.4.0 — final verification
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/share-generation-extensibility/evidence/final)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 Status: COMPLETE — verification and aggregate code review passed
 
 ## Delivered behavior

@@ -3,7 +3,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {browserRuntime,productionBundle,openFixture} from './browser-test-support.mjs';
 const {chromium}=await browserRuntime();
 const browser=await chromium.launch({headless:true});
-const out=process.env.BSP_EVIDENCE_DIR??'.scratch/bilibili-share-poster/usage-refinement/interaction-smoothness/evidence';
+const out=process.env.BSP_EVIDENCE_DIR??'artifacts/browser/marker-smoothness';
 await mkdir(out,{recursive:true});
 try{
  const {page,context}=await openFixture(browser,await productionBundle());

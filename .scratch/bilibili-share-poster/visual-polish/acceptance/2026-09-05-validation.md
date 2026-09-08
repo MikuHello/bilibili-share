@@ -1,5 +1,7 @@
 # 2026-09-05 视觉打磨实施与验证
 
+> 归档说明：本报告对应历史版本。原始截图、日志和中间报告见 [清理前快照](https://github.com/MikuHello/bilibili-share/tree/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/visual-polish/acceptance)；当前测试使用 tests/fixtures/，输出写入 artifacts/。
+
 ## 实施范围
 
 - 01：定位包含官方分享控件的工具项，避免误插在点赞之后；维持幂等挂载。沿用已批准的海报舞台/控制栏骨架。

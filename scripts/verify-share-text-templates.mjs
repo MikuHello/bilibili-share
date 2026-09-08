@@ -5,7 +5,7 @@ import { browserRuntime, openFixture } from './browser-test-support.mjs';
 
 const { chromium } = await browserRuntime();
 const browser = await chromium.launch({ headless: true });
-const out = process.env.BSP_EVIDENCE_DIR ?? '.scratch/share-generation-extensibility/evidence/01';
+const out = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/share-text-templates';
 const results = [];
 try {
   for (const template of ['{{url}}\n{{title}}\n结束', '{{title}}\n{{url}}\n结束', '地址 {{url}} 后缀', '{{title}}', '前\n{{title}}\n后\n', '{{#if honor}}{{unknown}}{{/if}}']) {

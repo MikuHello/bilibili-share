@@ -5,9 +5,9 @@ import { browserRuntime } from './browser-test-support.mjs';
 
 const { chromium } = await browserRuntime();
 const bundle = await build({ stdin: { contents: `import {buildDefaultPoster} from './src/domain'; import {createPoster,exportPosterPng} from './src/ui/posters'; import {STYLES} from './src/ui/styles'; const style=document.createElement('style'); style.textContent=STYLES;document.head.append(style); window.render = async (snapshot,target) => { const poster = await createPoster(buildDefaultPoster(snapshot,target)); document.body.replaceChildren(poster); return exportPosterPng(poster); };`, resolveDir: process.cwd() }, bundle: true, write: false, format: 'iife' });
-const out = '.scratch/bilibili-share-poster/redesign/acceptance/ticket02';
+const out = process.env.BSP_EVIDENCE_DIR ?? 'artifacts/browser/default-poster';
 await mkdir(out, { recursive: true });
-const cover = 'data:image/jpeg;base64,' + (await readFile('.scratch/bilibili-share-poster/redesign/validation-prototype/assets/cover.jpg')).toString('base64');
+const cover = 'data:image/jpeg;base64,' + (await readFile('tests/fixtures/covers/default.jpg')).toString('base64');
 const sample = { bvid: 'BV1TXoWBsEGc', aid: 116448123027614, title: '35min 正念冥想｜把身体作为方法｜从内耗到感受｜此时此地此身｜聆听身体｜回归当下', uploader: '妮卡的房间NiCalm', coverDataUrl: cover, coverUnavailable: false, partNumber: 2, partTitle: '第二集', partIdentified: true, playbackSeconds: 83, wasPlaying: false, stats: { views: 178000, likes: 2662, coins: null, favorites: 6656 } };
 const target = 'https://www.bilibili.com/video/BV1TXoWBsEGc/';
 const cases = [
