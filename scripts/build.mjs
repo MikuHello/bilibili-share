@@ -5,9 +5,9 @@ const { version } = JSON.parse(await readFile(new URL("../package.json", import.
 
 const args = process.argv.slice(2);
 const development = args[0] === "--dev";
-const revision = development && args[1] === "--revision" ? args[2] : undefined;
-if (args.length && !(development && args.length === 3 && /^[1-9]\d*$/.test(revision ?? "") && Number.isSafeInteger(Number(revision)))) {
-  throw new Error("Use npm run build for a release, or npm run build:dev -- --revision <positive integer> for a development iteration.");
+const revision = development && args.length === 1 ? "1" : args[1] === "--revision" ? args[2] : undefined;
+if (args.length && !(development && (args.length === 1 || args.length === 3 && args[1] === "--revision") && /^[1-9]\d*$/.test(revision ?? "") && Number.isSafeInteger(Number(revision)))) {
+  throw new Error("Use npm run build for a release, or npm run build:dev [-- --revision <positive integer>] for a development build (default: dev.1).");
 }
 if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
   throw new Error("package.json version must be the release base X.Y.Z; development revisions are passed separately.");
@@ -18,7 +18,7 @@ const header = `// ==UserScript==
 // @name         Bilibili 分享海报${development ? " · 开发调试" : ""}
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      ${scriptVersion}
-// @description  ${development ? `开发构建 V${version} R${revision} · ` : ""}在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
+// @description  ${development ? `开发构建 ${scriptVersion} · ` : ""}在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard

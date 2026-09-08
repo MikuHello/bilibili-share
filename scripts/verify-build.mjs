@@ -14,19 +14,20 @@ assert.equal(header(release, "version"), version);
 assert.equal(header(release, "name"), "Bilibili 分享海报");
 assert.ok(!release.includes("bsp-debug-drawer"), "release excludes development drawer");
 
-for (const revision of [1, 2]) {
-  const result = run("--dev", "--revision", String(revision));
+for (const revision of [undefined, 1, 2]) {
+  const result = revision === undefined ? run("--dev") : run("--dev", "--revision", String(revision));
   assert.equal(result.status, 0, result.stderr);
   const dev = await readFile(devFile, "utf8");
-  assert.equal(header(dev, "version"), `${version}-dev.${revision}`);
+  assert.equal(header(dev, "version"), `${version}-dev.${revision ?? 1}`);
   assert.equal(header(dev, "name"), "Bilibili 分享海报 · 开发调试", "dev identity stays stable across revisions");
-  assert.ok(header(dev, "description").includes(`V${version} R${revision}`));
+  assert.ok(header(dev, "description").includes(`${version}-dev.${revision ?? 1}`));
+  assert.ok(!/\bR\d+\b/.test(header(dev, "description")));
   assert.ok(dev.includes("bsp-debug-drawer"));
   assert.equal(await readFile(releaseFile, "utf8"), release, "development builds leave release artifact intact");
 }
 
 const dev = await readFile(devFile, "utf8");
-for (const args of [["--dev"], ["--revision", "1"], ["--dev", "--revision", "0"],
+for (const args of [["--dev", "--revision"], ["--revision", "1"], ["--dev", "--revision", "0"],
   ["--dev", "--revision", "01"], ["--dev", "--revision", "-1"], ["--dev", "--revision", "1.5"],
   ["--dev", "--revision", "999999999999999999999"], ["--dev", "--revision", "1", "--revision", "2"], ["--typo"]]) {
   const result = run(...args);

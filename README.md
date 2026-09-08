@@ -15,7 +15,7 @@ If the cover fails, valid plain text and Markdown remain available with a retry 
 
 The userscript deliberately declares no remote update or download URL.
 
-Current release baseline: **V0.1** (`0.1.0`). Development iterations such as `V0.1.0 R1` are separate builds, not GitHub releases.
+Current release baseline: **V0.1** (`0.1.0`). Local prototypes are recommended to use versions such as `0.1.0-dev.1`; they are separate builds, not GitHub releases.
 
 ## Develop
 
@@ -28,7 +28,7 @@ npm run check
 npm run build
 ```
 
-For development/prototype iteration R1, use `npm run build:dev -- --revision 1`. It writes the separate development userscript; increase the revision for the next reviewed iteration. See [Contributing](CONTRIBUTING.md) and [development/version rules](docs/development.md).
+For a local prototype, use `npm run build:dev` (defaults to `0.1.0-dev.1` at the current baseline). Optionally use `npm run build:dev -- --revision 2` for `0.1.0-dev.2`. This writes a separate development userscript; local numbering is a recommendation, not a repository-wide sequence. See [Contributing](CONTRIBUTING.md) and [development/version rules](docs/development.md).
 
 - Maintained TypeScript source: [`src/`](src/)
 - Developer share-text configuration: [`src/share-text-config.ts`](src/share-text-config.ts), with [variables and template examples](docs/share-text-templates.md)
