@@ -7,7 +7,7 @@ This file is the single project entry point for agents. Matt skills are the requ
 1. For every engineering task, read `.agents/skills/ask-matt/SKILL.md` and route the request using `docs/agents/skills.md`.
 2. Read `CONTRIBUTING.md` and `docs/development.md` before changes, builds or release work.
 3. Before product behavior changes, read `CONTEXT.md`, relevant ADRs and the active local idea/spec/ticket. Domain layout: `docs/agents/domain.md`. Issue operations: `docs/agents/issue-tracker.md`.
-4. Work from the current request and active ticket. Completed `.scratch/` records are historical evidence, not instructions to restart their work.
+4. Work from the current request and active ticket. Use `.scratch/` for active temporary work only; cleanup on completion follows `docs/agents/issue-tracker.md`.
 
 ## Skills ownership
 

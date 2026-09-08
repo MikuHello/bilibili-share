@@ -1,6 +1,6 @@
 # Issue tracker: Local Markdown
 
-Issues and specs for this repository live as Markdown files in `.scratch/`.
+Active issues and specs live as temporary Markdown files in `.scratch/` (Git-ignored). The current explicit maintenance request can serve as the work item when it already defines the scope and acceptance criteria.
 
 ## Conventions
 
@@ -13,9 +13,11 @@ Issues and specs for this repository live as Markdown files in `.scratch/`.
 
 ## Generated artifacts and completed work
 
-- Keep idea/spec/approval/issue records and one final acceptance summary per delivery. Put test inputs in `tests/fixtures/` with provenance; product documentation images belong in `docs/images/`.
-- Write screenshots, temporary bundles, measurements and raw logs to ignored `artifacts/`. Do not keep multiple copies under historical tickets. Existing `.scratch/**/evidence/` output paths are also ignored; new acceptance summaries belong outside generated-output directories.
-- On completion, retain resolved decisions and the final summary, then remove superseded prototypes, per-step reports and duplicate outputs from the working tree. Before removing a referenced file, migrate required fixtures and replace navigable historical references with links to a fixed Git commit. Keep the archive entry point in `.scratch/ARCHIVE.md`; do not rewrite Git history to perform routine cleanup.
+- Keep only active working notes under `.scratch/`. On completion, remove temporary ideas, specs, tickets, acceptance notes and historical archives; do not create an archive index or replacement archive directory.
+- Keep durable product decisions in `CONTEXT.md` or ADRs when needed. Put release changes and verification results in the commit or release description.
+- Test inputs belong in `tests/fixtures/` with provenance; product documentation images belong in `docs/images/`.
+- Screenshots, temporary bundles, measurements and raw logs belong in ignored `artifacts/`; remove obsolete generated output at completion.
+- Remove stale documentation links when deleting temporary files. Routine cleanup does not rewrite Git history.
 
 ## Skill operations
 

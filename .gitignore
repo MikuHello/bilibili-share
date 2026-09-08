@@ -8,6 +8,6 @@ desktop.ini
 node_modules/
 coverage/
 /artifacts/
-.scratch/**/evidence/
+/.scratch/
 
 dist/bilibili-share-poster.dev.user.js

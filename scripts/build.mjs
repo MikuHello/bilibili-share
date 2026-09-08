@@ -21,6 +21,9 @@ const header = `// ==UserScript==
 // @namespace    https://github.com/mikuhello/bilibili-share
 // @version      ${scriptVersion}
 // @license      MIT
+// @author       MikuHello
+// @homepageURL  https://github.com/MikuHello/bilibili-share
+// @supportURL   https://github.com/MikuHello/bilibili-share/issues
 // @description  ${development ? `开发构建 ${scriptVersion} · ` : ""}在 Bilibili 标准视频页生成默认主题分享海报，复制海报、普通文案与 Markdown
 // @match        https://www.bilibili.com/video/BV*
 // @grant        GM_xmlhttpRequest
