@@ -15,6 +15,8 @@ If the cover fails, valid plain text and Markdown remain available with a retry 
 
 The userscript deliberately declares no remote update or download URL.
 
+Current release baseline: **V0.1** (`0.1.0`). Development iterations such as `V0.1.0 R1` are separate builds, not GitHub releases.
+
 ## Develop
 
 Requires Node.js 20 or newer.
@@ -26,6 +28,8 @@ npm run check
 npm run build
 ```
 
+For development/prototype iteration R1, use `npm run build:dev -- --revision 1`. It writes the separate development userscript; increase the revision for the next reviewed iteration. See [Contributing](CONTRIBUTING.md) and [development/version rules](docs/development.md).
+
 - Maintained TypeScript source: [`src/`](src/)
 - Developer share-text configuration: [`src/share-text-config.ts`](src/share-text-config.ts), with [variables and template examples](docs/share-text-templates.md)
 - Poster ownership and cache rules: [`docs/poster-maintenance.md`](docs/poster-maintenance.md)
@@ -34,9 +38,10 @@ npm run build
 - Product source: [share-generation idea](.scratch/share-generation-extensibility/idea.md)
 - Approved implementation spec: [share-generation spec](.scratch/share-generation-extensibility/spec.md)
 - Matt workflow: [`docs/agents/skills.md`](docs/agents/skills.md)
+- Agent entry: [`AGENTS.md`](AGENTS.md); vendored project skills and their source lock live under [`.agents/`](.agents/)
 
 ## Browser verification
 
 Install Playwright separately in the test environment, or set `BSP_PLAYWRIGHT_MODULE` to an existing Playwright module entry point, then run `npm run test:browser`. Set `BSP_EVIDENCE_DIR` to choose the report directory. The default-behavior suites build and exercise the exact distributable bundle with controlled GM/network and player boundaries; clipboard success checks additionally use the actual Chromium clipboard. The two template suites compile the production entry point with developer configuration overrides and check preview/copy results. They do not substitute for Tampermonkey installation verification. On macOS, the QR checks use the native Vision decoder.
 
-Release 0.4.0: [Reusable plain/Markdown templates and poster module verification](.scratch/share-generation-extensibility/evidence/final/verification.md).
+V0.1 keeps the reusable plain/Markdown templates and poster module refactor. The [prior internal 0.4.0 verification](.scratch/share-generation-extensibility/evidence/final/verification.md) remains historical evidence; [V0.1 version and governance verification](.scratch/project-governance/verification.md) records the numbering reset and current artifact.

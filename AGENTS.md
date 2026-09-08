@@ -1,17 +1,14 @@
 # Bilibili Share
 
-## Agent skills
+This file is the single project entry point for agents. Matt skills are the required engineering workflow; supporting tools operate within that workflow.
 
-### Issue tracker
+## Start here
 
-Track product work as local Markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+1. For every engineering task, read `.agents/skills/ask-matt/SKILL.md` and route the request using `docs/agents/skills.md`.
+2. Read `CONTRIBUTING.md` and `docs/development.md` before changes, builds or release work.
+3. Before product behavior changes, read `CONTEXT.md`, relevant ADRs and the active local idea/spec/ticket. Domain layout: `docs/agents/domain.md`. Issue operations: `docs/agents/issue-tracker.md`.
+4. Work from the current request and active ticket. Completed `.scratch/` records are historical evidence, not instructions to restart their work.
 
-### Domain docs
+## Skills ownership
 
-Use the single-context layout: root `CONTEXT.md` plus `docs/adr/`, created only when resolved vocabulary or durable decisions exist. See `docs/agents/domain.md`.
-
-### Matt workflow
-
-For a new idea, run `grill-with-docs`; use `handoff` and `prototype` only for a visual or runnable question; then run `to-spec`, `to-tickets`, and one fresh `implement` session per approved ticket. See `docs/agents/skills.md`.
-
-For the approved default-theme and share-panel redesign, read `.scratch/bilibili-share-poster/redesign/spec.md`, `delivery-plan.md`, and the active ticket in its `issues/` directory. The seven approved tickets are internal implementation units with one final batch delivery. Earlier parent tickets are historical; do not resume them. Future visual changes still require an explicit design pass.
+Project skills under `.agents/skills/` are vendored upstream source. For installing or updating them, follow `docs/agents/skills.md` and `.agents/matt-skills.lock.json`; keep project adaptations outside the upstream copies. Skill updates do not replace the owner's decisions or existing approvals.

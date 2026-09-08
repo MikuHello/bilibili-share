@@ -1,6 +1,6 @@
 {
   "name": "bilibili-share-poster",
-  "version": "0.4.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build:dev": "node scripts/build.mjs --dev",
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "test:build": "node scripts/verify-build.mjs",
     "test:watch": "vitest",
     "test:browser": "node scripts/verify-delivery.mjs"
   },

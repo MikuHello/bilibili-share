@@ -18,3 +18,5 @@ When a skill says "publish to the issue tracker", create or update the correspon
 When a skill says "fetch the relevant ticket", read the exact local path or issue number supplied by the owner.
 
 For ticket dependencies, use a `Blocked by:` line containing ticket numbers. A ticket is ready only when every listed blocker is complete.
+
+For externally supplied requests routed through `triage`, use the local fields and role mapping in [triage-labels.md](triage-labels.md). External PRs are not an automatic request surface in this local tracker; explicitly requested remote work must name its repository and scope.
