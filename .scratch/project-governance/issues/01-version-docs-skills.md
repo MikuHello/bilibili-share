@@ -1,6 +1,6 @@
 # 01 — 发布版本、开发迭代与项目入口规范
 
-Status: in-progress
+Status: complete
 Blocked by: None
 
 ## Request and authorization
@@ -19,7 +19,11 @@ Blocked by: None
 
 ## Acceptance
 
-- [ ] 正式/开发构建版本和产物隔离可验证，错误迭代参数明确拒绝。
-- [ ] 文档职责、版本规则、Matt 路由、上游更新规则清晰且单一来源。
-- [ ] 本地 skills 与锁定上游一致，无悬空本地文档引用。
-- [ ] 类型/行为/构建检查及双轴 code-review 完成。
+- [x] 正式/开发构建版本和产物隔离可验证，错误迭代参数明确拒绝。
+- [x] 文档职责、版本规则、Matt 路由、上游更新规则清晰且单一来源。
+- [x] 本地 skills 与锁定上游一致，无悬空本地文档引用。
+- [x] 类型/行为/构建检查及双轴 code-review 完成。
+
+## Comments
+
+2026-09-08 — 实现提交cfeb993；GitHub CLI/公共Git链路核查完成，项目仓库连接限制已记录。正式版本0.1.0、开发R构建、贡献规范和25个稳定Matt技能已落地。95项测试、类型检查、构建隔离、技能74文件来源锁和本地文档链接验证通过。Standards/Spec审查均0项问题。最终产物及其校验值见上级verification.md/json。

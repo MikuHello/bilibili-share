@@ -1,6 +1,6 @@
 # V0.1 版本与工程规范验证
 
-Status: verified — code review pending
+Status: complete — verification and both review axes passed
 
 2026-09-08；本轮开始提交 d887910。
 
@@ -26,9 +26,19 @@ Status: verified — code review pending
 - 绿：npm run test:build通过，验证正式构建、R1/R2、开发不覆盖正式、固定安装名称、调试代码隔离，以及9组错误参数在写入前拒绝。
 - 类型检查及95项Vitest行为测试通过。
 - 正式产物剥离userscript头后与已完整验证的内部0.4.0正文逐字节相同；本轮未重复运行15套产品浏览器矩阵，既有行为证据保留在上一批工作项。
-- 开发迭代R1/R2是本次相同代码的构建验证样本，最高已用R2；后续发生代码变化时使用R3或新的正式目标基线。
+- 本轮R1/R2是构建验证样本，不是对外发布的开发迭代。实际迭代号由对应工作项记录；交付开发包前按该编号重新构建。
 - 实际产物校验值见verification.json。没有执行真实脚本管理器安装；由内部高版本改为V0.1时需要手动安装，不能期待自动降级。
 
 ## 文档入口
 
 README负责使用与安装，CONTRIBUTING负责贡献导航，AGENTS是唯一agent入口，docs/development.md集中版本/构建/验证/工作目录规范，docs/agents/skills.md负责Matt路由与上游更新。保留CONTEXT作为纯领域词汇表，不复制工程规则。
+
+## Standards
+
+审查 d887910...cfeb993：0项规范违反，0项可行动代码异味。文档职责与入口指针清晰，构建使用单一基线并隔离开发产物，上游技能保留原文。
+
+## Spec
+
+审查 d887910...cfeb993：0项遗漏，0项范围扩张，0项错误实现。版本规则、文档导航、Matt入口、技能锁和许可符合请求；未将仓库404误报为连接或发布成功。
+
+总计：Standards 0（无最高问题）；Spec 0（无最高问题）。两位审查者独立只读核查，没有另行重跑测试。
