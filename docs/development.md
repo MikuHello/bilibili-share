@@ -54,9 +54,6 @@ npm run build:dev -- --revision 2
 
 ## 正式发布
 
-1. 根据维护者确定的正式目标同步 package/lock 版本；本地开发迭代不触发这一步。
-2. 构建正式产物、完成相关检查和代码审查，提交后确认工作区状态。
-3. 记录提交 SHA、产物校验值、变更说明和验证限制。
-4. 只有得到明确发布授权，并确认目标 GitHub 仓库和写权限后，才创建 `vX.Y.Z` 标签及正式 Release，上传正式 `.user.js`。
+根据维护者确定的目标同步 package/lock 版本，完成验收并记录提交和产物校验值。脚本唯一正式安装与更新入口是 Greasy Fork；GitHub Actions 构建候选包，GitHub Release 仅提供源码归档和说明，不构建或上传 `.user.js`。具体操作以 [发行流程](distribution.md) 为准。
 
 私人本地实验无需逐次登记版本；有必要评审或复现的结果记录到工单与 Git 提交中。确需外部分发开发包时单独获得授权，使用明确的预发布标签/状态，不能冒充正式 Release。项目 skills 的版本由 `.agents/matt-skills.lock.json` 管理，与产品发布版本独立。

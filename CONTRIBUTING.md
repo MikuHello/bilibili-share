@@ -10,6 +10,7 @@
 | 本指南 | 贡献入口与文档导航 |
 | [AGENTS.md](AGENTS.md) | Agent 的唯一项目入口，按任务指向相应规范 |
 | [开发规范](docs/development.md) | 版本、开发构建、验证、发布与工作目录管理 |
+| [发行流程](docs/distribution.md) | Greasy Fork 唯一安装入口、Actions 候选产物和 GitHub 源码 Release |
 | [Matt 工作流](docs/agents/skills.md) | 任务路由、审批状态、技能更新与来源 |
 | [本地工单](docs/agents/issue-tracker.md) | `.scratch/` 的需求、规格、票据及状态约定 |
 | [领域文档规则](docs/agents/domain.md) | 何时读取/维护词汇表与 ADR |

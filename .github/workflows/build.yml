@@ -1,0 +1,45 @@
+name: Check and build candidate
+
+'on':
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run test:build
+      - run: npm run build
+      - name: Record candidate provenance
+        env:
+          BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          sha256sum dist/bilibili-share-poster.user.js > dist/bilibili-share-poster.user.js.sha256
+          printf 'Candidate build, not a published release.\nCommit: %s\n' "$BUILD_COMMIT" > dist/CANDIDATE.txt
+      - name: Save downloadable candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bilibili-share-candidate-${{ github.sha }}
+          path: |
+            dist/bilibili-share-poster.user.js
+            dist/bilibili-share-poster.user.js.sha256
+            dist/CANDIDATE.txt
+          if-no-files-found: error
+          retention-days: 14

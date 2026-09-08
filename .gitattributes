@@ -1,0 +1,2 @@
+# Source archives contain maintainable source, not installable build artifacts.
+/dist export-ignore

@@ -9,11 +9,13 @@ If the cover fails, valid plain text and Markdown remain available with a retry 
 ## Install
 
 1. Install Tampermonkey in a supported Chrome or Edge release.
-2. Open [`dist/bilibili-share-poster.user.js`](dist/bilibili-share-poster.user.js) and install it manually in Tampermonkey.
+2. Install this script from its Greasy Fork page. The first public listing is pending; there is no public installation URL yet. Maintainers can build locally or download an Actions candidate for testing.
 3. Visit a standard Bilibili video URL shaped like `https://www.bilibili.com/video/BV.../`.
 4. Use “分享海报” to open the poster preview and download the PNG.
 
 The userscript deliberately declares no remote update or download URL.
+
+Greasy Fork is the sole official script distribution channel. GitHub Releases contain source archives and release notes only. See [distribution workflow](docs/distribution.md) for installation, candidate builds and future synchronization.
 
 Current release baseline: **V0.1** (`0.1.0`). Local prototypes are recommended to use versions such as `0.1.0-dev.1`; they are separate builds, not GitHub releases.
 
@@ -34,7 +36,7 @@ For a local prototype, use `npm run build:dev` (defaults to `0.1.0-dev.1` at the
 - Developer share-text configuration: [`src/share-text-config.ts`](src/share-text-config.ts), with [variables and template examples](docs/share-text-templates.md)
 - Poster ownership and cache rules: [`docs/poster-maintenance.md`](docs/poster-maintenance.md)
 - Node behavior tests: [`tests/`](tests/)
-- Directly installable build: [`dist/bilibili-share-poster.user.js`](dist/bilibili-share-poster.user.js)
+- Local candidate output (run build first): [`dist/bilibili-share-poster.user.js`](dist/bilibili-share-poster.user.js)
 - Product source: [share-generation idea](.scratch/share-generation-extensibility/idea.md)
 - Approved implementation spec: [share-generation spec](.scratch/share-generation-extensibility/spec.md)
 - Matt workflow: [`docs/agents/skills.md`](docs/agents/skills.md)
