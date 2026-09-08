@@ -1,6 +1,6 @@
 # 02 — 本地原型使用建议性 dev 版本
 
-Status: in-progress
+Status: complete
 Blocked by: None
 
 主人明确决定去掉 R 编号，直接建议使用 0.1.0-dev.1 形式作为本地原型版本。正式版本仍由仓库拥有者管理。
@@ -12,4 +12,8 @@ Blocked by: None
 
 ## Verification
 
-红：默认 --dev 被旧代码拒绝；绿：待验证。历史工单保留原规则作为当时记录。
+红：默认 --dev 被旧代码拒绝；绿：npm run test:build通过默认dev.1、显式dev.1/dev.2、版本描述、安装名称与产物隔离及错误参数验证。历史工单保留原规则作为当时记录。
+
+## Comments
+
+实现711dd41。Standards无发现；Spec提出docs/agents/skills.md旧R术语遗漏，已改为正式版本与本地开发版本。正式产物与版本保持原样，历史证据不重写。

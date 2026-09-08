@@ -22,7 +22,7 @@ implement 使用 TDD（适用时）和 code-review。多票实施每票使用新
 - 新需求在主人确认已达成共同理解后生成规格，规格与拆票批准后发布正式工单。
 - 当前请求已经明确的维护工作，以及已有获批范围，可按对应入口直接执行。后续技术细节由 agent 在范围内处理，不重复索取已有授权。
 - 视觉变化单独走 prototype/design 阶段；内部职责整理保持已有视觉。
-- 本地工单规则见 [issue-tracker.md](issue-tracker.md)；领域规则见 [domain.md](domain.md)；产品版本与 R 迭代只在 [开发规范](../development.md) 定义。
+- 本地工单规则见 [issue-tracker.md](issue-tracker.md)；领域规则见 [domain.md](domain.md)；正式版本与本地开发版本只在 [开发规范](../development.md) 定义。
 - Skills 明确引用其他技能时继续按路由读取。单纯回答问题或只读核查不强制生成一套新产品规格。
 
 ## 上游来源与随仓库共享
