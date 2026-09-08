@@ -8,7 +8,7 @@
 | GitHub Actions Artifacts | 自动检查与构建，提供候选 `.user.js` 供维护者下载验证 | 否，不是安装首页或自动更新地址 |
 | GitHub Release | 标签、更新说明，以及 GitHub 自动提供的源码 ZIP/tar.gz | 否，不上传脚本安装包，不执行构建 |
 
-Tampermonkey 是浏览器中的脚本管理器；Greasy Fork 是脚本托管网站。使用者先安装 Tampermonkey，再到项目的 Greasy Fork 页面点击安装，由管理器确认安装。当前尚未建立本项目 Greasy Fork 页面，因此没有可提供的正式安装网址。
+Tampermonkey 是浏览器中的脚本管理器；Greasy Fork 是脚本托管网站。使用者先安装 Tampermonkey，再到项目的 Greasy Fork 页面点击安装，由管理器确认安装。正式安装页面：[Bilibili 分享海报](https://greasyfork.org/zh-CN/scripts/594826)。源码仓库：[MikuHello/bilibili-share](https://github.com/MikuHello/bilibili-share)。首个已发布版本为 `0.1.0`。
 
 ## 已配置的自动构建
 
@@ -16,7 +16,7 @@ Tampermonkey 是浏览器中的脚本管理器；Greasy Fork 是脚本托管网�
 
 产物保存为 GitHub Actions artifact，保留14天，维护者可以下载解压使用。工作流不含 `release` 事件，push 仅匹配 main 分支，因此创建 Release 或推送标签不会自动运行构建。工作流没有写仓库或发布权限，不会自动把 main 或 PR 的代码送给脚本用户。
 
-这些检查不取代海报/面板变更所需的完整浏览器验收。具体发布版本必须采用通过验收的提交；首次云端运行需先建立可用的 GitHub 仓库。
+这些检查不取代海报/面板变更所需的完整浏览器验收。具体发布版本必须采用通过验收的提交；首次云端运行已通过：[Build candidate #34173903419](https://github.com/MikuHello/bilibili-share/actions/runs/34173903419)。
 
 ## 首次正式发布到 Greasy Fork
 
@@ -33,7 +33,7 @@ Greasy Fork 支持从可公开读取的脚本 URL 同步，并可通过 GitHub w
 
 这条分支只承担 Greasy Fork 的同步来源，不向使用者宣传为第二安装渠道。避免直接同步持续变化的 main 或开发版本。Actions artifact 有保存期限，也不是供 Greasy Fork 持续拉取的稳定公开脚本 URL。
 
-首次脚本导入和 Greasy Fork 管理页中的同步设置需要先完成；webhook 使用该账户页面提供的 URL 和 secret，不能把凭据写入仓库。此阶段尚未创建发行分支或自动同步 workflow，待实际仓库及脚本页面可用后再接入。
+首次脚本发布已完成；后续自动同步仍需在 Greasy Fork 管理页配置。webhook 使用该账户页面提供的 URL 和 secret，不能把凭据写入仓库。此阶段尚未创建发行分支或自动同步 workflow，待维护者决定启用自动同步后再接入。
 
 ## GitHub 源码 Release
 
