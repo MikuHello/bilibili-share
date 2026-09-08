@@ -26,3 +26,15 @@
 - 产品展示：[docs/images](../docs/images)。
 - 本地生成结果：`artifacts/`，不提交到 Git。
 - 后续归档按 [工作项规则](../docs/agents/issue-tracker.md#generated-artifacts-and-completed-work) 执行。
+
+## 2026-09-08 原生导航修复前清理
+
+以下已完成阶段的调查与中间报告退出当前工作目录；原始需求、批准记录、规格、工单及最终验收摘要保留。历史报告中的后续建议不构成本次修复任务。
+
+- [discovery-runtime-2026-09-05.md](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/redesign/discovery-runtime-2026-09-05.md)
+- [discovery-theme-2026-09-05.md](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/redesign/discovery-theme-2026-09-05.md)
+- [runtime-followup.md](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/redesign/runtime-followup.md)
+- [investigation.md](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/redesign/investigation.md)
+- [technical-findings.md](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/usage-refinement/technical-findings.md)
+
+当前新工作项：[原生导航被移除](native-header-regression/issues/01-preserve-native-navigation.md)。

@@ -62,6 +62,9 @@ export function mountSharePosterEntry(appearance: PageAppearance, onOpen: () => 
   if (document.getElementById(ENTRY_ID)) return false;
   const anchor = findToolbarAnchor();
   if (!anchor?.parentElement) return false;
+  // Mutating SSR markup before Vue hydrates it forces a full app replacement,
+  // destroying the independently mounted native header along with that tree.
+  if (anchor.closest('[data-server-rendered="true"]')) return false;
   anchor.insertAdjacentElement("afterend", createSharePosterEntry(appearance, onOpen));
   return true;
 }

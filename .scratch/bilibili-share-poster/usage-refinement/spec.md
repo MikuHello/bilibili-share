@@ -120,7 +120,7 @@ Status: approved — implementation spec and ticket breakdown approved; tickets 
 ## Further Notes
 
 - 输入：[需求及逐轮决定](idea.md)，共11项需求；最新版视觉：[B3说明](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/prototype-b3/NOTES.md)。早期固定页脚/标题区及A/B2布局仅作历史，不再约束实现。
-- 技术证据：[调查记录](technical-findings.md)、[隔离渲染计时](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/render-baseline.md)、[最终统计排列](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/final-counter-layout.json)。
+- 技术证据：[调查记录](https://github.com/MikuHello/bilibili-share/blob/9d9408a24b09f7536e6b263f0b2770702285c6e9/.scratch/bilibili-share-poster/usage-refinement/technical-findings.md)、[隔离渲染计时](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/render-baseline.md)、[最终统计排列](https://github.com/MikuHello/bilibili-share/blob/f0a534c81de44edccd741ecd116a6d07dfa5cf83/.scratch/bilibili-share-poster/usage-refinement/evidence/final-counter-layout.json)。
 - 旧产品边界继承自[原始idea](../idea.md)及[上一轮实现规格](../redesign/spec.md)，冲突时本规格优先。
 - 当前实际安装版未与候选构建逐字核对；真实剪贴板粘贴仍未验证。上述缺口不得被规格文档掩盖。
 - 下一步：主人审阅规格（包含测试接缝与工程策略）→批准拆票方案→to-tickets→每票fresh implement/TDD/code-review→统一交付。

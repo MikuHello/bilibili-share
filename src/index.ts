@@ -55,7 +55,10 @@ observePageAppearance((appearance) => {
   activePanel?.setAppearance(appearance);
 });
 queueMount();
-new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
+new MutationObserver(queueMount).observe(document.documentElement, {
+  childList: true, subtree: true,
+  attributes: true, attributeFilter: ["data-server-rendered"],
+});
 window.addEventListener("urlchange", handleLocationChange);
 window.addEventListener("popstate", handleLocationChange);
 

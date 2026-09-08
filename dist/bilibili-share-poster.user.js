@@ -2587,6 +2587,7 @@ THE SOFTWARE.
     if (document.getElementById(ENTRY_ID)) return false;
     const anchor = findToolbarAnchor();
     if (!anchor?.parentElement) return false;
+    if (anchor.closest('[data-server-rendered="true"]')) return false;
     anchor.insertAdjacentElement("afterend", createSharePosterEntry(appearance, onOpen));
     return true;
   }
@@ -4679,7 +4680,12 @@ ${MOTION_STYLES}
     activePanel?.setAppearance(appearance);
   });
   queueMount();
-  new MutationObserver(queueMount).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(queueMount).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["data-server-rendered"]
+  });
   window.addEventListener("urlchange", handleLocationChange);
   window.addEventListener("popstate", handleLocationChange);
   if (typeof GM_registerMenuCommand === "function") {

@@ -77,7 +77,19 @@ export async function openFixture(browser, bundle, overrides = {}) {
       },
     } });
   }, { coverBase64: cover.toString("base64"), overrides: { ...overrides, context: undefined } });
+  if (overrides.pageHeader) await page.evaluate(html => document.body.insertAdjacentHTML("afterbegin", html), overrides.pageHeader);
+  if (overrides.serverRendered) await page.evaluate(() => {
+    const app = document.createElement("div");
+    app.id = "app";
+    app.setAttribute("data-server-rendered", "true");
+    app.append(...[...document.body.childNodes].filter(node => node.nodeType !== Node.COMMENT_NODE));
+    document.body.append(app);
+    const template = app.cloneNode(true);
+    template.removeAttribute("data-server-rendered");
+    template.querySelector("#biliMainHeader").replaceChildren();
+    window.fixture.pageTemplate = template.outerHTML;
+  });
   await page.addScriptTag({ content: bundle });
-  await page.getByRole("button", { name: "分享海报", exact: true }).waitFor();
+  if (!overrides.serverRendered) await page.getByRole("button", { name: "分享海报", exact: true }).waitFor();
   return { page, context, errors };
 }
